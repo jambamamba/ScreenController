@@ -31,7 +31,6 @@ ENDIF(UNIX)
 
 INCLUDE_DIRECTORIES(
     ${LIBS_DIR}/turbojpeg
-#    ${LIBS_DIR}/jpegsr9c
     ${LIBS_DIR}/openssl/include
     ../License
     ../Updater
@@ -64,7 +63,6 @@ SET(X11Libs )
 IF(UNIX)
     LINK_DIRECTORIES(
         ${LIBS_DIR}/turbojpeg/build/
-#        ${LIBS_DIR}/jpegsr9c/.libs/
     )
     SET(SSLLibs
         crypto

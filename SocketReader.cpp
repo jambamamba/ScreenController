@@ -55,7 +55,7 @@ int SocketReader::SendData(uint8_t *buf, int buf_size, const std::string &ip, si
     int datagram_size = 8192;
     for(int i =0 ; i < buf_size; i+= datagram_size)
     {
-        int bytes_sent = sendto(fp_, buf + i, std::min(datagram_size, buf_size - i), 0,(struct sockaddr*)&sa_, sizeof sa_);
+        int bytes_sent = sendto(fp_, buf + i, std::min(datagram_size, buf_size - i), 0,(struct sockaddr*)&sa, sizeof sa);
         if(bytes_sent < 1)
         {
             return -1;
@@ -75,10 +75,14 @@ void SocketReader::StartRecieveDataThread()
     reader_thread_ = std::async(std::launch::async, [this, buf_size](){
         while(!stop_)
         {
+            struct sockaddr_in sa;
+            memset(&sa, 0, sizeof sa);
+            sa.sin_family = AF_INET;
             socklen_t fromlen = sizeof IN_CLASSA_HOST;
             //osm: todo use select here so we don't block forever
-            ssize_t recsize = recvfrom(fp_, (void*)buf, buf_size, 0, (struct sockaddr*)&sa_, &fromlen);
+            ssize_t recsize = recvfrom(fp_, (void*)buf, buf_size, 0, (struct sockaddr*)&sa, &fromlen);
 
+            qDebug() << "########### recvd from " << inet_ntoa(sa.sin_addr);
 //            mylog("recvd %i bytes", recsize);
 
             {
@@ -153,7 +157,7 @@ bool SocketReader::PlaybackImages(std::function<void(const QImage&img)> renderIm
                 memcpy(&jpeg_data[jpeg_data_pos], buf, idx);
                 jpeg_data_pos += idx;
                 static int counter = 0;
-                qDebug() << "Complete jpeg recvd " << counter++;
+//                qDebug() << "Complete jpeg recvd " << counter++;
                 QImage img;
                 img.loadFromData(jpeg_data, jpeg_data_pos, "JPG");
                 if(!img.isNull()) renderImageCb(img);

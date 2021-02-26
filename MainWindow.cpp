@@ -57,12 +57,13 @@ void MainWindow::StartDiscoveryService()
 
 void MainWindow::NodeDoubleClicked(QModelIndex index)
 {
+    showTransparentWindowOverlay();
+
     int idx = 0;
     for(const auto &node : m_nodes)
     {
         if(idx == index.row())
         {
-            qDebug() << "################### " << node->m_name.c_str();
             m_streamer.StartStreaming(node->m_ip, node->m_port);
             break;
         }
@@ -73,7 +74,8 @@ void MainWindow::NodeDoubleClicked(QModelIndex index)
 void MainWindow::PrepareToReceiveStream()
 {
     m_streamer_socket.PlaybackImages([this](const QImage&img){
-//        pw->SetImage(img);//.scaled(pw->width(), pw->height()));
+        m_transparent_window->SetImage(img);
+        m_transparent_window->update();
     });
     m_streamer_socket.StartRecieveDataThread();
 }

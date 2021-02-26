@@ -36,15 +36,20 @@ void TransparentMaximizedWindow::moveToScreen(const QScreen* screen)
     resize(screen_geometry.width(), screen_geometry.height());
 }
 
+void TransparentMaximizedWindow::SetImage(const QImage &img)
+{
+    m_image = img;
+}
+
 void TransparentMaximizedWindow::show(int width, int height, QScreen* screen)
 {
     m_screen = screen;
     moveToScreen(screen);
     m_capturing = false;
-    setWindowState(Qt::WindowFullScreen);
+//    setWindowState(Qt::WindowFullScreen);
     setWindowFlags(Qt::Window
-                   | Qt::FramelessWindowHint
-                   | Qt::WindowStaysOnTopHint
+//                   | Qt::FramelessWindowHint
+//                   | Qt::WindowStaysOnTopHint
                    | Qt::X11BypassWindowManagerHint
                    );
 #ifdef Linux
@@ -70,6 +75,24 @@ void TransparentMaximizedWindow::mouseReleaseEvent(QMouseEvent *mouse_event)
 {
     if(m_capturing) {return;}
 }
+
+void TransparentMaximizedWindow::paintEvent(QPaintEvent *)
+{
+    qDebug() << "################ painter";
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
+//    painter.setPen(QPen(Qt::green, BORDER_WIDTH, Qt::DashDotLine, Qt::FlatCap, Qt::MiterJoin));
+//    QRect r(rect);
+//    r.setX(rect.x() - BORDER_WIDTH);
+//    r.setY(rect.y() - BORDER_WIDTH);
+//    r.setWidth(rect.width() + BORDER_WIDTH*2);
+//    r.setHeight(rect.height() + BORDER_WIDTH*2);
+//    painter.drawRect(r);
+    painter.drawImage(rect(), m_image, m_image.rect());
+    painter.end();
+
+}
+
 
 void TransparentMaximizedWindow::startCapture(
         const QPoint &point_start,
