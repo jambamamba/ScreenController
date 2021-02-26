@@ -75,12 +75,13 @@ void MainWindow::PrepareToReceiveStream()
 {
     m_streamer_socket.PlaybackImages([this](const QImage&img){
         qDebug() << "############### got image";
-        if(!m_transparent_window)
-        {
-            showTransparentWindowOverlay();
-        }
-        m_transparent_window->SetImage(img);
-        m_transparent_window->update();
+        img.save("/home/dev/oosman/foo.jpg");
+//        if(!m_transparent_window)
+//        {
+//            showTransparentWindowOverlay();
+//        }
+//        m_transparent_window->SetImage(img);
+//        m_transparent_window->update();
     });
     m_streamer_socket.StartRecieveDataThread();
 }

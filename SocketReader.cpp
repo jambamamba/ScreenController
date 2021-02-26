@@ -82,7 +82,6 @@ void SocketReader::StartRecieveDataThread()
             //osm: todo use select here so we don't block forever
             ssize_t recsize = recvfrom(fp_, (void*)buf, buf_size, 0, (struct sockaddr*)&sa, &fromlen);
 
-            qDebug() << "########### recvd from " << inet_ntoa(sa.sin_addr);
 //            mylog("recvd %i bytes", recsize);
 
             {
