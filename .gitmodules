@@ -1,0 +1,3 @@
+[submodule "DiscoveryService"]
+	path = DiscoveryService
+	url = https://github.com/jambamamba/DiscoveryService

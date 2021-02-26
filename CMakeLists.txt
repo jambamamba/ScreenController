@@ -34,6 +34,7 @@ INCLUDE_DIRECTORIES(
     ${LIBS_DIR}/openssl/include
     ../License
     ../Updater
+    DiscoveryService
     .
 )
 
@@ -128,6 +129,7 @@ IF(UNIX)
     SET(CMAKE_INSTALL_RPATH /usr/local/bin/oxpecker-screen-controller)
 ENDIF(UNIX)
 
+ADD_SUBDIRECTORY(DiscoveryService)
 ADD_EXECUTABLE(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
     ${App_ICON}
     ${PROJECT_SOURCES}
@@ -144,6 +146,7 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME}
     ${JPEGLib}
     ${X11Libs}
     pthread
+    discovery.lib
 )
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")

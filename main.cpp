@@ -4,6 +4,9 @@
 #include <QDebug>
 #include <QStandardPaths>
 
+#include "DiscoveryService.h"
+#include "DiscoveryClient.h"
+
 extern "C" void mylog(const char *fmt, ...)
 {
     char tbuffer [128];
@@ -33,8 +36,22 @@ extern "C" void mylog(const char *fmt, ...)
 
 int main(int argc, char *argv[])
 {
+    bool stop = false;
+    auto discovery_thread = std::async(std::launch::async, [&stop](){
+        DiscoveryService discovery;
+        DiscoveryClient client;
+        while(!stop)
+        {
+            client.Discover();
+            usleep(3 * 1000 * 1000);
+        }
+    });
+
     QApplication a(argc, argv);
     MainWindow w;
     w.show();
-    return a.exec();
+    int ret = a.exec();
+    stop = true;
+    discovery_thread.wait();
+    return ret;
 }

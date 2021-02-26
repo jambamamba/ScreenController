@@ -84,7 +84,7 @@ ScreenStreamer::ScreenStreamer()
 ScreenStreamer::~ScreenStreamer()
 {
     stop_ = true;
-    thread_.wait();
+    if(thread_.valid()){thread_.wait();}
 }
 
 void ScreenStreamer::InitAvailableScreens()
