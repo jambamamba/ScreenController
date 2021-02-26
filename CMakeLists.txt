@@ -31,6 +31,7 @@ ENDIF(UNIX)
 
 INCLUDE_DIRECTORIES(
     ${LIBS_DIR}/turbojpeg
+#    ${LIBS_DIR}/jpegsr9c
     ${LIBS_DIR}/openssl/include
     ../License
     ../Updater
@@ -63,6 +64,7 @@ SET(X11Libs )
 IF(UNIX)
     LINK_DIRECTORIES(
         ${LIBS_DIR}/turbojpeg/build/
+#        ${LIBS_DIR}/jpegsr9c/.libs/
     )
     SET(SSLLibs
         crypto
@@ -76,8 +78,8 @@ IF(UNIX)
     )
 #ln -s /usr/lib/x86_64-linux-gnu/libpulse-mainloop-glib.so.0.0.5
     SET(JPEGLib
-        jpeg
         turbojpeg
+        jpeg
         )
     SET(PROJECT_LINUX_SOURCES
         X11Mouse.cpp
