@@ -47,11 +47,10 @@ QT5_WRAP_UI(PROJECT_UI_HDRS
     ../Updater/UpdaterWidget.ui
     CrossCursorWidget.ui
     MainWindow.ui
-    PreviewDialog.ui
     TransparentMaximizedWindow.ui
 )
 QT5_ADD_RESOURCES(PROJECT_RESOURCES
-
+    screencontroller.qrc
 )
 ADD_DEFINITIONS(
     -DHAVE_STDINT_H
@@ -109,14 +108,10 @@ SET(PROJECT_SOURCES
     KeyInterface.h
     MouseInterface.cpp
     MouseInterface.h
-    PreviewDialog.cpp
-    PreviewDialog.h
     ScreenStreamer.h
     ScreenStreamer.cpp
     SocketReader.cpp
     SocketReader.h
-    SocketWriter.cpp
-    SocketWriter.h
     TransparentMaximizedWindow.cpp
     TransparentMaximizedWindow.h
     main.cpp

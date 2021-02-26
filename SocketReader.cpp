@@ -3,10 +3,15 @@
 #include <QImage>
 #include <QDebug>
 
+#include <arpa/inet.h>
 #include <fcntl.h>
 #include <memory.h>
+#include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 extern "C" void mylog(const char *fmt, ...);
 
@@ -38,7 +43,31 @@ SocketReader::~SocketReader()
     playback_thread_.wait();
 }
 
-void SocketReader::RecieveData()
+int SocketReader::SendData(uint8_t *buf, int buf_size, const std::string &ip, size_t port)
+{
+    struct sockaddr_in sa;
+    memset(&sa, 0, sizeof sa);
+    sa.sin_family = AF_INET;
+    sa.sin_addr.s_addr = inet_addr(ip.c_str());
+    sa.sin_port = htons(port);
+
+    int total_sent = 0;
+    int datagram_size = 8192;
+    for(int i =0 ; i < buf_size; i+= datagram_size)
+    {
+        int bytes_sent = sendto(fp_, buf + i, std::min(datagram_size, buf_size - i), 0,(struct sockaddr*)&sa_, sizeof sa_);
+        if(bytes_sent < 1)
+        {
+            return -1;
+            break;
+        }
+        total_sent += bytes_sent;
+        usleep(10000);//osm
+    }
+    return total_sent;
+}
+
+void SocketReader::StartRecieveDataThread()
 {
     int buf_size = 8192*10;
     static uint8_t * buf = (uint8_t*) malloc(buf_size);

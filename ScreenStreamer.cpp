@@ -7,9 +7,9 @@
 #include <QPixmap>
 #include <QScreen>
 
-#include "SocketWriter.h"
-
 #include <jpeglib.h>
+
+#include "SocketReader.h"
 
 namespace  {
 //https://www.ridgesolutions.ie/index.php/2019/12/10/libjpeg-example-encode-jpeg-to-memory-buffer-instead-of-file/
@@ -76,7 +76,8 @@ void ToJpeg(unsigned char* image, int width, int height, int quality,
 }
 
 }//namespace
-ScreenStreamer::ScreenStreamer()
+ScreenStreamer::ScreenStreamer(SocketReader &socket)
+    : m_socket(socket)
 {
     InitAvailableScreens();
 }
@@ -123,11 +124,9 @@ QScreen *ScreenStreamer::ActiveScreen()
     return m_screens[ActiveScreenIdx()];
 }
 
-void ScreenStreamer::StartStreaming()
+void ScreenStreamer::StartStreaming(const std::string &ip, size_t port)
 {
-    fp_ = std::make_unique<SocketWriter>();
-    fp_->BfOpen("127.0.0.1", 9000);
-    thread_ = std::async(std::launch::async, [this](){
+    thread_ = std::async(std::launch::async, [this, ip, port](){
         while(!stop_){
             std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
@@ -137,7 +136,7 @@ void ScreenStreamer::StartStreaming()
             ToJpeg(screen_shot.bits(), screen_shot.width(), screen_shot.height(), 85, "osletek", &jpegSize, &jpegBuf);
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
             auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
-            fp_->BfWrite(jpegBuf, jpegSize);
+            m_socket.SendData(jpegBuf, jpegSize, ip, port);
             free(jpegBuf);
         }
     });

@@ -18,10 +18,8 @@ class SocketReader
 public:
     SocketReader();
     ~SocketReader();
-    void RecieveData();
-    int Readfn(uint8_t *buf, int buf_size);
-    int64_t Seekfn(int64_t offset, int whence);
-    bool PlaybackVideo(const std::string &output_file, std::function<void(const QImage&img)> renderImageCb);
+    void StartRecieveDataThread();
+    int SendData(uint8_t *buf, int buf_size, const std::string &ip, size_t port);
     bool PlaybackImages(std::function<void(const QImage&img)> renderImageCb);
 protected:
     int ReadSocketData(uint8_t *buf, int buf_size);

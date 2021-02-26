@@ -11,21 +11,21 @@
 #include <QList>
 
 class QScreen;
-class SocketWriter;
+class SocketReader;
 class ScreenStreamer
 {
 public:
-    ScreenStreamer();
+    ScreenStreamer(SocketReader &socket);
     ~ScreenStreamer();
-    void StartStreaming();
+    void StartStreaming(const std::string &ip, size_t port);
     QImage ScreenShot();
     QScreen *ActiveScreen();
 protected:
     void InitAvailableScreens();
     int ActiveScreenIdx() const;
 
-    std::unique_ptr<SocketWriter> fp_;
     std::future<void> thread_;
     QList<QScreen *> m_screens;
+    SocketReader &m_socket;
     bool stop_ = false;
 };
