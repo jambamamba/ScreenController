@@ -74,26 +74,19 @@ void MainWindow::NodeDoubleClicked(QModelIndex index)
 void MainWindow::PrepareToReceiveStream()
 {
     m_streamer_socket.PlaybackImages([this](const QImage&img){
+        qDebug() << "############### got image";
+        if(!m_transparent_window)
+        {
+            showTransparentWindowOverlay();
+        }
         m_transparent_window->SetImage(img);
         m_transparent_window->update();
     });
     m_streamer_socket.StartRecieveDataThread();
 }
-void MainWindow::scrubScreenCaptureModeOperation()
-{
-    delete m_transparent_window;
-    m_transparent_window = nullptr;
-}
-
-void MainWindow::captureFullScreen()
-{
-    scrubScreenCaptureModeOperation();
-    m_region = QRect();
-}
 
 void MainWindow::showTransparentWindowOverlay()
 {
-    scrubScreenCaptureModeOperation();
     QImage screen_shot = m_streamer.ScreenShot();
 
     m_transparent_window = new TransparentMaximizedWindow(this);

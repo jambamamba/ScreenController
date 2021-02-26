@@ -38,8 +38,6 @@ public:
     ~MainWindow();
 
 protected:
-    void captureFullScreen();
-    void scrubScreenCaptureModeOperation();
     void StartDiscoveryService();
     void PrepareToReceiveStream();
 
