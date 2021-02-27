@@ -121,7 +121,7 @@ bool SocketReader::PlaybackImages(std::function<void(const QImage&img)> renderIm
 {
     renderImageCb_ = renderImageCb;
     playback_thread_ = std::async(std::launch::async, [this,renderImageCb](){
-        constexpr int buf_size = 8192*4;
+        constexpr int buf_size = 8192*10;
         uint8_t buf[buf_size];
         size_t jpeg_data_sz = 1024*1024;
         size_t jpeg_data_pos = 0;
