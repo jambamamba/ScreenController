@@ -16,13 +16,15 @@
 class SocketReader
 {
 public:
-    SocketReader();
+    SocketReader(uint16_t port);
     ~SocketReader();
     void StartRecieveDataThread();
-    int SendData(uint8_t *buf, int buf_size, const std::string &ip, size_t port);
+    int SendData(uint8_t *buf, int buf_size, const std::string &ip, size_t port, int throttle_ms);
     bool PlaybackImages(std::function<void(const QImage&img)> renderImageCb);
+    uint16_t GetPort() const;
 protected:
     int ReadSocketData(uint8_t *buf, int buf_size);
+    uint16_t m_port;
     int fp_;
     struct sockaddr_in sa_;
     std::future<void> reader_thread_;

@@ -21,12 +21,13 @@ namespace  {
 }//namespace
 
 
-SocketReader::SocketReader()
+SocketReader::SocketReader(uint16_t port)
+    : m_port(port)
 {
     memset(&sa_, 0, sizeof sa_);
     sa_.sin_family = AF_INET;
     sa_.sin_addr.s_addr = htonl(INADDR_ANY);
-    sa_.sin_port = htons(9000);
+    sa_.sin_port = htons(m_port);
     fp_ = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (bind(fp_, (struct sockaddr *)&sa_, sizeof sa_) == -1)
     {
@@ -43,7 +44,7 @@ SocketReader::~SocketReader()
     playback_thread_.wait();
 }
 
-int SocketReader::SendData(uint8_t *buf, int buf_size, const std::string &ip, size_t port)
+int SocketReader::SendData(uint8_t *buf, int buf_size, const std::string &ip, size_t port, int throttle_ms)
 {
     struct sockaddr_in sa;
     memset(&sa, 0, sizeof sa);
@@ -62,7 +63,7 @@ int SocketReader::SendData(uint8_t *buf, int buf_size, const std::string &ip, si
             break;
         }
         total_sent += bytes_sent;
-        usleep(1000 * 20);//osm
+        usleep(1000 * throttle_ms);
     }
     return total_sent;
 }
@@ -173,6 +174,11 @@ bool SocketReader::PlaybackImages(std::function<void(const QImage&img)> renderIm
         }
     });
     return true;
+}
+
+uint16_t SocketReader::GetPort() const
+{
+    return m_port;
 }
 
 

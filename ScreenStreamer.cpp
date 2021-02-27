@@ -126,18 +126,24 @@ QScreen *ScreenStreamer::ActiveScreen()
 
 void ScreenStreamer::StartStreaming(const std::string &ip, size_t port)
 {
-    thread_ = std::async(std::launch::async, [this, ip, port](){
+    thread_ = std::async(std::launch::async, [this, ip](){
         while(!stop_){
             std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
             QImage screen_shot = ScreenShot();
+            if(m_scale_factor*100 != 100)
+            {
+                screen_shot = screen_shot.scaled(screen_shot.width()*m_scale_factor, screen_shot.height()*m_scale_factor);
+            }
             unsigned long jpegSize = 0;
             unsigned char* jpegBuf = nullptr;
-            ToJpeg(screen_shot.bits(), screen_shot.width(), screen_shot.height(), 65, "osletek", &jpegSize, &jpegBuf);
+            ToJpeg(screen_shot.bits(), screen_shot.width(), screen_shot.height(), m_jpeg_quality_percent,
+                   "osletek", &jpegSize, &jpegBuf);
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
-            m_socket.SendData(jpegBuf, jpegSize, ip, 9000);
+            m_socket.SendData(jpegBuf, jpegSize, ip, m_socket.GetPort(), m_throttle_ms);
             free(jpegBuf);
+            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
+            qDebug() << "elapsed " << elapsed;
         }
     });
 }

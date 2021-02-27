@@ -14,6 +14,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
     , m_transparent_window(nullptr)
+    , m_streamer_socket(9000)
     , m_streamer(m_streamer_socket)
 {
     ui->setupUi(this);
