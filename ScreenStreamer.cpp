@@ -133,7 +133,7 @@ void ScreenStreamer::StartStreaming(const std::string &ip, size_t port)
             QImage screen_shot = ScreenShot();
             unsigned long jpegSize = 0;
             unsigned char* jpegBuf = nullptr;
-            ToJpeg(screen_shot.bits(), screen_shot.width(), screen_shot.height(), 85, "osletek", &jpegSize, &jpegBuf);
+            ToJpeg(screen_shot.bits(), screen_shot.width(), screen_shot.height(), 65, "osletek", &jpegSize, &jpegBuf);
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
             auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
             m_socket.SendData(jpegBuf, jpegSize, ip, 9000);

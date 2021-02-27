@@ -30,6 +30,7 @@ FIND_PACKAGE(Qt5WinExtras REQUIRED)
 ENDIF(UNIX)
 
 INCLUDE_DIRECTORIES(
+    ${LIBS_DIR}/turbojpeg/build
     ${LIBS_DIR}/turbojpeg
     ${LIBS_DIR}/openssl/include
     ../License
