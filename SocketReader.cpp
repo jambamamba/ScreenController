@@ -62,7 +62,7 @@ int SocketReader::SendData(uint8_t *buf, int buf_size, const std::string &ip, si
             break;
         }
         total_sent += bytes_sent;
-        usleep(10000);//osm
+        usleep(1000 * 20);//osm
     }
     return total_sent;
 }

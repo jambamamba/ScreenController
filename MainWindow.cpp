@@ -57,8 +57,6 @@ void MainWindow::StartDiscoveryService()
 
 void MainWindow::NodeDoubleClicked(QModelIndex index)
 {
-    showTransparentWindowOverlay();
-
     int idx = 0;
     for(const auto &node : m_nodes)
     {
