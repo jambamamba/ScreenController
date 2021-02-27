@@ -129,6 +129,11 @@ bool SocketReader::PlaybackImages(std::function<void(const QImage&img)> renderIm
         while(true)
         {
             int bytes_read = ReadSocketData(buf, buf_size);
+            if(bytes_read <= 0)
+            {
+                usleep(1000 * 1000);
+                continue;
+            }
 
             bool found_jpeg_header = false;
             ssize_t idx = 0;
@@ -156,10 +161,13 @@ bool SocketReader::PlaybackImages(std::function<void(const QImage&img)> renderIm
                 memcpy(&jpeg_data[jpeg_data_pos], buf, idx);
                 jpeg_data_pos += idx;
                 static int counter = 0;
-//                qDebug() << "Complete jpeg recvd " << counter++;
                 QImage img;
                 img.loadFromData(jpeg_data, jpeg_data_pos, "JPG");
-                if(!img.isNull()) renderImageCb(img);
+                if(!img.isNull())
+                {
+                    qDebug() << "Complete jpeg recvd " << counter++;
+                    renderImageCb(img);
+                }
 
                 jpeg_data_pos = 0;
                 memcpy(&jpeg_data[jpeg_data_pos], &buf[idx], bytes_read-idx);
