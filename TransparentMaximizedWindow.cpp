@@ -47,11 +47,11 @@ void TransparentMaximizedWindow::show(int width, int height, QScreen* screen)
     moveToScreen(screen);
     m_capturing = false;
 //    setWindowState(Qt::WindowFullScreen);
-    setWindowFlags(Qt::Window
-                   | Qt::FramelessWindowHint
+//    setWindowFlags(Qt::Window
+//                   | Qt::FramelessWindowHint
 //                   | Qt::WindowStaysOnTopHint
-                   | Qt::X11BypassWindowManagerHint
-                   );
+//                   | Qt::X11BypassWindowManagerHint
+//                   );
 #ifdef Linux
     setAttribute(Qt::WA_TranslucentBackground, true);
 #elif defined(Win32) || defined(Win64)

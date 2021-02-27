@@ -57,8 +57,6 @@ void MainWindow::StartDiscoveryService()
 
 void MainWindow::NodeDoubleClicked(QModelIndex index)
 {
-    showTransparentWindowOverlay();
-
     int idx = 0;
     for(const auto &node : m_nodes)
     {
@@ -80,8 +78,9 @@ void MainWindow::PrepareToReceiveStream()
             showTransparentWindowOverlay();
         }
         m_transparent_window->SetImage(img);
-        m_transparent_window->hide();
-        m_transparent_window->showFullScreen();
+//        m_transparent_window->hide();
+//        m_transparent_window->showFullScreen();
+        m_transparent_window->repaint(m_transparent_window->rect());
     });
     m_streamer_socket.StartRecieveDataThread();
 }
