@@ -176,8 +176,8 @@ bool SocketReader::PlaybackImages(std::function<void(const QImage&img)> renderIm
             }
             else
             {
-                memcpy(&jpeg_data[jpeg_data_pos], buf, bytes_read);
-                jpeg_data_pos += bytes_read;
+                memcpy(&jpeg_data[jpeg_data_pos], buf, bytes_read - 10);
+                jpeg_data_pos += bytes_read - 10;
             }
         }
     });
