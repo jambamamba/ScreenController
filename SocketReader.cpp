@@ -154,7 +154,8 @@ void SocketReader::StartRecieveDataThread()
                 continue;
             }
 
-            ssize_t bytes_recvd = recvfrom(m_socket, (void*)read_buffer, buffer_size, 0, (struct sockaddr*)&sa, &fromlen);
+            ssize_t bytes_recvd = //recvfrom(m_socket, (void*)read_buffer, buffer_size, 0, (struct sockaddr*)&sa, &fromlen);
+                    recv(m_socket, (void*)read_buffer, buffer_size, 0);
 
 //            mylog("recvd %i bytes", recsize);
 
