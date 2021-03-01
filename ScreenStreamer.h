@@ -29,6 +29,5 @@ protected:
     SocketReader &m_socket;
     int m_jpeg_quality_percent = 75;
     float m_scale_factor = 1;//.85;
-    int m_throttle_ms = 20;
     bool stop_ = false;
 };

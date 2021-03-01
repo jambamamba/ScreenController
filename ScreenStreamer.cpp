@@ -140,7 +140,7 @@ void ScreenStreamer::StartStreaming(const std::string &ip, size_t port)
             ToJpeg(screen_shot.bits(), screen_shot.width(), screen_shot.height(), m_jpeg_quality_percent,
                    "osletek", &jpegSize, &jpegBuf);
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-            m_socket.SendData(jpegBuf, jpegSize, ip, m_socket.GetPort(), m_throttle_ms);
+            m_socket.SendData(jpegBuf, jpegSize, ip, m_socket.GetPort());
             free(jpegBuf);
             auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
             qDebug() << "elapsed " << elapsed;

@@ -83,7 +83,7 @@ SocketReader::~SocketReader()
     m_playback_thread.wait();
 }
 
-int SocketReader::SendData(uint8_t *buf, int buf_size, const std::string &ip, size_t port, int throttle_ms)
+int SocketReader::SendData(uint8_t *buf, int buf_size, const std::string &ip, size_t port)
 {
     struct sockaddr_in sa;
     memset(&sa, 0, sizeof sa);
@@ -106,7 +106,6 @@ int SocketReader::SendData(uint8_t *buf, int buf_size, const std::string &ip, si
             break;
         }
         total_sent += bytes_sent;
-        usleep(1000 * throttle_ms);
     }
     return total_sent;
 }
