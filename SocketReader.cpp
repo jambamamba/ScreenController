@@ -112,7 +112,6 @@ void SocketReader::StartRecieveDataThread()
 //            mylog("recvd %i bytes", recsize);
 
             {
-                std::lock_guard<std::mutex> lk(m_mutex);
                 if(buffer_size - buffer_tail < bytes_recvd)
                 {
                     qDebug() << "Read buffer is full, dropping received data";
@@ -134,21 +133,21 @@ void SocketReader::StartRecieveDataThread()
                 if(idx == -1) continue;
 
                 idx += 10;
+                if(buffer[idx-2] == 0xff && buffer[idx-1] == 0xd9)
                 {
-                    QImage &img = m_display_img[m_display_img_idx];
-                    m_display_img_idx = (m_display_img_idx + 1) %2;
-                    img.loadFromData(buffer, idx, "JPG");
-                    if(!img.isNull())
+                    bool loaded = false;
                     {
-                        static int counter = 0;
-                        qDebug() << "Complete jpeg recvd " << counter++ << ", bytes " << idx;
-//                        renderImageCb(img);
+                        std::lock_guard<std::mutex> lk(m_mutex);
+                        loaded = m_display_img.loadFromData(buffer, idx, "JPG");
                     }
-                    memmove(buffer, &buffer[idx], buffer_tail - idx);
-                    buffer_tail -= (idx);
+                    if(loaded)
+                    {
+                        m_cv.notify_one();
+                    }
                 }
+                memmove(buffer, &buffer[idx], buffer_tail - idx);
+                buffer_tail -= (idx);
             }
-            m_cv.notify_one();
 
             static size_t total = 0;
             total += bytes_recvd;
@@ -170,16 +169,16 @@ bool SocketReader::PlaybackImages(std::function<void(const QImage&img)> renderIm
         {
             std::unique_lock<std::mutex> lk(m_mutex);
             m_cv.wait_for(lk, std::chrono::seconds(1), [this]{
-                QImage &img = m_display_img[(m_display_img_idx + 1) %2];
-                return (m_stop || !img.isNull());
+                return (m_stop || !m_display_img.isNull());
             });
             if(m_stop)
             { return false; }
 
-            QImage &img = m_display_img[(m_display_img_idx + 1) %2];
-            if(!img.isNull())
+            if(!m_display_img.isNull())
             {
-                renderImageCb(img);
+                static int counter = 0;
+//                qDebug() << "Complete jpeg recvd " << counter++;
+                renderImageCb(m_display_img);
             }
         }
     });

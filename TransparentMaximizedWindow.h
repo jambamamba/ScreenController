@@ -20,12 +20,14 @@ public:
     void moveToScreen(const QScreen *screen);
     void SetImage(const QImage&img);
     
-
+signals:
+    void RefreshScreen(const QRect &);
 private:
     Ui::TransparentMaximizedWindow *ui;
     bool m_capturing;
     QScreen *m_screen;
     QImage m_image;
+    QTimer *m_timer;
 
     virtual void mousePressEvent(QMouseEvent *mouse_event);
     virtual void mouseReleaseEvent(QMouseEvent *mouse_event);

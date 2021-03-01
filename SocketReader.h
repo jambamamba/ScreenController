@@ -30,7 +30,6 @@ protected:
     std::future<bool> m_playback_thread;
     std::mutex m_mutex;
     std::condition_variable m_cv;
-    QImage m_display_img[2];
-    int m_display_img_idx = 0;
+    QImage m_display_img;
     bool m_stop = false;
 };

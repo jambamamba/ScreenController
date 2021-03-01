@@ -13,15 +13,28 @@
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QSizeGrip>
+#include <QTimer>
 
 static const float WINDOW_OPACITY = 0.5f;
 
 TransparentMaximizedWindow::TransparentMaximizedWindow(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::TransparentMaximizedWindow),
-    m_capturing(false)
+    m_capturing(false),
+    m_timer(new QTimer(this))
 {
     ui->setupUi(this);
+//    void repaint(const QRect &)
+
+    connect(m_timer, &QTimer::timeout, [this](){
+        repaint(rect());
+    });
+    m_timer->start(100);
+//    connect(this,
+//            static_cast<void (TransparentMaximizedWindow::*)(const QRect &)>(&TransparentMaximizedWindow::RefreshScreen),
+//            this,
+//            static_cast<void (TransparentMaximizedWindow::*)(const QRect &)>(&TransparentMaximizedWindow::repaint),
+//            Qt::ConnectionType::BlockingQueuedConnection);
 }
 
 TransparentMaximizedWindow::~TransparentMaximizedWindow()
@@ -39,6 +52,7 @@ void TransparentMaximizedWindow::moveToScreen(const QScreen* screen)
 void TransparentMaximizedWindow::SetImage(const QImage &img)
 {
     m_image = img;
+//    emit RefreshScreen(rect());
 }
 
 void TransparentMaximizedWindow::show(int width, int height, QScreen* screen)
@@ -46,12 +60,12 @@ void TransparentMaximizedWindow::show(int width, int height, QScreen* screen)
     m_screen = screen;
     moveToScreen(screen);
     m_capturing = false;
-//    setWindowState(Qt::WindowFullScreen);
-//    setWindowFlags(Qt::Window
-//                   | Qt::FramelessWindowHint
+    setWindowState(Qt::WindowFullScreen);
+    setWindowFlags(Qt::Window
+                   | Qt::FramelessWindowHint
 //                   | Qt::WindowStaysOnTopHint
 //                   | Qt::X11BypassWindowManagerHint
-//                   );
+                   );
 #ifdef Linux
     setAttribute(Qt::WA_TranslucentBackground, true);
 #elif defined(Win32) || defined(Win64)
@@ -78,7 +92,6 @@ void TransparentMaximizedWindow::mouseReleaseEvent(QMouseEvent *mouse_event)
 
 void TransparentMaximizedWindow::paintEvent(QPaintEvent *)
 {
-    qDebug() << "################ painter";
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
 //    painter.setPen(QPen(Qt::green, BORDER_WIDTH, Qt::DashDotLine, Qt::FlatCap, Qt::MiterJoin));
