@@ -33,7 +33,7 @@ void jpegOutputMessage (j_common_ptr cinfo)
 }//namespace
 
 
-QImage JpegConverter::FromJpeg(uint8_t *jpg_buffer, size_t jpg_size)
+QImage JpegConverter::FromJpeg(uint8_t *jpg_buffer, size_t jpg_size, QImage &out_image)
 {
     struct jpeg_decompress_struct cinfo;
 
@@ -46,7 +46,7 @@ QImage JpegConverter::FromJpeg(uint8_t *jpg_buffer, size_t jpg_size)
     {
         qDebug() << "Error while decompressing JPEG " << jpegLastErrorMsg;
         jpeg_destroy_decompress(&cinfo);
-        return QImage();
+        return out_image;
     }
 
     jpeg_create_decompress(&cinfo);
@@ -55,12 +55,12 @@ QImage JpegConverter::FromJpeg(uint8_t *jpg_buffer, size_t jpg_size)
     if(rc == -1)
     {
         qDebug() << "jpeg_read_header failed";
-        return QImage();
+        return out_image;
     }
     if(!jpeg_start_decompress(&cinfo))
     {
         qDebug() << "jpeg_start_decompress failed";
-        return QImage();
+        return out_image;
     }
     int width = cinfo.output_width;
     int height = cinfo.output_height;
@@ -85,11 +85,14 @@ QImage JpegConverter::FromJpeg(uint8_t *jpg_buffer, size_t jpg_size)
     jpeg_finish_decompress(&cinfo);
     jpeg_destroy_decompress(&cinfo);
 
-    QImage rgb(width, height, QImage::Format::Format_RGB888);
-    memcpy(rgb.bits(), bmp_buffer, bmp_size);
+    if(out_image.isNull() || out_image.width() != width || out_image.height() != height)
+    {
+        out_image = QImage(width, height, QImage::Format::Format_RGB888);
+    }
+    memcpy(out_image.bits(), bmp_buffer, bmp_size);
     free(bmp_buffer);
 
-    return rgb;
+    return out_image;
 }
 
 //https://www.ridgesolutions.ie/index.php/2019/12/10/libjpeg-example-encode-jpeg-to-memory-buffer-instead-of-file/

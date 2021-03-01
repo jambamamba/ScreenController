@@ -162,16 +162,14 @@ void SocketReader::StartRecieveDataThread()
                 idx += 10;
                 if(JpegConverter::ValidJpegFooter(buffer[idx-2], buffer[idx-1]))
                 {
-                    QImage img;
                     bool loaded = false;
                     {
                         std::lock_guard<std::mutex> lk(m_mutex);
-                        img = JpegConverter::FromJpeg(buffer, idx);
-                        loaded = !img.isNull();
+                        m_display_img = JpegConverter::FromJpeg(buffer, idx, m_display_img);
+                        loaded = !m_display_img.isNull();
                     }
                     if(loaded)
                     {
-                        m_display_img = img;
                         m_cv.notify_one();
                     }
                 }
