@@ -24,7 +24,8 @@ public:
     uint16_t GetPort() const;
 protected:
     uint16_t m_port;
-    int m_fp;
+    int m_socket;
+    fd_set m_socket_set;
     struct sockaddr_in m_sa;
     std::future<void> m_reader_thread;
     std::future<bool> m_playback_thread;

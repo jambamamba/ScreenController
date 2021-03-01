@@ -17,7 +17,43 @@ extern "C" void mylog(const char *fmt, ...);
 
 namespace  {
 
+//-------------------------------------------------------------------------------
+void InitFileDescriptorSet( timeval &tv, int socketfd, fd_set *set )
+{
+   FD_ZERO( set );
+   tv.tv_sec = 3;
+   tv.tv_usec = 0;
+   FD_SET( socketfd, set );
+}
 
+//-------------------------------------------------------------------------------
+bool WaitForClient(int socket, fd_set &socketSet)
+{
+    struct timeval tv;
+    InitFileDescriptorSet( tv, socket, &socketSet );
+
+    int ret = select( socket + 1, &socketSet, nullptr, nullptr, &tv );
+    if( ret == -1 )
+    {
+        if(errno == EAGAIN)// try again
+        {
+            return false;
+        }
+        else if (errno == EBADF) // file descriptor closed while trying to read from socket
+        {
+            qDebug() << "error in select call: EBADF, File Closed\n";
+            return false;
+        }
+
+        qDebug() << "error in select call, errno: " << errno << ", " << strerror(errno) << "\n";
+        return false;
+    }
+    else if( ret == 0 )// timeout
+    {
+       return false;
+    }
+    return FD_ISSET(socket, &socketSet);
+}
 }//namespace
 
 
@@ -28,13 +64,13 @@ SocketReader::SocketReader(uint16_t port)
     m_sa.sin_family = AF_INET;
     m_sa.sin_addr.s_addr = htonl(INADDR_ANY);
     m_sa.sin_port = htons(m_port);
-    m_fp = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (bind(m_fp, (struct sockaddr *)&m_sa, sizeof m_sa) == -1)
+    m_socket = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (bind(m_socket, (struct sockaddr *)&m_sa, sizeof m_sa) == -1)
     {
-      close(m_fp);
+      close(m_socket);
       exit(-1);
     }
-
+    fcntl(m_socket, F_SETFL, fcntl(m_socket, F_GETFL, 0) | O_NONBLOCK);
 }
 
 SocketReader::~SocketReader()
@@ -56,7 +92,7 @@ int SocketReader::SendData(uint8_t *buf, int buf_size, const std::string &ip, si
     int datagram_size = 8192;
     for(int i =0 ; i < buf_size; i+= datagram_size)
     {
-        int bytes_sent = sendto(m_fp, buf + i, std::min(datagram_size, buf_size - i), 0,(struct sockaddr*)&sa, sizeof sa);
+        int bytes_sent = sendto(m_socket, buf + i, std::min(datagram_size, buf_size - i), 0,(struct sockaddr*)&sa, sizeof sa);
         if(bytes_sent < 1)
         {
             return -1;
@@ -107,7 +143,12 @@ void SocketReader::StartRecieveDataThread()
             sa.sin_family = AF_INET;
             socklen_t fromlen = sizeof IN_CLASSA_HOST;
             //osm: todo use select here so we don't block forever
-            ssize_t bytes_recvd = recvfrom(m_fp, (void*)read_buffer, buffer_size, 0, (struct sockaddr*)&sa, &fromlen);
+            if(!WaitForClient(m_socket, m_socket_set))
+            {
+                continue;
+            }
+
+            ssize_t bytes_recvd = recvfrom(m_socket, (void*)read_buffer, buffer_size, 0, (struct sockaddr*)&sa, &fromlen);
 
 //            mylog("recvd %i bytes", recsize);
 
