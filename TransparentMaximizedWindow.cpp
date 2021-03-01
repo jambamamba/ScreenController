@@ -46,6 +46,7 @@ void TransparentMaximizedWindow::moveToScreen(const QScreen* screen)
 
 void TransparentMaximizedWindow::SetImage(const QImage &img)
 {
+    std::lock_guard<std::mutex> lk(m_mutex);
     m_image = img;
 }
 
@@ -86,6 +87,7 @@ void TransparentMaximizedWindow::mouseReleaseEvent(QMouseEvent *mouse_event)
 
 void TransparentMaximizedWindow::paintEvent(QPaintEvent *)
 {
+    std::lock_guard<std::mutex> lk(m_mutex);
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
 //    painter.setPen(QPen(Qt::green, BORDER_WIDTH, Qt::DashDotLine, Qt::FlatCap, Qt::MiterJoin));

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QWidget>
+#include <mutex>
 
 namespace Ui {
 class TransparentMaximizedWindow;
@@ -24,6 +25,7 @@ private:
     Ui::TransparentMaximizedWindow *ui;
     bool m_capturing;
     QScreen *m_screen;
+    std::mutex m_mutex;
     QImage m_image;
     QTimer *m_timer;
 

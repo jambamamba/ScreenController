@@ -13,6 +13,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "JpegConverter.h"
+
 extern "C" void mylog(const char *fmt, ...);
 
 namespace  {
@@ -110,29 +112,6 @@ int SocketReader::SendData(uint8_t *buf, int buf_size, const std::string &ip, si
     return total_sent;
 }
 
-ssize_t FindJpegHeader(uint8_t* buffer, ssize_t buffer_tail)
-{
-    ssize_t idx = 0;
-    for(; idx < buffer_tail - 10; ++idx)
-    {
-//jpeg header                ff d8 ff e0 00 10 4a 46  49 46
-        if(buffer[idx] == 0xff &&
-                buffer[idx+1] == 0xd8 &&
-                buffer[idx+2] == 0xff &&
-                buffer[idx+3] == 0xe0 &&
-                buffer[idx+4] == 0x00 &&
-                buffer[idx+5] == 0x10 &&
-                buffer[idx+6] == 0x4a &&
-                buffer[idx+7] == 0x46 &&
-                buffer[idx+8] == 0x49 &&
-                buffer[idx+9] == 0x46
-                )
-        {
-            return idx;
-        }
-    }
-    return -1;
-}
 void SocketReader::StartRecieveDataThread()
 {
     m_reader_thread = std::async(std::launch::async, [this](){
@@ -170,26 +149,29 @@ void SocketReader::StartRecieveDataThread()
 
                 if(jpeg_head == -1)
                 {
-                    ssize_t idx = FindJpegHeader(buffer, buffer_tail);
+                    ssize_t idx = JpegConverter::FindJpegHeader(buffer, buffer_tail);
                     if(idx == -1) continue;
                     memmove(buffer, &buffer[idx], buffer_tail - idx);
                     buffer_tail -= idx;
                     jpeg_head = 0;
                     continue;
                 }
-                ssize_t idx = FindJpegHeader(buffer + 10, buffer_tail);
+                ssize_t idx = JpegConverter::FindJpegHeader(buffer + 10, buffer_tail);
                 if(idx == -1) continue;
 
                 idx += 10;
-                if(buffer[idx-2] == 0xff && buffer[idx-1] == 0xd9)
+                if(JpegConverter::ValidJpegFooter(buffer[idx-2], buffer[idx-1]))
                 {
+                    QImage img;
                     bool loaded = false;
                     {
                         std::lock_guard<std::mutex> lk(m_mutex);
-                        loaded = m_display_img.loadFromData(buffer, idx, "JPG");
+                        img = JpegConverter::FromJpeg(buffer, idx);
+                        loaded = !img.isNull();
                     }
                     if(loaded)
                     {
+                        m_display_img = img;
                         m_cv.notify_one();
                     }
                 }

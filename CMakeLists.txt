@@ -119,6 +119,8 @@ SET(PROJECT_SOURCES
     MainWindow.cpp
     MainWindow.h
     WindowEnumeratorInterface.h
+    JpegConverter.h
+    JpegConverter.cpp
 )
 
 IF(UNIX)

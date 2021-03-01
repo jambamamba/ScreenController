@@ -7,73 +7,10 @@
 #include <QPixmap>
 #include <QScreen>
 
-#include <jpeglib.h>
-
+#include "JpegConverter.h"
 #include "SocketReader.h"
 
 namespace  {
-//https://www.ridgesolutions.ie/index.php/2019/12/10/libjpeg-example-encode-jpeg-to-memory-buffer-instead-of-file/
-// Encodes a 32bpp image to JPEG directly to a memory buffer
-// libJEPG will malloc() the buffer so the caller must free() it when
-// they are finished with it.
-//
-// image    - the input 32 bpp bgra image, 4 byte is 1 pixel.
-// width    - the width of the input image
-// height   - the height of the input image
-// quality  - target JPEG 'quality' factor (max 100)
-// comment  - optional JPEG NULL-termoinated comment, pass NULL for no comment.
-// jpegSize - output, the number of bytes in the output JPEG buffer
-// jpegBuf  - output, a pointer to the output JPEG buffer, must call free() when finished with it.
-//
-void ToJpeg(unsigned char* image, int width, int height, int quality,
-            const char* comment, unsigned long* jpegSize, unsigned char** jpegBuf)
-{
-    struct jpeg_compress_struct cinfo;
-    struct jpeg_error_mgr jerr;
-
-    JSAMPROW row_pointer[1];
-    int bytesperpixel = 4;
-    int row_stride;
-
-    cinfo.err = jpeg_std_error(&jerr);
-
-    jpeg_create_compress(&cinfo);
-    cinfo.image_width = width;
-    cinfo.image_height = height;
-
-    // Input is greyscale, 1 byte per pixel
-    cinfo.input_components = bytesperpixel;
-    cinfo.in_color_space = JCS_EXT_BGRX;
-
-    jpeg_set_defaults(&cinfo);
-    jpeg_set_quality(&cinfo, quality, TRUE);
-
-    //
-    //
-    // Tell libJpeg to encode to memory, this is the bit that's different!
-    // Lib will alloc buffer.
-    //
-    jpeg_mem_dest(&cinfo, jpegBuf, jpegSize);
-
-    jpeg_start_compress(&cinfo, TRUE);
-
-    // Add comment section if any..
-    if (comment) {
-        jpeg_write_marker(&cinfo, JPEG_COM, (const JOCTET*)comment, strlen(comment));
-    }
-
-    // 1 BPP
-    row_stride = width * bytesperpixel;
-
-    // Encode
-    while (cinfo.next_scanline < cinfo.image_height) {
-        row_pointer[0] = &image[cinfo.next_scanline * row_stride];
-        jpeg_write_scanlines(&cinfo, row_pointer, 1);
-    }
-
-    jpeg_finish_compress(&cinfo);
-    jpeg_destroy_compress(&cinfo);
-}
 
 }//namespace
 ScreenStreamer::ScreenStreamer(SocketReader &socket)
@@ -137,7 +74,7 @@ void ScreenStreamer::StartStreaming(const std::string &ip, size_t port)
             }
             unsigned long jpegSize = 0;
             unsigned char* jpegBuf = nullptr;
-            ToJpeg(screen_shot.bits(), screen_shot.width(), screen_shot.height(), m_jpeg_quality_percent,
+            JpegConverter::ToJpeg(screen_shot.bits(), screen_shot.width(), screen_shot.height(), m_jpeg_quality_percent,
                    "osletek", &jpegSize, &jpegBuf);
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
             m_socket.SendData(jpegBuf, jpegSize, ip, m_socket.GetPort());
