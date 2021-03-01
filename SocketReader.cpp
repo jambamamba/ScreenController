@@ -132,17 +132,19 @@ void SocketReader::StartRecieveDataThread(std::function<void(const QImage&img)> 
                 }
                 ssize_t idx = FindJpegHeader(m_buffer + 10, m_buffer_tail);
                 if(idx == -1) continue;
-                static int counter1 = 0;
 
                 idx += 10;
                 {
-                    QImage img;
-                    img.loadFromData(m_buffer, idx, "JPG");
-                    if(!img.isNull())
+                    if(m_buffer[idx - 2] == 0xFF && m_buffer[idx - 1] == 0xD9)
                     {
-                        static int counter = 0;
-                        qDebug() << "Complete jpeg recvd " << counter++ << ", bytes " << idx;
-                        renderImageCb(img);
+                        QImage img;
+                        img.loadFromData(m_buffer, idx, "JPG");
+                        if(!img.isNull())
+                        {
+                            static int counter = 0;
+                            qDebug() << "Complete jpeg recvd " << counter++ << ", bytes " << idx;
+                            renderImageCb(img);
+                        }
                     }
                     memmove(m_buffer, &m_buffer[idx], m_buffer_tail - idx);
                     m_buffer_tail -= (idx);
