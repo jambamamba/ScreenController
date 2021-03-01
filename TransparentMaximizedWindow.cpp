@@ -30,11 +30,6 @@ TransparentMaximizedWindow::TransparentMaximizedWindow(QWidget *parent) :
         repaint(rect());
     });
     m_timer->start(100);
-//    connect(this,
-//            static_cast<void (TransparentMaximizedWindow::*)(const QRect &)>(&TransparentMaximizedWindow::RefreshScreen),
-//            this,
-//            static_cast<void (TransparentMaximizedWindow::*)(const QRect &)>(&TransparentMaximizedWindow::repaint),
-//            Qt::ConnectionType::BlockingQueuedConnection);
 }
 
 TransparentMaximizedWindow::~TransparentMaximizedWindow()
@@ -52,7 +47,6 @@ void TransparentMaximizedWindow::moveToScreen(const QScreen* screen)
 void TransparentMaximizedWindow::SetImage(const QImage &img)
 {
     m_image = img;
-//    emit RefreshScreen(rect());
 }
 
 void TransparentMaximizedWindow::show(int width, int height, QScreen* screen)

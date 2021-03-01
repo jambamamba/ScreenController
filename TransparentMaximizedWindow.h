@@ -20,8 +20,6 @@ public:
     void moveToScreen(const QScreen *screen);
     void SetImage(const QImage&img);
     
-signals:
-    void RefreshScreen(const QRect &);
 private:
     Ui::TransparentMaximizedWindow *ui;
     bool m_capturing;
