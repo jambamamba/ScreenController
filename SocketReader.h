@@ -19,7 +19,7 @@ public:
     SocketReader(uint16_t port);
     ~SocketReader();
     void StartRecieveDataThread();
-    int SendData(uint8_t *buf, int buf_size, const std::string &ip, size_t port, int throttle_ms);
+    int SendData(uint8_t *buf, int buf_size, const std::string &ip, size_t port);
     bool PlaybackImages(std::function<void(const QImage&img)> renderImageCb);
     uint16_t GetPort() const;
 protected:
