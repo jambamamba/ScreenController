@@ -25,7 +25,8 @@ public:
 protected:
     uint16_t m_port;
     int m_socket;
-    fd_set m_socket_set;
+    fd_set m_read_set;
+    fd_set m_write_set;
     struct sockaddr_in m_sa;
     std::future<void> m_reader_thread;
     std::future<bool> m_playback_thread;

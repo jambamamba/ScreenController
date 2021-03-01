@@ -27,12 +27,13 @@ void InitFileDescriptorSet( timeval &tv, int socketfd, fd_set *set )
 }
 
 //-------------------------------------------------------------------------------
-bool WaitForClient(int socket, fd_set &socketSet)
+bool WaitForSocketIO(int socket, fd_set *readset, fd_set *writeset)
 {
     struct timeval tv;
-    InitFileDescriptorSet( tv, socket, &socketSet );
+    if(readset) {InitFileDescriptorSet( tv, socket, readset );}
+    if(writeset) {InitFileDescriptorSet( tv, socket, writeset );}
 
-    int ret = select( socket + 1, &socketSet, nullptr, nullptr, &tv );
+    int ret = select( socket + 1, readset, writeset, nullptr, &tv );
     if( ret == -1 )
     {
         if(errno == EAGAIN)// try again
@@ -52,7 +53,9 @@ bool WaitForClient(int socket, fd_set &socketSet)
     {
        return false;
     }
-    return FD_ISSET(socket, &socketSet);
+    return readset ? FD_ISSET(socket, readset) :
+                     writeset ? FD_ISSET(socket, writeset) :
+                                false;
 }
 }//namespace
 
@@ -92,6 +95,10 @@ int SocketReader::SendData(uint8_t *buf, int buf_size, const std::string &ip, si
     int datagram_size = 8192;
     for(int i =0 ; i < buf_size; i+= datagram_size)
     {
+        if(!WaitForSocketIO(m_socket, nullptr, &m_write_set))
+        {
+            continue;
+        }
         int bytes_sent = sendto(m_socket, buf + i, std::min(datagram_size, buf_size - i), 0,(struct sockaddr*)&sa, sizeof sa);
         if(bytes_sent < 1)
         {
@@ -143,7 +150,7 @@ void SocketReader::StartRecieveDataThread()
             sa.sin_family = AF_INET;
             socklen_t fromlen = sizeof IN_CLASSA_HOST;
             //osm: todo use select here so we don't block forever
-            if(!WaitForClient(m_socket, m_socket_set))
+            if(!WaitForSocketIO(m_socket, &m_read_set, nullptr))
             {
                 continue;
             }
