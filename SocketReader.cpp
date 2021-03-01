@@ -91,13 +91,13 @@ ssize_t FindJpegHeader(uint8_t* buffer, ssize_t buffer_tail)
     }
     return -1;
 }
-void SocketReader::StartRecieveDataThread(std::function<void(const QImage&img)> renderImageCb)
+void SocketReader::StartRecieveDataThread()
 {
-    m_buffer = (uint8_t*) malloc(m_buffer_size);
-
-    m_reader_thread = std::async(std::launch::async, [this,renderImageCb](){
-        int read_buffer_size = m_buffer_size;
-        static uint8_t * read_buffer = (uint8_t*) malloc(read_buffer_size);
+    m_reader_thread = std::async(std::launch::async, [this](){
+        ssize_t buffer_size = 1024*1024;
+        ssize_t buffer_tail = 0;
+        uint8_t *buffer = (uint8_t*) malloc(buffer_size);
+        uint8_t *read_buffer = (uint8_t*) malloc(buffer_size);
 
         ssize_t jpeg_head = -1;
         while(!m_stop)
@@ -107,45 +107,45 @@ void SocketReader::StartRecieveDataThread(std::function<void(const QImage&img)> 
             sa.sin_family = AF_INET;
             socklen_t fromlen = sizeof IN_CLASSA_HOST;
             //osm: todo use select here so we don't block forever
-            ssize_t bytes_recvd = recvfrom(m_fp, (void*)read_buffer, read_buffer_size, 0, (struct sockaddr*)&sa, &fromlen);
+            ssize_t bytes_recvd = recvfrom(m_fp, (void*)read_buffer, buffer_size, 0, (struct sockaddr*)&sa, &fromlen);
 
 //            mylog("recvd %i bytes", recsize);
 
             {
                 std::lock_guard<std::mutex> lk(m_mutex);
-                if(m_buffer_size - m_buffer_tail < bytes_recvd)
+                if(buffer_size - buffer_tail < bytes_recvd)
                 {
                     qDebug() << "Read buffer is full, dropping received data";
                     exit(-1);
                 }
-                memcpy(&m_buffer[m_buffer_tail], read_buffer, bytes_recvd);
-                m_buffer_tail += bytes_recvd;
+                memcpy(&buffer[buffer_tail], read_buffer, bytes_recvd);
+                buffer_tail += bytes_recvd;
 
                 if(jpeg_head == -1)
                 {
-                    ssize_t idx = FindJpegHeader(m_buffer, m_buffer_tail);
+                    ssize_t idx = FindJpegHeader(buffer, buffer_tail);
                     if(idx == -1) continue;
-                    memmove(m_buffer, &m_buffer[idx], m_buffer_tail - idx);
-                    m_buffer_tail -= idx;
+                    memmove(buffer, &buffer[idx], buffer_tail - idx);
+                    buffer_tail -= idx;
                     jpeg_head = 0;
                     continue;
                 }
-                ssize_t idx = FindJpegHeader(m_buffer + 10, m_buffer_tail);
+                ssize_t idx = FindJpegHeader(buffer + 10, buffer_tail);
                 if(idx == -1) continue;
-                static int counter1 = 0;
 
                 idx += 10;
                 {
-                    QImage img;
-                    img.loadFromData(m_buffer, idx, "JPG");
+                    QImage &img = m_display_img[m_display_img_idx];
+                    m_display_img_idx = (m_display_img_idx + 1) %2;
+                    img.loadFromData(buffer, idx, "JPG");
                     if(!img.isNull())
                     {
                         static int counter = 0;
                         qDebug() << "Complete jpeg recvd " << counter++ << ", bytes " << idx;
-                        renderImageCb(img);
+//                        renderImageCb(img);
                     }
-                    memmove(m_buffer, &m_buffer[idx], m_buffer_tail - idx);
-                    m_buffer_tail -= (idx);
+                    memmove(buffer, &buffer[idx], buffer_tail - idx);
+                    buffer_tail -= (idx);
                 }
             }
             m_cv.notify_one();
@@ -159,72 +159,27 @@ void SocketReader::StartRecieveDataThread(std::function<void(const QImage&img)> 
 
 bool SocketReader::PlaybackImages(std::function<void(const QImage&img)> renderImageCb)
 {
-    return false;//osm
-    m_render_image_cb = renderImageCb;
+    if(m_playback_thread.valid())
+    {
+        m_stop = true;
+        m_playback_thread.wait();
+        m_stop = false;
+    }
     m_playback_thread = std::async(std::launch::async, [this,renderImageCb](){
-        constexpr int buf_size = 8192*10;
-        uint8_t buf[buf_size];
-        size_t jpeg_data_sz = 1024*1024;
-        size_t jpeg_data_pos = 0;
-        uint8_t* jpeg_data = nullptr;
-        jpeg_data = (uint8_t*)malloc(jpeg_data_sz);
         while(true)
         {
             std::unique_lock<std::mutex> lk(m_mutex);
             m_cv.wait_for(lk, std::chrono::seconds(1), [this]{
-                return (m_stop || m_buffer_tail > 0);
+                QImage &img = m_display_img[(m_display_img_idx + 1) %2];
+                return (m_stop || !img.isNull());
             });
             if(m_stop)
             { return false; }
 
-            bool found_jpeg_header = false;
-            ssize_t idx = 0;
-            for(; idx < m_buffer_tail - 10; ++idx)
+            QImage &img = m_display_img[(m_display_img_idx + 1) %2];
+            if(!img.isNull())
             {
-//jpeg header                ff d8 ff e0 00 10 4a 46  49 46
-                if(m_buffer[idx] == 0xff &&
-                        m_buffer[idx+1] == 0xd8 &&
-                        m_buffer[idx+2] == 0xff &&
-                        m_buffer[idx+3] == 0xe0 &&
-                        m_buffer[idx+4] == 0x00 &&
-                        m_buffer[idx+5] == 0x10 &&
-                        m_buffer[idx+6] == 0x4a &&
-                        m_buffer[idx+7] == 0x46 &&
-                        m_buffer[idx+8] == 0x49 &&
-                        m_buffer[idx+9] == 0x46
-                        )
-                {
-                    found_jpeg_header = true;
-                    break;
-                }
-            }
-            if(found_jpeg_header)
-            {
-                memcpy(&jpeg_data[jpeg_data_pos], m_buffer, idx);
-                jpeg_data_pos += idx;
-
-                static int counter = 0;
-                QImage img;
-                img.loadFromData(jpeg_data, jpeg_data_pos, "JPG");
-                if(!img.isNull())
-                {
-                    qDebug() << "Complete jpeg recvd " << counter++;
-                    renderImageCb(img);
-                }
-
-                memcpy(jpeg_data, m_buffer, idx);
-                jpeg_data_pos = idx;
-
-                memmove(m_buffer, &m_buffer[idx], m_buffer_tail - idx);
-                m_buffer_tail -= idx;
-            }
-            else if(jpeg_data_pos > 0 && m_buffer_tail >= 10)
-            {
-                memcpy(&jpeg_data[jpeg_data_pos], m_buffer, m_buffer_tail - 10);
-                jpeg_data_pos += (m_buffer_tail - 10);
-
-                memmove(m_buffer, &m_buffer[m_buffer_tail - 10], 10);
-                m_buffer_tail -= 10;
+                renderImageCb(img);
             }
         }
     });

@@ -18,7 +18,7 @@ class SocketReader
 public:
     SocketReader(uint16_t port);
     ~SocketReader();
-    void StartRecieveDataThread(std::function<void(const QImage&img)> renderImageCb);
+    void StartRecieveDataThread();
     int SendData(uint8_t *buf, int buf_size, const std::string &ip, size_t port, int throttle_ms);
     bool PlaybackImages(std::function<void(const QImage&img)> renderImageCb);
     uint16_t GetPort() const;
@@ -30,9 +30,7 @@ protected:
     std::future<bool> m_playback_thread;
     std::mutex m_mutex;
     std::condition_variable m_cv;
-    uint8_t* m_buffer = nullptr;
-    ssize_t m_buffer_size = 1024*1024;
-    ssize_t m_buffer_tail = 0;
-    std::function<void(const QImage&img)> m_render_image_cb = nullptr;
+    QImage m_display_img[2];
+    int m_display_img_idx = 0;
     bool m_stop = false;
 };
