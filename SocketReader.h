@@ -18,20 +18,21 @@ class SocketReader
 public:
     SocketReader(uint16_t port);
     ~SocketReader();
-    void StartRecieveDataThread();
+    void StartRecieveDataThread(std::function<void(const QImage&img)> renderImageCb);
     int SendData(uint8_t *buf, int buf_size, const std::string &ip, size_t port, int throttle_ms);
     bool PlaybackImages(std::function<void(const QImage&img)> renderImageCb);
     uint16_t GetPort() const;
 protected:
-    int ReadSocketData(uint8_t *buf, int buf_size);
     uint16_t m_port;
-    int fp_;
-    struct sockaddr_in sa_;
-    std::future<void> reader_thread_;
-    std::future<void> playback_thread_;
-    std::mutex m_;
-    std::condition_variable cv_;
-    std::vector<uint8_t> buffer_;
-    std::function<void(const QImage&img)> renderImageCb_ = nullptr;
-    bool stop_ = false;
+    int m_fp;
+    struct sockaddr_in m_sa;
+    std::future<void> m_reader_thread;
+    std::future<bool> m_playback_thread;
+    std::mutex m_mutex;
+    std::condition_variable m_cv;
+    uint8_t* m_buffer = nullptr;
+    ssize_t m_buffer_size = 1024*1024;
+    ssize_t m_buffer_tail = 0;
+    std::function<void(const QImage&img)> m_render_image_cb = nullptr;
+    bool m_stop = false;
 };

@@ -72,18 +72,14 @@ void MainWindow::NodeDoubleClicked(QModelIndex index)
 
 void MainWindow::PrepareToReceiveStream()
 {
-    m_streamer_socket.PlaybackImages([this](const QImage&img){
-        qDebug() << "############### got image";
+    m_streamer_socket.StartRecieveDataThread([this](const QImage&img){
         if(!m_transparent_window)
         {
             showTransparentWindowOverlay();
         }
         m_transparent_window->SetImage(img);
-//        m_transparent_window->hide();
-//        m_transparent_window->showFullScreen();
         m_transparent_window->repaint(m_transparent_window->rect());
     });
-    m_streamer_socket.StartRecieveDataThread();
 }
 
 void MainWindow::showTransparentWindowOverlay()
