@@ -72,7 +72,8 @@ void MainWindow::NodeDoubleClicked(QModelIndex index)
 
 void MainWindow::PrepareToReceiveStream()
 {
-    m_streamer_socket.StartRecieveDataThread([this](const QImage&img){
+    m_streamer_socket.StartRecieveDataThread();
+    m_streamer_socket.PlaybackImages([this](const QImage&img) {
         if(!m_transparent_window)
         {
             showTransparentWindowOverlay();
