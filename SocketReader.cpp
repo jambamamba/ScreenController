@@ -141,10 +141,15 @@ void SocketReader::StartRecieveDataThread()
         uint8_t *buffer = (uint8_t*) malloc(buffer_size);
         uint8_t *read_buffer = (uint8_t*) malloc(buffer_size);
 
+        struct sockaddr_in sa_client;
+        memset(&sa_client, 0, sizeof sa_client);
+        sa_client.sin_family = AF_INET;
+        socklen_t fromlen = sizeof sa_client;
+
         bool found_jpeg_head = false;
         while(!m_stop)
         {
-            int client_socket = accept(m_server_socket, nullptr, nullptr);
+            int client_socket = accept(m_server_socket, (struct sockaddr *)&sa_client, &fromlen);
             if (client_socket < 0)
             {
               qDebug() << "accept failed";
@@ -155,17 +160,15 @@ void SocketReader::StartRecieveDataThread()
 
             while(!m_stop)
             {
-                struct sockaddr_in sa;
-                memset(&sa, 0, sizeof sa);
-                sa.sin_family = AF_INET;
-                socklen_t fromlen = sizeof sa;
                 //osm: todo use select here so we don't block forever
                 if(!WaitForSocketIO(client_socket, &m_read_set, nullptr))
                 {
                     continue;
                 }
 
-                ssize_t bytes_recvd = recvfrom(client_socket, (void*)read_buffer, buffer_size, 0, (struct sockaddr*)&sa, &fromlen);
+                ssize_t bytes_recvd = //recvfrom(client_socket, (void*)read_buffer, buffer_size, 0, (struct sockaddr*)&sa, &fromlen);
+                        recv(client_socket, (void*)read_buffer, buffer_size, 0);
+
                 if(bytes_recvd < 1)
                 {
                     qDebug() << "recvfrom failed. Was connection closed? errno " << errno << ": " << strerror(errno);
@@ -201,8 +204,8 @@ void SocketReader::StartRecieveDataThread()
                         bool loaded = false;
                         {
                             std::lock_guard<std::mutex> lk(m_mutex);
-                            m_display_img[sa.sin_addr.s_addr] = JpegConverter::FromJpeg(buffer, idx, m_display_img[sa.sin_addr.s_addr]);
-                            loaded = !m_display_img[sa.sin_addr.s_addr].isNull();
+                            m_display_img[sa_client.sin_addr.s_addr] = JpegConverter::FromJpeg(buffer, idx, m_display_img[sa_client.sin_addr.s_addr]);
+                            loaded = !m_display_img[sa_client.sin_addr.s_addr].isNull();
                         }
                         if(loaded)
                         {
