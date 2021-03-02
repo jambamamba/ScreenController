@@ -48,6 +48,7 @@ QT5_WRAP_UI(PROJECT_UI_HDRS
     ../Updater/UpdaterWidget.ui
     CrossCursorWidget.ui
     MainWindow.ui
+    NodeNameDialog.ui
     TransparentMaximizedWindow.ui
 )
 QT5_ADD_RESOURCES(PROJECT_RESOURCES
@@ -121,10 +122,12 @@ SET(PROJECT_SOURCES
     WindowEnumeratorInterface.h
     JpegConverter.h
     JpegConverter.cpp
+    NodeNameDialog.h
+    NodeNameDialog.cpp
 )
 
 IF(UNIX)
-    SET(CMAKE_INSTALL_RPATH /usr/local/bin/oxpecker-screen-controller)
+    SET(CMAKE_INSTALL_RPATH /usr/local/bin/kingfisher-screen-controller)
 ENDIF(UNIX)
 
 ADD_SUBDIRECTORY(DiscoveryService)

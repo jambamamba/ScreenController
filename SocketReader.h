@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QImage>
+#include <QMap>
 #include <condition_variable>
 #include <future>
 #include <mutex>
@@ -20,18 +21,19 @@ public:
     ~SocketReader();
     void StartRecieveDataThread();
     int SendData(uint8_t *buf, int buf_size, const std::string &ip, size_t port);
-    bool PlaybackImages(std::function<void(const QImage&img)> renderImageCb);
+    bool PlaybackImages(std::function<void(const QImage&img, uint32_t from_ip)> renderImageCb);
     uint16_t GetPort() const;
+    static char *IpToString(uint32_t ip);
+    static uint32_t IpFromString(const char* ip);
 protected:
     uint16_t m_port;
     int m_socket;
     fd_set m_read_set;
     fd_set m_write_set;
-    struct sockaddr_in m_sa;
     std::future<void> m_reader_thread;
     std::future<bool> m_playback_thread;
     std::mutex m_mutex;
     std::condition_variable m_cv;
-    QImage m_display_img;
+    QMap<int /*ip*/, QImage> m_display_img;
     bool m_stop = false;
 };

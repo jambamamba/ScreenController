@@ -13,13 +13,18 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , m_transparent_window(nullptr)
     , m_streamer_socket(9000)
     , m_streamer(m_streamer_socket)
 {
     ui->setupUi(this);
+    setWindowTitle("Kingfisher Screen Controller");
+
     m_node_model = new QStandardItemModel(ui->listView);
     connect(ui->listView, &QListView::doubleClicked,this,&MainWindow::NodeDoubleClicked);
+
+    connect(this, &MainWindow::StartPlayback,
+            this, &MainWindow::ShowTransparentWindowOverlay,
+            Qt::ConnectionType::BlockingQueuedConnection);
 
     ui->listView->setModel(m_node_model);
     ui->listView->show();
@@ -38,12 +43,14 @@ MainWindow::~MainWindow()
 void MainWindow::StartDiscoveryService()
 {
     m_discovery_thread = std::async(std::launch::async, [this](){
-        DiscoveryService discovery;
-        DiscoveryClient client([this](DiscoveryData *data, std::string ip, uint16_t port){
+        DiscoveryService discovery(m_node_name.GetFileAbsolutePathName().toUtf8().data());
+        DiscoveryClient client(m_node_name.GetFileAbsolutePathName().toUtf8().data(),
+                               [this](DiscoveryData *data, std::string ip, uint16_t port){
             qDebug() << "Discovered node " << QString(data->m_name) << " at " << QString(ip.c_str()) << ":" << port;
-            if(m_nodes.find(ip.c_str()) == m_nodes.end())
+            uint32_t ip_ = SocketReader::IpFromString(ip.c_str());
+           if(m_nodes.find(ip_) == m_nodes.end())
             {
-                m_nodes.insert(ip.c_str(), new Node(data->m_name, ip, port));
+                m_nodes.insert(ip_, new Node(data->m_name, ip_, port));
                 m_node_model->appendRow(new QStandardItem(QIcon(":/resources/laptop-icon-19517.png"), data->m_name));
             }
         });
@@ -63,7 +70,9 @@ void MainWindow::NodeDoubleClicked(QModelIndex index)
     {
         if(idx == index.row())
         {
-            m_streamer.StartStreaming(node->m_ip, node->m_port);
+            m_streamer.StartStreaming(
+                        SocketReader::IpToString(node->m_ip),
+                        node->m_port);
             break;
         }
         idx ++;
@@ -72,25 +81,23 @@ void MainWindow::NodeDoubleClicked(QModelIndex index)
 
 void MainWindow::PrepareToReceiveStream()
 {
-    if(!m_transparent_window)
-    {
-        showTransparentWindowOverlay();
-    }
     m_streamer_socket.StartRecieveDataThread();
-    m_streamer_socket.PlaybackImages([this](const QImage&img) {
-        m_transparent_window->SetImage(img);
+    m_streamer_socket.PlaybackImages([this](const QImage&img, uint32_t ip) {
+        if(m_transparent_window.find(ip) ==  m_transparent_window.end()) { emit StartPlayback(ip); }
+        if(m_transparent_window[ip]) { m_transparent_window[ip]->SetImage(img); }
     });
 }
 
-void MainWindow::showTransparentWindowOverlay()
+void MainWindow::ShowTransparentWindowOverlay(uint32_t ip)
 {
+    m_transparent_window[ip] = new TransparentMaximizedWindow(
+                m_nodes[ip]->m_name.c_str(), this);
+    connect(m_transparent_window[ip], &TransparentMaximizedWindow::Close,
+            [this, ip](){
+        m_transparent_window[ip]->hide();
+        m_transparent_window[ip]->deleteLater();
+        m_transparent_window.remove(ip);
+    });
     QImage screen_shot = m_streamer.ScreenShot();
-
-    m_transparent_window = new TransparentMaximizedWindow(this);
-    m_transparent_window->show(screen_shot.width(), screen_shot.height(), m_streamer.ActiveScreen());
-}
-
-void MainWindow::on_testButton_clicked()
-{
-    showTransparentWindowOverlay();
+    m_transparent_window[ip]->Show(screen_shot.width(), screen_shot.height(), m_streamer.ActiveScreen());
 }

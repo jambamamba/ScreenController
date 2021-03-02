@@ -61,16 +61,16 @@ bool WaitForSocketIO(int socket, fd_set *readset, fd_set *writeset)
 }
 }//namespace
 
-
 SocketReader::SocketReader(uint16_t port)
     : m_port(port)
 {
-    memset(&m_sa, 0, sizeof m_sa);
-    m_sa.sin_family = AF_INET;
-    m_sa.sin_addr.s_addr = htonl(INADDR_ANY);
-    m_sa.sin_port = htons(m_port);
+    struct sockaddr_in sa;
+    memset(&sa, 0, sizeof sa);
+    sa.sin_family = AF_INET;
+    sa.sin_addr.s_addr = htonl(INADDR_ANY);
+    sa.sin_port = htons(m_port);
     m_socket = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (bind(m_socket, (struct sockaddr *)&m_sa, sizeof m_sa) == -1)
+    if (bind(m_socket, (struct sockaddr *)&sa, sizeof sa) == -1)
     {
       close(m_socket);
       exit(-1);
@@ -120,7 +120,7 @@ void SocketReader::StartRecieveDataThread()
         uint8_t *buffer = (uint8_t*) malloc(buffer_size);
         uint8_t *read_buffer = (uint8_t*) malloc(buffer_size);
 
-        ssize_t jpeg_head = -1;
+        bool found_jpeg_head = false;
         while(!m_stop)
         {
             struct sockaddr_in sa;
@@ -133,27 +133,24 @@ void SocketReader::StartRecieveDataThread()
                 continue;
             }
 
-            ssize_t bytes_recvd = //recvfrom(m_socket, (void*)read_buffer, buffer_size, 0, (struct sockaddr*)&sa, &fromlen);
-                    recv(m_socket, (void*)read_buffer, buffer_size, 0);
-
-//            mylog("recvd %i bytes", recsize);
+            ssize_t bytes_recvd = recvfrom(m_socket, (void*)read_buffer, buffer_size, 0, (struct sockaddr*)&sa, &fromlen);
 
             {
                 if(buffer_size - buffer_tail < bytes_recvd)
                 {
                     qDebug() << "Read buffer is full, dropping received data";
-                    exit(-1);
+                    continue;
                 }
                 memcpy(&buffer[buffer_tail], read_buffer, bytes_recvd);
                 buffer_tail += bytes_recvd;
 
-                if(jpeg_head == -1)
+                if(!found_jpeg_head)
                 {
                     ssize_t idx = JpegConverter::FindJpegHeader(buffer, buffer_tail);
                     if(idx == -1) continue;
                     memmove(buffer, &buffer[idx], buffer_tail - idx);
                     buffer_tail -= idx;
-                    jpeg_head = 0;
+                    found_jpeg_head = true;
                     continue;
                 }
                 ssize_t idx = JpegConverter::FindJpegHeader(buffer + 10, buffer_tail);
@@ -165,8 +162,8 @@ void SocketReader::StartRecieveDataThread()
                     bool loaded = false;
                     {
                         std::lock_guard<std::mutex> lk(m_mutex);
-                        m_display_img = JpegConverter::FromJpeg(buffer, idx, m_display_img);
-                        loaded = !m_display_img.isNull();
+                        m_display_img[sa.sin_addr.s_addr] = JpegConverter::FromJpeg(buffer, idx, m_display_img[sa.sin_addr.s_addr]);
+                        loaded = !m_display_img[sa.sin_addr.s_addr].isNull();
                     }
                     if(loaded)
                     {
@@ -184,7 +181,7 @@ void SocketReader::StartRecieveDataThread()
     });
 }
 
-bool SocketReader::PlaybackImages(std::function<void(const QImage&img)> renderImageCb)
+bool SocketReader::PlaybackImages(std::function<void(const QImage&img, uint32_t from_ip)> renderImageCb)
 {
     if(m_playback_thread.valid())
     {
@@ -197,16 +194,18 @@ bool SocketReader::PlaybackImages(std::function<void(const QImage&img)> renderIm
         {
             std::unique_lock<std::mutex> lk(m_mutex);
             m_cv.wait_for(lk, std::chrono::seconds(1), [this]{
-                return (m_stop || !m_display_img.isNull());
+                if (m_stop) {return true;}
+                for(const auto &display_image: m_display_img)
+                {
+                    if(!display_image.isNull()) { return true; }
+                }
+                return false;
             });
-            if(m_stop)
-            { return false; }
+            if(m_stop) { return false; }
 
-            if(!m_display_img.isNull())
+            for(uint32_t ip: m_display_img.keys())
             {
-                static int counter = 0;
-//                qDebug() << "Complete jpeg recvd " << counter++;
-                renderImageCb(m_display_img);
+                if(!m_display_img[ip].isNull()) { renderImageCb(m_display_img[ip], ip); }
             }
         }
     });
@@ -218,4 +217,18 @@ uint16_t SocketReader::GetPort() const
     return m_port;
 }
 
+
+char *SocketReader::IpToString(uint32_t ip)
+{
+    struct sockaddr_in sa;
+    memset(&sa, 0, sizeof sa);
+    sa.sin_addr.s_addr = ip;
+    return inet_ntoa(sa.sin_addr);
+}
+uint32_t SocketReader::IpFromString(const char* ip)
+{
+    struct sockaddr_in sa;
+    memset(&sa, 0, sizeof sa);
+    return inet_aton(ip, &sa.sin_addr);
+}
 

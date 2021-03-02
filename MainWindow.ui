@@ -2,14 +2,6 @@
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>433</width>
-    <height>328</height>
-   </rect>
-  </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
@@ -24,7 +16,7 @@
        </sizepolicy>
       </property>
       <property name="title">
-       <string>GroupBox</string>
+       <string>Machines in your network</string>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_2">
        <item>
@@ -40,14 +32,26 @@
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
-       <widget class="QPushButton" name="testButton">
+       <widget class="QLabel" name="label">
+        <property name="maximumSize">
+         <size>
+          <width>40</width>
+          <height>40</height>
+         </size>
+        </property>
         <property name="text">
-         <string>PushButton</string>
+         <string/>
+        </property>
+        <property name="pixmap">
+         <pixmap resource="screencontroller.qrc">:/resources/♂_Common_Kingfisher_(Alcedo_atthis)_Photograph_By_Shantanu_Kuveskar,_Mangaon,_Maharashtra,_India.jpg</pixmap>
+        </property>
+        <property name="scaledContents">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
       <item>
-       <spacer name="horizontalSpacer">
+       <spacer name="horizontalSpacer_2">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
@@ -59,6 +63,13 @@
         </property>
        </spacer>
       </item>
+      <item>
+       <widget class="QPushButton" name="testButton">
+        <property name="text">
+         <string>Connect</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </item>
    </layout>
@@ -68,13 +79,15 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>433</width>
+     <width>616</width>
      <height>21</height>
     </rect>
    </property>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
- <resources/>
+ <resources>
+  <include location="screencontroller.qrc"/>
+ </resources>
  <connections/>
 </ui>

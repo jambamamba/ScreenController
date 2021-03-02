@@ -17,11 +17,12 @@
 
 static const float WINDOW_OPACITY = 0.5f;
 
-TransparentMaximizedWindow::TransparentMaximizedWindow(QWidget *parent) :
-    QWidget(parent),
-    ui(new Ui::TransparentMaximizedWindow),
-    m_capturing(false),
-    m_timer(new QTimer(this))
+TransparentMaximizedWindow::TransparentMaximizedWindow(const QString &ip, QWidget *parent)
+    : QWidget(parent)
+    , ui(new Ui::TransparentMaximizedWindow)
+    , m_ip(ip)
+    , m_capturing(false)
+    , m_timer(new QTimer(this))
 {
     ui->setupUi(this);
 //    void repaint(const QRect &)
@@ -30,6 +31,10 @@ TransparentMaximizedWindow::TransparentMaximizedWindow(QWidget *parent) :
         repaint(rect());
     });
     m_timer->start(100);
+
+    installEventFilter(this);
+    grabKeyboard();
+    setFocusPolicy(Qt::ClickFocus);
 }
 
 TransparentMaximizedWindow::~TransparentMaximizedWindow()
@@ -37,7 +42,7 @@ TransparentMaximizedWindow::~TransparentMaximizedWindow()
     delete ui;
 }
 
-void TransparentMaximizedWindow::moveToScreen(const QScreen* screen)
+void TransparentMaximizedWindow::MoveToScreen(const QScreen* screen)
 {
     QRect screen_geometry = screen->geometry();
     move(screen_geometry.x(), screen_geometry.y());
@@ -50,10 +55,10 @@ void TransparentMaximizedWindow::SetImage(const QImage &img)
     m_image = img;
 }
 
-void TransparentMaximizedWindow::show(int width, int height, QScreen* screen)
+void TransparentMaximizedWindow::Show(int width, int height, QScreen* screen)
 {
     m_screen = screen;
-    moveToScreen(screen);
+    MoveToScreen(screen);
     m_capturing = false;
     setWindowState(Qt::WindowFullScreen);
     setWindowFlags(Qt::Window
@@ -70,19 +75,21 @@ void TransparentMaximizedWindow::show(int width, int height, QScreen* screen)
     QWidget::showFullScreen();
 }
 
-void TransparentMaximizedWindow::mousePressEvent(QMouseEvent *mouse_event)
+bool TransparentMaximizedWindow::eventFilter(QObject *obj, QEvent *event)
 {
-    if(m_capturing) {return;}
-}
-
-void TransparentMaximizedWindow::mouseMoveEvent(QMouseEvent *mouse_event)
-{
-    if(m_capturing) {return;}
-}
-
-void TransparentMaximizedWindow::mouseReleaseEvent(QMouseEvent *mouse_event)
-{
-    if(m_capturing) {return;}
+    if(obj == this)
+    {
+        QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
+        if ( keyEvent->type() == QEvent::KeyPress)
+        {
+            if((keyEvent->key() == 'q' || keyEvent->key() == 'Q') &&
+                    (keyEvent->modifiers() == Qt::AltModifier))
+            {
+                emit Close();
+            }
+        }
+    }
+    return true;
 }
 
 void TransparentMaximizedWindow::paintEvent(QPaintEvent *)
@@ -103,7 +110,7 @@ void TransparentMaximizedWindow::paintEvent(QPaintEvent *)
 }
 
 
-void TransparentMaximizedWindow::startCapture(
+void TransparentMaximizedWindow::StartCapture(
         const QPoint &point_start,
         const QPoint &point_stop)
 {

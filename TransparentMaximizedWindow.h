@@ -12,25 +12,29 @@ class TransparentMaximizedWindow : public QWidget
     Q_OBJECT
 
 public:
-    explicit TransparentMaximizedWindow(QWidget *parent = 0);
+    explicit TransparentMaximizedWindow(const QString &ip, QWidget *parent = 0);
     ~TransparentMaximizedWindow();
 
-    void show(int width, int height, QScreen *screen);
-    void startCapture(const QPoint &point_start,
+    void Show(int width, int height, QScreen *screen);
+    void StartCapture(const QPoint &point_start,
                       const QPoint &point_stop);
-    void moveToScreen(const QScreen *screen);
+    void MoveToScreen(const QScreen *screen);
     void SetImage(const QImage&img);
     
+signals:
+    void Close();
 private:
     Ui::TransparentMaximizedWindow *ui;
+    QString m_ip;
     bool m_capturing;
     QScreen *m_screen;
     std::mutex m_mutex;
     QImage m_image;
     QTimer *m_timer;
 
-    virtual void mousePressEvent(QMouseEvent *mouse_event);
-    virtual void mouseReleaseEvent(QMouseEvent *mouse_event);
-    virtual void mouseMoveEvent(QMouseEvent *mouse_event);
+//    virtual void mousePressEvent(QMouseEvent *mouse_event);
+//    virtual void mouseReleaseEvent(QMouseEvent *mouse_event);
+//    virtual void mouseMoveEvent(QMouseEvent *mouse_event);
     void paintEvent(QPaintEvent *);
+    bool eventFilter(QObject *obj, QEvent *event);
 };
