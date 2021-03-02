@@ -29,6 +29,7 @@ NodeNameDialog::NodeNameDialog(QWidget *parent) :
 
     connect(this, &QDialog::finished, [this](int result){});
 
+    qDebug() << "Looking for machine name in " << GetFileAbsolutePathName();
     QFile node_file(GetFileAbsolutePathName());
     if(node_file.exists() && GetName().size() > 0)
     { return; }
@@ -83,7 +84,9 @@ void NodeNameDialog::accept()
         qDebug() << "Failed to open file for writing " << GetFileAbsolutePathName();
         return;
     }
-    node_file.write(ui->lineEdit->text().toUtf8());
+    node_file.write((QString("serialnumber:123")).toUtf8());
+    node_file.write((QString("\n")).toUtf8());
+    node_file.write((QString("name:") + ui->lineEdit->text()).toUtf8());
     QDialog::accept();
 }
 
