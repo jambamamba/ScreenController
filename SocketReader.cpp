@@ -126,7 +126,7 @@ void SocketReader::StartRecieveDataThread()
             struct sockaddr_in sa;
             memset(&sa, 0, sizeof sa);
             sa.sin_family = AF_INET;
-            socklen_t fromlen = sizeof IN_CLASSA_HOST;
+            socklen_t fromlen = sizeof sa;
             //osm: todo use select here so we don't block forever
             if(!WaitForSocketIO(m_socket, &m_read_set, nullptr))
             {

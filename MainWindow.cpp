@@ -94,9 +94,13 @@ void MainWindow::ShowTransparentWindowOverlay(uint32_t ip)
                 m_nodes[ip]->m_name.c_str(), this);
     connect(m_transparent_window[ip], &TransparentMaximizedWindow::Close,
             [this, ip](){
-        m_transparent_window[ip]->hide();
-        m_transparent_window[ip]->deleteLater();
-        m_transparent_window.remove(ip);
+        if(m_transparent_window.find(ip) != m_transparent_window.end())
+        {
+            TransparentMaximizedWindow *wnd = m_transparent_window[ip];
+            wnd->hide();
+            wnd->deleteLater();
+            m_transparent_window.remove(ip);
+        }
     });
     QImage screen_shot = m_streamer.ScreenShot();
     m_transparent_window[ip]->Show(screen_shot.width(), screen_shot.height(), m_streamer.ActiveScreen());
