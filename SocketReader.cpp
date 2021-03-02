@@ -147,7 +147,7 @@ int SocketReader::SendData(uint8_t *buf, int buf_size, const std::string &ip, si
 void SocketReader::StartRecieveDataThread()
 {
     m_reader_thread = std::async(std::launch::async, [this](){
-        ssize_t buffer_size = 1024*1024/4;
+        ssize_t buffer_size = 1024*1024;
         ssize_t buffer_tail = 0;
         uint8_t *buffer = (uint8_t*) malloc(buffer_size);
         ssize_t read_buffer_size = 8192*10;
