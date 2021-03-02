@@ -83,8 +83,14 @@ void MainWindow::PrepareToReceiveStream()
 {
     m_streamer_socket.StartRecieveDataThread();
     m_streamer_socket.PlaybackImages([this](const QImage&img, uint32_t ip) {
-        if(m_transparent_window.find(ip) ==  m_transparent_window.end()) { emit StartPlayback(ip); }
-        if(m_transparent_window[ip]) { m_transparent_window[ip]->SetImage(img); }
+        if(m_transparent_window.find(ip) ==  m_transparent_window.end())
+        {
+            emit StartPlayback(ip);
+        }
+        if(m_transparent_window[ip])
+        {
+            m_transparent_window[ip]->SetImage(img);
+        }
     });
 }
 

@@ -26,15 +26,16 @@ TransparentMaximizedWindow::TransparentMaximizedWindow(const QString &ip, QWidge
 {
     ui->setupUi(this);
 
+    m_timer->start(100);
+
+//    installEventFilter(this);
+//    grabKeyboard();
+//    setFocusPolicy(Qt::ClickFocus);
+
     connect(m_timer, &QTimer::timeout, [this](){
         repaint(rect());
     });
 
-    m_timer->start(100);
-
-    installEventFilter(this);
-    grabKeyboard();
-    setFocusPolicy(Qt::ClickFocus);
 }
 
 TransparentMaximizedWindow::~TransparentMaximizedWindow()
@@ -53,6 +54,22 @@ void TransparentMaximizedWindow::SetImage(const QImage &img)
 {
     std::lock_guard<std::mutex> lk(m_mutex);
     m_image = img;
+}
+
+void TransparentMaximizedWindow::keyPressEvent(QKeyEvent *event)
+{
+    if((event->key() == 'q' || event->key() == 'Q') &&
+            (event->modifiers() == Qt::AltModifier))
+    {
+        emit Close();
+        exit(0);
+    }
+
+}
+
+void TransparentMaximizedWindow::keyReleaseEvent(QKeyEvent *event)
+{
+
 }
 
 void TransparentMaximizedWindow::Show(int width, int height, QScreen* screen)
@@ -75,27 +92,29 @@ void TransparentMaximizedWindow::Show(int width, int height, QScreen* screen)
     QWidget::showFullScreen();
 }
 
-bool TransparentMaximizedWindow::eventFilter(QObject *obj, QEvent *event)
-{
-    if(obj == this)
-    {
-        QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
-        if ( keyEvent->type() == QEvent::KeyPress)
-        {
-            if((keyEvent->key() == 'q' || keyEvent->key() == 'Q') &&
-                    (keyEvent->modifiers() == Qt::AltModifier))
-            {
-                emit Close();
-                exit(0);
-            }
-        }
-    }
-    return true;
-}
+//bool TransparentMaximizedWindow::eventFilter(QObject *obj, QEvent *event)
+//{
+//    if(obj == this)
+//    {
+//        {
+//            auto ev = static_cast<QKeyEvent *>(event);
+//            if ( ev->type() == QEvent::KeyPress)
+//            {
+//                if((ev->key() == 'q' || ev->key() == 'Q') &&
+//                        (ev->modifiers() == Qt::AltModifier))
+//                {
+//                    emit Close();
+//                    exit(0);
+//                }
+//            }
+//        }
+//    }
+//    //if you want to filter the event out, i.e. stop it being handled further, return true;
+//    return QWidget::eventFilter(obj, event);
+//}
 
 void TransparentMaximizedWindow::paintEvent(QPaintEvent *)
 {
-    qDebug() << "pait image " << m_image.width() << "x" << m_image.height();
     std::lock_guard<std::mutex> lk(m_mutex);
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);

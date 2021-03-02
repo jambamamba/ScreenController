@@ -104,6 +104,7 @@ int SocketReader::SendData(uint8_t *buf, int buf_size, const std::string &ip, si
         int bytes_sent = sendto(m_socket, buf + i, std::min(datagram_size, buf_size - i), 0,(struct sockaddr*)&sa, sizeof sa);
         if(bytes_sent < 1)
         {
+            qDebug() << "Failed in sendto " << errno << " : " << strerror(errno);
             return -1;
             break;
         }
