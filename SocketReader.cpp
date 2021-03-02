@@ -122,7 +122,7 @@ int SocketReader::SendData(uint8_t *buf, int buf_size, const std::string &ip, si
     }
 
     int total_sent = 0;
-    int datagram_size = 8192*1;
+    int datagram_size = 8192*2;
     for(int i =0 ; i < buf_size; i+= datagram_size)
     {
         if(!WaitForSocketIO(m_client_socket, nullptr, &m_write_set))
@@ -139,7 +139,7 @@ int SocketReader::SendData(uint8_t *buf, int buf_size, const std::string &ip, si
             break;
         }
         total_sent += bytes_sent;
-//        usleep(1000 * 30);
+//        usleep(1000 * 100);
     }
     return total_sent;
 }
