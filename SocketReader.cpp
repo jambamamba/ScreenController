@@ -147,10 +147,11 @@ int SocketReader::SendData(uint8_t *buf, int buf_size, const std::string &ip, si
 void SocketReader::StartRecieveDataThread()
 {
     m_reader_thread = std::async(std::launch::async, [this](){
-        ssize_t buffer_size = 1024*1024;
+        ssize_t buffer_size = 1024*1024/4;
         ssize_t buffer_tail = 0;
         uint8_t *buffer = (uint8_t*) malloc(buffer_size);
-        uint8_t *read_buffer = (uint8_t*) malloc(buffer_size);
+        ssize_t read_buffer_size = 8192*10;
+        uint8_t *read_buffer = (uint8_t*) malloc(read_buffer_size);
 
         struct sockaddr_in sa_client;
         memset(&sa_client, 0, sizeof sa_client);
@@ -180,9 +181,9 @@ void SocketReader::StartRecieveDataThread()
                 }
 
                 ssize_t bytes_recvd = m_using_udp ?
-                            recvfrom(client_socket, (void*)read_buffer, buffer_size, 0,
+                            recvfrom(client_socket, (void*)read_buffer, read_buffer_size, 0,
                                      (struct sockaddr*)&sa_client, &fromlen):
-                            recv(client_socket, (void*)read_buffer, buffer_size, 0);
+                            recv(client_socket, (void*)read_buffer, read_buffer_size, 0);
 
                 if(bytes_recvd < 1)
                 {
@@ -216,6 +217,8 @@ void SocketReader::StartRecieveDataThread()
                     idx += 10;
                     if(JpegConverter::ValidJpegFooter(buffer[idx-2], buffer[idx-1]))
                     {
+                        static int counter = 0;
+                        qDebug() << "jpeg #" << counter++ << " size " << idx;
                         bool loaded = false;
                         {
                             std::lock_guard<std::mutex> lk(m_mutex);
