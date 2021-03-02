@@ -27,7 +27,8 @@ public:
     static uint32_t IpFromString(const char* ip);
 protected:
     uint16_t m_port;
-    int m_socket;
+    int m_server_socket = 0;
+    int m_client_socket = 0;
     fd_set m_read_set;
     fd_set m_write_set;
     std::future<void> m_reader_thread;

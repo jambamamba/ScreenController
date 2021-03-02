@@ -99,6 +99,9 @@ void MainWindow::ShowTransparentWindowOverlay(uint32_t ip)
     if(m_transparent_window.find(ip) !=  m_transparent_window.end())
     {return;}
 
+    if(m_nodes.find(ip) == m_nodes.end())
+    {return;}
+
     m_transparent_window[ip] = new TransparentMaximizedWindow(
                 m_nodes[ip]->m_name.c_str(), this);
     connect(m_transparent_window[ip], &TransparentMaximizedWindow::Close,

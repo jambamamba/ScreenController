@@ -26,8 +26,6 @@ TransparentMaximizedWindow::TransparentMaximizedWindow(const QString &ip, QWidge
 {
     ui->setupUi(this);
 
-    m_timer->start(100);
-
 //    installEventFilter(this);
 //    grabKeyboard();
 //    setFocusPolicy(Qt::ClickFocus);
@@ -35,7 +33,7 @@ TransparentMaximizedWindow::TransparentMaximizedWindow(const QString &ip, QWidge
     connect(m_timer, &QTimer::timeout, [this](){
         repaint(rect());
     });
-
+    m_timer->start(1000);
 }
 
 TransparentMaximizedWindow::~TransparentMaximizedWindow()
@@ -52,8 +50,16 @@ void TransparentMaximizedWindow::MoveToScreen(const QScreen* screen)
 
 void TransparentMaximizedWindow::SetImage(const QImage &img)
 {
-    std::lock_guard<std::mutex> lk(m_mutex);
-    m_image = img;
+//    static int counter = 0;
+//    qDebug() << "set image " << counter++;
+    {
+        std::lock_guard<std::mutex> lk(m_mutex);
+        m_image = img;
+    }
+//    while(QApplication::hasPendingEvents())
+//    {
+//        QApplication::processEvents();
+//    }
 }
 
 void TransparentMaximizedWindow::keyPressEvent(QKeyEvent *event)
@@ -64,7 +70,6 @@ void TransparentMaximizedWindow::keyPressEvent(QKeyEvent *event)
         emit Close();
         exit(0);
     }
-
 }
 
 void TransparentMaximizedWindow::keyReleaseEvent(QKeyEvent *event)
