@@ -25,11 +25,11 @@ TransparentMaximizedWindow::TransparentMaximizedWindow(const QString &ip, QWidge
     , m_timer(new QTimer(this))
 {
     ui->setupUi(this);
-//    void repaint(const QRect &)
 
     connect(m_timer, &QTimer::timeout, [this](){
         repaint(rect());
     });
+
     m_timer->start(100);
 
     installEventFilter(this);
@@ -60,7 +60,7 @@ void TransparentMaximizedWindow::Show(int width, int height, QScreen* screen)
     m_screen = screen;
     MoveToScreen(screen);
     m_capturing = false;
-    setWindowState(Qt::WindowFullScreen);
+//    setWindowState(Qt::WindowFullScreen);
     setWindowFlags(Qt::Window
                    | Qt::FramelessWindowHint
 //                   | Qt::WindowStaysOnTopHint
@@ -86,6 +86,7 @@ bool TransparentMaximizedWindow::eventFilter(QObject *obj, QEvent *event)
                     (keyEvent->modifiers() == Qt::AltModifier))
             {
                 emit Close();
+                exit(0);
             }
         }
     }
@@ -94,6 +95,7 @@ bool TransparentMaximizedWindow::eventFilter(QObject *obj, QEvent *event)
 
 void TransparentMaximizedWindow::paintEvent(QPaintEvent *)
 {
+    qDebug() << "pait image " << m_image.width() << "x" << m_image.height();
     std::lock_guard<std::mutex> lk(m_mutex);
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
@@ -106,7 +108,6 @@ void TransparentMaximizedWindow::paintEvent(QPaintEvent *)
 //    painter.drawRect(r);
     painter.drawImage(rect(), m_image, m_image.rect());
     painter.end();
-
 }
 
 

@@ -24,7 +24,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(this, &MainWindow::StartPlayback,
             this, &MainWindow::ShowTransparentWindowOverlay,
-            Qt::ConnectionType::BlockingQueuedConnection);
+            Qt::ConnectionType::QueuedConnection);
 
     ui->listView->setModel(m_node_model);
     ui->listView->show();
