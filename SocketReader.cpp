@@ -206,7 +206,10 @@ bool SocketReader::PlaybackImages(std::function<void(const QImage&img, uint32_t 
 
             for(uint32_t ip: m_display_img.keys())
             {
-                if(!m_display_img[ip].isNull()) { renderImageCb(m_display_img[ip], ip); }
+                if(!m_display_img[ip].isNull())
+                {
+                    renderImageCb(m_display_img[ip], ip);
+                }
             }
         }
     });

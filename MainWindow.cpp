@@ -46,7 +46,7 @@ void MainWindow::StartDiscoveryService()
         DiscoveryService discovery(m_node_name.GetFileAbsolutePathName().toUtf8().data());
         DiscoveryClient client(m_node_name.GetFileAbsolutePathName().toUtf8().data(),
                                [this](DiscoveryData *data, std::string ip, uint16_t port){
-            qDebug() << "Discovered node " << QString(data->m_name) << " at " << QString(ip.c_str()) << ":" << port;
+//            qDebug() << "Discovered node " << QString(data->m_name) << " at " << QString(ip.c_str()) << ":" << port;
             uint32_t ip_ = SocketReader::IpFromString(ip.c_str());
            if(m_nodes.find(ip_) == m_nodes.end())
             {
@@ -87,7 +87,7 @@ void MainWindow::PrepareToReceiveStream()
         {
             emit StartPlayback(ip);
         }
-        if(m_transparent_window[ip])
+        else
         {
             m_transparent_window[ip]->SetImage(img);
         }
@@ -96,6 +96,9 @@ void MainWindow::PrepareToReceiveStream()
 
 void MainWindow::ShowTransparentWindowOverlay(uint32_t ip)
 {
+    if(m_transparent_window.find(ip) !=  m_transparent_window.end())
+    {return;}
+
     m_transparent_window[ip] = new TransparentMaximizedWindow(
                 m_nodes[ip]->m_name.c_str(), this);
     connect(m_transparent_window[ip], &TransparentMaximizedWindow::Close,
