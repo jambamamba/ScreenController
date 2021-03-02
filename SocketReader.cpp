@@ -69,13 +69,19 @@ SocketReader::SocketReader(uint16_t port)
     sa.sin_family = AF_INET;
     sa.sin_addr.s_addr = htonl(INADDR_ANY);
     sa.sin_port = htons(m_port);
-    m_socket = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (bind(m_socket, (struct sockaddr *)&sa, sizeof sa) == -1)
+    m_server_socket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (bind(m_server_socket, (struct sockaddr *)&sa, sizeof sa) == -1)
     {
-      close(m_socket);
+      close(m_server_socket);
       exit(-1);
     }
-    fcntl(m_socket, F_SETFL, fcntl(m_socket, F_GETFL, 0) | O_NONBLOCK);
+//    fcntl(m_socket, F_SETFL, fcntl(m_socket, F_GETFL, 0) | O_NONBLOCK);
+    if (listen(m_server_socket, 10) == -1)
+    {
+      qDebug() << "listen failed";
+      close(m_server_socket);
+      exit(-1);
+    }
 }
 
 SocketReader::~SocketReader()
@@ -87,21 +93,34 @@ SocketReader::~SocketReader()
 
 int SocketReader::SendData(uint8_t *buf, int buf_size, const std::string &ip, size_t port)
 {
-    struct sockaddr_in sa;
-    memset(&sa, 0, sizeof sa);
-    sa.sin_family = AF_INET;
-    sa.sin_addr.s_addr = inet_addr(ip.c_str());
-    sa.sin_port = htons(port);
+    struct sockaddr_in sa_server;
+    memset(&sa_server, 0, sizeof sa_server);
+    sa_server.sin_family = AF_INET;
+    sa_server.sin_addr.s_addr = inet_addr(ip.c_str());
+    sa_server.sin_port = htons(port);
+
+    if(m_client_socket == 0)
+    {
+        m_client_socket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+        if (connect(m_client_socket, (struct sockaddr *)&sa_server, sizeof sa_server) == -1)
+        {
+            qDebug() << "Failed to connect to server " << ip.c_str() << ":" << port;
+            close(m_client_socket);
+            m_client_socket = 0;
+            return 0;
+        }
+    }
 
     int total_sent = 0;
     int datagram_size = 8192*2;
     for(int i =0 ; i < buf_size; i+= datagram_size)
     {
-        if(!WaitForSocketIO(m_socket, nullptr, &m_write_set))
+        if(!WaitForSocketIO(m_client_socket, nullptr, &m_write_set))
         {
             continue;
         }
-        int bytes_sent = sendto(m_socket, buf + i, std::min(datagram_size, buf_size - i), 0,(struct sockaddr*)&sa, sizeof sa);
+        int bytes_sent = sendto(m_client_socket, buf + i, std::min(datagram_size, buf_size - i), 0,(struct sockaddr*)&sa_server, sizeof sa_server);
         if(bytes_sent < 1)
         {
             qDebug() << "Failed in sendto " << errno << " : " << strerror(errno);
@@ -125,60 +144,79 @@ void SocketReader::StartRecieveDataThread()
         bool found_jpeg_head = false;
         while(!m_stop)
         {
-            struct sockaddr_in sa;
-            memset(&sa, 0, sizeof sa);
-            sa.sin_family = AF_INET;
-            socklen_t fromlen = sizeof sa;
-            //osm: todo use select here so we don't block forever
-            if(!WaitForSocketIO(m_socket, &m_read_set, nullptr))
+            int client_socket = accept(m_server_socket, nullptr, nullptr);
+            if (client_socket < 0)
             {
-                continue;
+              qDebug() << "accept failed";
+              close(m_server_socket);
+              exit(-1);
             }
+            fcntl(client_socket, F_SETFL, fcntl(client_socket, F_GETFL, 0) | O_NONBLOCK);
 
-            ssize_t bytes_recvd = recvfrom(m_socket, (void*)read_buffer, buffer_size, 0, (struct sockaddr*)&sa, &fromlen);
-
+            while(!m_stop)
             {
-                if(buffer_size - buffer_tail < bytes_recvd)
+                struct sockaddr_in sa;
+                memset(&sa, 0, sizeof sa);
+                sa.sin_family = AF_INET;
+                socklen_t fromlen = sizeof sa;
+                //osm: todo use select here so we don't block forever
+                if(!WaitForSocketIO(client_socket, &m_read_set, nullptr))
                 {
-                    qDebug() << "Read buffer is full, dropping received data";
                     continue;
                 }
-                memcpy(&buffer[buffer_tail], read_buffer, bytes_recvd);
-                buffer_tail += bytes_recvd;
 
-                if(!found_jpeg_head)
+                ssize_t bytes_recvd = recvfrom(client_socket, (void*)read_buffer, buffer_size, 0, (struct sockaddr*)&sa, &fromlen);
+                if(bytes_recvd < 1)
                 {
-                    ssize_t idx = JpegConverter::FindJpegHeader(buffer, buffer_tail);
+                    qDebug() << "recvfrom failed. Was connection closed? errno " << errno << ": " << strerror(errno);
+                    shutdown(client_socket, SHUT_RDWR);
+                    close(client_socket);
+                    break;
+                }
+                else
+                {
+                    if(buffer_size - buffer_tail < bytes_recvd)
+                    {
+                        qDebug() << "Read buffer is full, dropping received data";
+                        continue;
+                    }
+                    memcpy(&buffer[buffer_tail], read_buffer, bytes_recvd);
+                    buffer_tail += bytes_recvd;
+
+                    if(!found_jpeg_head)
+                    {
+                        ssize_t idx = JpegConverter::FindJpegHeader(buffer, buffer_tail);
+                        if(idx == -1) continue;
+                        memmove(buffer, &buffer[idx], buffer_tail - idx);
+                        buffer_tail -= idx;
+                        found_jpeg_head = true;
+                        continue;
+                    }
+                    ssize_t idx = JpegConverter::FindJpegHeader(buffer + 10, buffer_tail);
                     if(idx == -1) continue;
+
+                    idx += 10;
+                    if(JpegConverter::ValidJpegFooter(buffer[idx-2], buffer[idx-1]))
+                    {
+                        bool loaded = false;
+                        {
+                            std::lock_guard<std::mutex> lk(m_mutex);
+                            m_display_img[sa.sin_addr.s_addr] = JpegConverter::FromJpeg(buffer, idx, m_display_img[sa.sin_addr.s_addr]);
+                            loaded = !m_display_img[sa.sin_addr.s_addr].isNull();
+                        }
+                        if(loaded)
+                        {
+                            m_cv.notify_one();
+                        }
+                    }
                     memmove(buffer, &buffer[idx], buffer_tail - idx);
-                    buffer_tail -= idx;
-                    found_jpeg_head = true;
-                    continue;
+                    buffer_tail -= (idx);
                 }
-                ssize_t idx = JpegConverter::FindJpegHeader(buffer + 10, buffer_tail);
-                if(idx == -1) continue;
 
-                idx += 10;
-                if(JpegConverter::ValidJpegFooter(buffer[idx-2], buffer[idx-1]))
-                {
-                    bool loaded = false;
-                    {
-                        std::lock_guard<std::mutex> lk(m_mutex);
-                        m_display_img[sa.sin_addr.s_addr] = JpegConverter::FromJpeg(buffer, idx, m_display_img[sa.sin_addr.s_addr]);
-                        loaded = !m_display_img[sa.sin_addr.s_addr].isNull();
-                    }
-                    if(loaded)
-                    {
-                        m_cv.notify_one();
-                    }
-                }
-                memmove(buffer, &buffer[idx], buffer_tail - idx);
-                buffer_tail -= (idx);
+                static size_t total = 0;
+                total += bytes_recvd;
+                //            mylog("total recvd: %i", total);
             }
-
-            static size_t total = 0;
-            total += bytes_recvd;
-//            mylog("total recvd: %i", total);
         }
     });
 }
@@ -207,7 +245,10 @@ bool SocketReader::PlaybackImages(std::function<void(const QImage&img, uint32_t 
 
             for(uint32_t ip: m_display_img.keys())
             {
-                if(!m_display_img[ip].isNull()) { renderImageCb(m_display_img[ip], ip); }
+                if(!m_display_img[ip].isNull())
+                {
+                    renderImageCb(m_display_img[ip], ip);
+                }
             }
         }
     });
