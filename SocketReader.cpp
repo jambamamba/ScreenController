@@ -229,6 +229,7 @@ uint32_t SocketReader::IpFromString(const char* ip)
 {
     struct sockaddr_in sa;
     memset(&sa, 0, sizeof sa);
-    return inet_aton(ip, &sa.sin_addr);
+    inet_aton(ip, &sa.sin_addr);
+    return sa.sin_addr.s_addr;
 }
 
