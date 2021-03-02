@@ -69,14 +69,19 @@ SocketReader::SocketReader(uint16_t port)
     sa.sin_family = AF_INET;
     sa.sin_addr.s_addr = htonl(INADDR_ANY);
     sa.sin_port = htons(m_port);
-    m_server_socket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    m_server_socket = socket(PF_INET,
+                             m_using_udp ? SOCK_DGRAM:SOCK_STREAM,
+                             m_using_udp ? IPPROTO_UDP: IPPROTO_TCP);
     if (bind(m_server_socket, (struct sockaddr *)&sa, sizeof sa) == -1)
     {
       close(m_server_socket);
       exit(-1);
     }
-//    fcntl(m_socket, F_SETFL, fcntl(m_socket, F_GETFL, 0) | O_NONBLOCK);
-    if (listen(m_server_socket, 10) == -1)
+    if(m_using_udp)
+    {
+        fcntl(m_server_socket, F_SETFL, fcntl(m_server_socket, F_GETFL, 0) | O_NONBLOCK);
+    }
+    else if (listen(m_server_socket, 10) == -1)
     {
       qDebug() << "listen failed";
       close(m_server_socket);
@@ -99,7 +104,11 @@ int SocketReader::SendData(uint8_t *buf, int buf_size, const std::string &ip, si
     sa_server.sin_addr.s_addr = inet_addr(ip.c_str());
     sa_server.sin_port = htons(port);
 
-    if(m_client_socket == 0)
+    if(m_using_udp)
+    {
+        m_client_socket = m_server_socket;
+    }
+    else if(m_client_socket == 0)
     {
         m_client_socket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
 
@@ -149,7 +158,9 @@ void SocketReader::StartRecieveDataThread()
         bool found_jpeg_head = false;
         while(!m_stop)
         {
-            int client_socket = accept(m_server_socket, (struct sockaddr *)&sa_client, &fromlen);
+            int client_socket = m_using_udp ?
+                        m_server_socket :
+                        accept(m_server_socket, (struct sockaddr *)&sa_client, &fromlen);
             if (client_socket < 0)
             {
               qDebug() << "accept failed";
@@ -166,8 +177,10 @@ void SocketReader::StartRecieveDataThread()
                     continue;
                 }
 
-                ssize_t bytes_recvd = //recvfrom(client_socket, (void*)read_buffer, buffer_size, 0, (struct sockaddr*)&sa, &fromlen);
-                        recv(client_socket, (void*)read_buffer, buffer_size, 0);
+                ssize_t bytes_recvd = m_using_udp ?
+                            recvfrom(client_socket, (void*)read_buffer, buffer_size, 0,
+                                     (struct sockaddr*)&sa_client, &fromlen):
+                            recv(client_socket, (void*)read_buffer, buffer_size, 0);
 
                 if(bytes_recvd < 1)
                 {

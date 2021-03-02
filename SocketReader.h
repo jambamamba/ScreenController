@@ -26,6 +26,7 @@ public:
     static char *IpToString(uint32_t ip);
     static uint32_t IpFromString(const char* ip);
 protected:
+    bool m_using_udp = true;
     uint16_t m_port;
     int m_server_socket = 0;
     int m_client_socket = 0;
