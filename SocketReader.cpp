@@ -13,7 +13,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "JpegConverter.h"
+#include "ImageConverterInterface.h"
 
 extern "C" void mylog(const char *fmt, ...);
 
@@ -144,9 +144,9 @@ int SocketReader::SendData(uint8_t *buf, int buf_size, const std::string &ip, si
     return total_sent;
 }
 
-void SocketReader::StartRecieveDataThread()
+void SocketReader::StartRecieveDataThread(ImageConverterInterface &img_converter)
 {
-    m_reader_thread = std::async(std::launch::async, [this](){
+    m_reader_thread = std::async(std::launch::async, [this,&img_converter](){
         ssize_t buffer_size = 1024*1024;
         ssize_t buffer_tail = 0;
         uint8_t *buffer = (uint8_t*) malloc(buffer_size);
@@ -204,25 +204,26 @@ void SocketReader::StartRecieveDataThread()
 
                     if(!found_jpeg_head)
                     {
-                        ssize_t idx = JpegConverter::FindJpegHeader(buffer, buffer_tail);
+                        ssize_t idx = img_converter.FindHeader(buffer, buffer_tail);
                         if(idx == -1) continue;
                         memmove(buffer, &buffer[idx], buffer_tail - idx);
                         buffer_tail -= idx;
                         found_jpeg_head = true;
                         continue;
                     }
-                    ssize_t idx = JpegConverter::FindJpegHeader(buffer + 10, buffer_tail);
+                    ssize_t idx = img_converter.FindHeader(buffer + 10, buffer_tail);
                     if(idx == -1) continue;
 
                     idx += 10;
-                    if(JpegConverter::ValidJpegFooter(buffer[idx-2], buffer[idx-1]))
+                    if(img_converter.IsValid(buffer, idx))
                     {
                         static int counter = 0;
                         qDebug() << "jpeg #" << counter++ << " size " << idx;
                         bool loaded = false;
                         {
                             std::lock_guard<std::mutex> lk(m_mutex);
-                            m_display_img[sa_client.sin_addr.s_addr] = JpegConverter::FromJpeg(buffer, idx, m_display_img[sa_client.sin_addr.s_addr]);
+                            EncodedImage enc(buffer, idx);
+                            m_display_img[sa_client.sin_addr.s_addr] = img_converter.Decode(enc, m_display_img[sa_client.sin_addr.s_addr]);
                             loaded = !m_display_img[sa_client.sin_addr.s_addr].isNull();
                         }
                         if(loaded)

@@ -1,12 +1,13 @@
 #pragma once
 
-#include <QImage>
+#include "ImageConverterInterface.h"
 
-namespace JpegConverter
+struct JpegConverter : public ImageConverterInterface
 {
-    ssize_t FindJpegHeader(uint8_t* buffer, ssize_t buffer_tail);
-    bool ValidJpegFooter(uint8_t second_last_byte, uint8_t last_byte);
-    QImage FromJpeg(uint8_t *jpg_buffer, size_t jpg_size, QImage &out_image);
-    void ToJpeg(unsigned char* image, int width, int height, int quality,
-                const char* comment, unsigned long* jpegSize, unsigned char** jpegBuf);
-}
+    JpegConverter();
+    virtual ~JpegConverter();
+    virtual ssize_t FindHeader(uint8_t* buffer, ssize_t buffer_sz) override;
+    virtual EncodedImage Encode(const uint8_t* rgb888, int width, int height, float quality_factor) override;
+    virtual QImage &Decode(const EncodedImage &enc, QImage &out_image) override;
+    virtual bool IsValid(uint8_t* buffer, ssize_t buffer_sz) override;
+};

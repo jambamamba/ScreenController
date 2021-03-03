@@ -10,6 +10,7 @@
 
 #include <QList>
 
+struct ImageConverterInterface;
 class QScreen;
 class SocketReader;
 class ScreenStreamer
@@ -17,7 +18,7 @@ class ScreenStreamer
 public:
     ScreenStreamer(SocketReader &socket);
     ~ScreenStreamer();
-    void StartStreaming(const std::string &ip, size_t port);
+    void StartStreaming(const std::string &ip, size_t port, ImageConverterInterface &img_converter);
     QImage ScreenShot();
     QScreen *ActiveScreen();
 protected:

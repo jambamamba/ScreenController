@@ -33,6 +33,7 @@ INCLUDE_DIRECTORIES(
     ${LIBS_DIR}/turbojpeg/build
     ${LIBS_DIR}/turbojpeg
     ${LIBS_DIR}/openssl/include
+    ${LIBS_DIR}/libwebp/src
     ../License
     ../Updater
     DiscoveryService
@@ -65,6 +66,7 @@ SET(X11Libs )
 IF(UNIX)
     LINK_DIRECTORIES(
         ${LIBS_DIR}/turbojpeg/build/
+	/home/dev/oosman/repos/libwebp/build/
     )
     SET(SSLLibs
         crypto
@@ -124,6 +126,9 @@ SET(PROJECT_SOURCES
     JpegConverter.cpp
     NodeNameDialog.h
     NodeNameDialog.cpp
+    WebPConverter.h
+    WebPConverter.cpp
+    ImageConverterInterface.h
 )
 
 IF(UNIX)
@@ -148,6 +153,14 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME}
     ${X11Libs}
     pthread
     discovery.lib
+    imageioutil
+    imagedec
+    imageenc
+    webp
+    webpmux
+    webpdecoder
+    exampleutil
+    webpdemux
 )
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")

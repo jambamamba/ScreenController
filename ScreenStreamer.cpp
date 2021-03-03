@@ -7,7 +7,7 @@
 #include <QPixmap>
 #include <QScreen>
 
-#include "JpegConverter.h"
+#include "ImageConverterInterface.h"
 #include "SocketReader.h"
 
 namespace  {
@@ -61,9 +61,9 @@ QScreen *ScreenStreamer::ActiveScreen()
     return m_screens[ActiveScreenIdx()];
 }
 
-void ScreenStreamer::StartStreaming(const std::string &ip, size_t port)
+void ScreenStreamer::StartStreaming(const std::string &ip, size_t port, ImageConverterInterface &img_converter)
 {
-    thread_ = std::async(std::launch::async, [this, ip](){
+    thread_ = std::async(std::launch::async, [this, ip, &img_converter](){
         while(!stop_){
             std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
@@ -74,10 +74,9 @@ void ScreenStreamer::StartStreaming(const std::string &ip, size_t port)
             }
             unsigned long jpegSize = 0;
             unsigned char* jpegBuf = nullptr;
-            JpegConverter::ToJpeg(screen_shot.bits(), screen_shot.width(), screen_shot.height(), m_jpeg_quality_percent,
-                   "osletek", &jpegSize, &jpegBuf);
+            EncodedImage enc = img_converter.Encode(screen_shot.bits(), screen_shot.width(), screen_shot.height(), m_jpeg_quality_percent);
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-            m_socket.SendData(jpegBuf, jpegSize, ip, m_socket.GetPort());
+            m_socket.SendData(enc.m_enc_data, enc.m_enc_sz, ip, m_socket.GetPort());
             free(jpegBuf);
             auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
             qDebug() << "elapsed " << elapsed;

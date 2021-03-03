@@ -27,6 +27,7 @@ struct Node
     {}
 };
 
+struct ImageConverterInterface;
 class QStandardItemModel;
 class NodeListModel;
 class TransparentMaximizedWindow;
@@ -58,6 +59,7 @@ private:
     std::future<void> m_discovery_thread;
     QStandardItemModel *m_node_model;
     QMap<uint32_t /*ip*/, Node*> m_nodes;
+    ImageConverterInterface &m_img_converter;
     bool m_stop = false;
 };
 #endif // MAINWINDOW_H

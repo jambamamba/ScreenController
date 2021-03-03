@@ -32,11 +32,15 @@ void jpegOutputMessage (j_common_ptr cinfo)
 }
 }//namespace
 
+JpegConverter::JpegConverter()
+    : ImageConverterInterface()
+{}
+JpegConverter::~JpegConverter()
+{}
 
-QImage JpegConverter::FromJpeg(uint8_t *jpg_buffer, size_t jpg_size, QImage &out_image)
+QImage &JpegConverter::Decode(const EncodedImage &enc, QImage &out_image)
 {
     struct jpeg_decompress_struct cinfo;
-
 
 //    cinfo.err = jpeg_std_error(&jerr);
     jpegErrorManager jerr;
@@ -50,7 +54,7 @@ QImage JpegConverter::FromJpeg(uint8_t *jpg_buffer, size_t jpg_size, QImage &out
     }
 
     jpeg_create_decompress(&cinfo);
-    jpeg_mem_src(&cinfo, jpg_buffer, jpg_size);
+    jpeg_mem_src(&cinfo, enc.m_enc_data, enc.m_enc_sz);
     int rc = jpeg_read_header(&cinfo, TRUE);
     if(rc == -1)
     {
@@ -79,7 +83,7 @@ QImage JpegConverter::FromJpeg(uint8_t *jpg_buffer, size_t jpg_size, QImage &out
         if(rc == -1)
         {
             qDebug() << "jpeg_read_scanlines failed";
-            return QImage();
+            return out_image;
         }
     }
     jpeg_finish_decompress(&cinfo);
@@ -108,8 +112,9 @@ QImage JpegConverter::FromJpeg(uint8_t *jpg_buffer, size_t jpg_size, QImage &out
 // jpegSize - output, the number of bytes in the output JPEG buffer
 // jpegBuf  - output, a pointer to the output JPEG buffer, must call free() when finished with it.
 //
-void JpegConverter::ToJpeg(unsigned char* image, int width, int height, int quality,
-            const char* comment, unsigned long* jpegSize, unsigned char** jpegBuf)
+EncodedImage JpegConverter::Encode(const uint8_t* image, int width, int height, float quality_factor)
+//void JpegConverter::ToJpeg(unsigned char* image, int width, int height, int quality,
+//            const char* comment, unsigned long* jpegSize, unsigned char** jpegBuf)
 {
     struct jpeg_compress_struct cinfo;
     struct jpeg_error_mgr jerr;
@@ -129,39 +134,43 @@ void JpegConverter::ToJpeg(unsigned char* image, int width, int height, int qual
     cinfo.in_color_space = JCS_EXT_BGRX;
 
     jpeg_set_defaults(&cinfo);
-    jpeg_set_quality(&cinfo, quality, TRUE);
+    jpeg_set_quality(&cinfo, (int)quality_factor, TRUE);
 
     //
     //
     // Tell libJpeg to encode to memory, this is the bit that's different!
     // Lib will alloc buffer.
     //
-    jpeg_mem_dest(&cinfo, jpegBuf, jpegSize);
+    EncodedImage enc;
+    jpeg_mem_dest(&cinfo, &enc.m_enc_data, &enc.m_enc_sz);
 
     jpeg_start_compress(&cinfo, TRUE);
 
     // Add comment section if any..
-    if (comment) {
-        jpeg_write_marker(&cinfo, JPEG_COM, (const JOCTET*)comment, strlen(comment));
-    }
+//    if (comment) {
+//        jpeg_write_marker(&cinfo, JPEG_COM, (const JOCTET*)comment, strlen(comment));
+//    }
 
     // 1 BPP
     row_stride = width * bytesperpixel;
 
     // Encode
-    while (cinfo.next_scanline < cinfo.image_height) {
-        row_pointer[0] = &image[cinfo.next_scanline * row_stride];
+    while (cinfo.next_scanline < cinfo.image_height)
+    {
+        row_pointer[0] = (unsigned char*)&image[cinfo.next_scanline * row_stride];
         jpeg_write_scanlines(&cinfo, row_pointer, 1);
     }
 
     jpeg_finish_compress(&cinfo);
     jpeg_destroy_compress(&cinfo);
+
+    return enc;
 }
 
-ssize_t JpegConverter::FindJpegHeader(uint8_t* buffer, ssize_t buffer_tail)
+ssize_t JpegConverter::FindHeader(uint8_t* buffer, ssize_t buffer_sz)
 {
     ssize_t idx = 0;
-    for(; idx < buffer_tail - 10; ++idx)
+    for(; idx < buffer_sz - 10; ++idx)
     {
 //jpeg header                ff d8 ff e0 00 10 4a 46  49 46
         if(buffer[idx] == 0xff &&
@@ -182,7 +191,8 @@ ssize_t JpegConverter::FindJpegHeader(uint8_t* buffer, ssize_t buffer_tail)
     return -1;
 }
 
-bool JpegConverter::ValidJpegFooter(uint8_t second_last_byte, uint8_t last_byte)
+bool JpegConverter::IsValid(uint8_t* buffer, ssize_t buffer_sz)
 {
-    return (second_last_byte == 0xff && last_byte == 0xd9);
+    return (buffer[buffer_sz - 2] == 0xff &&
+            buffer[buffer_sz - 1] == 0xd9);
 }

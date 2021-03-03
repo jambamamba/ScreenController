@@ -14,12 +14,13 @@
 
 #include "libavutil/avutil.h"
 
+struct ImageConverterInterface;
 class SocketReader
 {
 public:
     SocketReader(uint16_t port);
     ~SocketReader();
-    void StartRecieveDataThread();
+    void StartRecieveDataThread(ImageConverterInterface &img_converter);
     int SendData(uint8_t *buf, int buf_size, const std::string &ip, size_t port);
     bool PlaybackImages(std::function<void(const QImage&img, uint32_t from_ip)> renderImageCb);
     uint16_t GetPort() const;

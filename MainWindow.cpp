@@ -10,11 +10,15 @@
 #include "DiscoveryClient.h"
 #include "TransparentMaximizedWindow.h"
 
+#include "JpegConverter.h"
+#include "WebPConverter.h"
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
     , m_streamer_socket(9000)
     , m_streamer(m_streamer_socket)
+    , m_img_converter(*new WebPConverter)//or JpegConverter
 {
     ui->setupUi(this);
     setWindowTitle("Kingfisher Screen Controller");
@@ -37,6 +41,7 @@ MainWindow::~MainWindow()
 {
     m_stop = true;
     m_discovery_thread.wait();
+    delete &m_img_converter;
     delete ui;
 }
 
@@ -72,7 +77,8 @@ void MainWindow::NodeDoubleClicked(QModelIndex index)
         {
             m_streamer.StartStreaming(
                         SocketReader::IpToString(node->m_ip),
-                        node->m_port);
+                        node->m_port,
+                        m_img_converter);
             break;
         }
         idx ++;
@@ -81,7 +87,7 @@ void MainWindow::NodeDoubleClicked(QModelIndex index)
 
 void MainWindow::PrepareToReceiveStream()
 {
-    m_streamer_socket.StartRecieveDataThread();
+    m_streamer_socket.StartRecieveDataThread(m_img_converter);
     m_streamer_socket.PlaybackImages([this](const QImage&img, uint32_t ip) {
         if(m_transparent_window.find(ip) ==  m_transparent_window.end())
         {
