@@ -53,7 +53,7 @@ int ScreenStreamer::ActiveScreenIdx() const
 
 QImage ScreenStreamer::ScreenShot()
 {
-    return ActiveScreen()->grabWindow(0).toImage();
+    return ActiveScreen()->grabWindow(0).toImage().convertToFormat(QImage::Format::Format_RGB888);
 }
 
 QScreen *ScreenStreamer::ActiveScreen()

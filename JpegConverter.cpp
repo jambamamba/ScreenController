@@ -132,7 +132,7 @@ EncodedImage JpegConverter::Encode(const uint8_t* image, int width, int height, 
 
     // Input is greyscale, 1 byte per pixel
     cinfo.input_components = bytesperpixel;
-    cinfo.in_color_space = JCS_EXT_BGRX;
+    cinfo.in_color_space = JCS_EXT_BGR;
 
     jpeg_set_defaults(&cinfo);
     jpeg_set_quality(&cinfo, (int)quality_factor, TRUE);
