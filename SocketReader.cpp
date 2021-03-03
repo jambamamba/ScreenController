@@ -19,6 +19,32 @@ extern "C" void mylog(const char *fmt, ...);
 
 namespace  {
 
+struct Stats
+{
+    void Update(ssize_t bytes)
+    {
+        {
+            std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
+
+            qDebug() << "frame# " << frame_counter++
+                     << bytes
+                     << " (frame size in bytes), "
+                     << (frame_counter*1000/elapsed)
+                     << " fps, "
+                     << (bytes*8/elapsed)
+                     << " kbps.";
+            if(elapsed > 1000 * 60)
+            {
+                begin = end;
+                frame_counter = 0;
+            }
+        }
+    }
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+    int frame_counter = 0;
+};
+
 //-------------------------------------------------------------------------------
 void InitFileDescriptorSet( timeval &tv, int socketfd, fd_set *set )
 {
@@ -158,7 +184,9 @@ void SocketReader::StartRecieveDataThread(ImageConverterInterface &img_converter
         sa_client.sin_family = AF_INET;
         socklen_t fromlen = sizeof sa_client;
 
+        Stats stats;
         bool found_jpeg_head = false;
+
         while(!m_stop)
         {
             int client_socket = m_using_udp ?
@@ -217,8 +245,6 @@ void SocketReader::StartRecieveDataThread(ImageConverterInterface &img_converter
                     idx += img_converter.HeaderSize();
                     if(img_converter.IsValid(buffer, idx))
                     {
-                        static int counter = 0;
-                        qDebug() << "jpeg #" << counter++ << " size " << idx;
                         bool loaded = false;
                         {
                             std::lock_guard<std::mutex> lk(m_mutex);
@@ -230,6 +256,7 @@ void SocketReader::StartRecieveDataThread(ImageConverterInterface &img_converter
                         {
                             m_cv.notify_one();
                         }
+                        stats.Update(idx);
                     }
                     memmove(buffer, &buffer[idx], buffer_tail - idx);
                     buffer_tail -= (idx);
