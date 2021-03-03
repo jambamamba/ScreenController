@@ -28,7 +28,7 @@ protected:
     std::future<void> thread_;
     QList<QScreen *> m_screens;
     SocketReader &m_socket;
-    int m_jpeg_quality_percent = 50;
+    int m_jpeg_quality_percent = 10;
     float m_scale_factor = 1;//.85;
     bool stop_ = false;
 };

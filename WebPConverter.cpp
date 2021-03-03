@@ -43,10 +43,7 @@ EncodedImage WebPConverter::Encode(const uint8_t* rgb888,
     EncodedImage enc([](uint8_t *data){
         if(data) { WebPFree(data); }
     });
-    enc.m_enc_sz = (quality_factor > 100) ?
-                WebPEncodeLosslessRGB(rgb888, width, height, width * 3, &enc.m_enc_data):
-                WebPEncodeRGB(rgb888, width, height, width * 3, quality_factor, &enc.m_enc_data);
-
+    enc.m_enc_sz = WebPEncodeRGB(rgb888, width, height, width * 3, quality_factor, &enc.m_enc_data);
     return enc;
 }
 
