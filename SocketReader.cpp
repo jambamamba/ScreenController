@@ -13,37 +13,13 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "ImageConverterInterface.h"
+#include "CommandMessage.h"
+#include "JpegConverter.h"
+#include "WebPConverter.h"
 
 extern "C" void mylog(const char *fmt, ...);
 
 namespace  {
-
-struct Stats
-{
-    void Update(ssize_t bytes)
-    {
-        {
-            std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
-
-            qDebug() << "frame# " << frame_counter++
-                     << bytes
-                     << " (frame size in bytes), "
-                     << (frame_counter*1000/elapsed)
-                     << " fps, "
-                     << (bytes*8/elapsed)
-                     << " kbps.";
-            if(elapsed > 1000 * 60)
-            {
-                begin = end;
-                frame_counter = 0;
-            }
-        }
-    }
-    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-    int frame_counter = 0;
-};
 
 //-------------------------------------------------------------------------------
 void InitFileDescriptorSet( timeval &tv, int socketfd, fd_set *set )
@@ -87,8 +63,39 @@ bool WaitForSocketIO(int socket, fd_set *readset, fd_set *writeset)
 }
 }//namespace
 
+struct Stats
+{
+    void Update(ssize_t bytes)
+    {
+        {
+            std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
+
+            qDebug() << "frame# " << frame_counter++
+                     << bytes
+                     << " (frame size in bytes), "
+                     << (frame_counter*1000/elapsed)
+                     << " fps, "
+                     << (bytes*8/elapsed)
+                     << " kbps.";
+            if(elapsed > 1000 * 60)
+            {
+                begin = end;
+                frame_counter = 0;
+            }
+        }
+    }
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+    int frame_counter = 0;
+};
+
 SocketReader::SocketReader(uint16_t port)
     : m_port(port)
+    , m_decoders{
+        {ImageConverterInterface::Types::Command, std::make_shared<CommandMessage>()},
+        {ImageConverterInterface::Types::Jpeg, std::make_shared<JpegConverter>()},
+        {ImageConverterInterface::Types::Webp, std::make_shared<WebPConverter>()}
+    }
 {
     struct sockaddr_in sa;
     memset(&sa, 0, sizeof sa);
@@ -120,6 +127,22 @@ SocketReader::~SocketReader()
     m_stop = true;
     m_reader_thread.wait();
     m_playback_thread.wait();
+}
+
+SocketReader::HeaderMetaData SocketReader::DetectHeaderType(uint8_t *buffer, ssize_t sz)
+{
+    SocketReader::HeaderMetaData meta;
+    for(const auto &decoder : m_decoders)
+    {
+        ssize_t pos = decoder.second->FindHeader(buffer, sz);
+        if(pos != -1)
+        {
+            meta.m_pos = pos;
+            meta.m_type = decoder.first;
+            return meta;
+        }
+    }
+    return meta;
 }
 
 int SocketReader::SendData(uint8_t *buf, int buf_size, const std::string &ip, size_t port)
@@ -170,9 +193,45 @@ int SocketReader::SendData(uint8_t *buf, int buf_size, const std::string &ip, si
     return total_sent;
 }
 
-void SocketReader::StartRecieveDataThread(ImageConverterInterface &img_converter)
+void SocketReader::ExtractImage(uint8_t *buffer,
+                                ssize_t idx,
+                                ImageConverterInterface::Types decoder_type,
+                                const sockaddr_in &sa_client,
+                                Stats &stats)
 {
-    m_reader_thread = std::async(std::launch::async, [this,&img_converter](){
+    switch(decoder_type)
+    {
+    case ImageConverterInterface::Types::Jpeg:
+    case ImageConverterInterface::Types::Webp:
+    {
+        bool loaded = false;
+        {
+            std::lock_guard<std::mutex> lk(m_mutex);
+            EncodedImage enc(buffer, idx);
+
+            auto &decoder = m_decoders[decoder_type];
+            m_display_img[sa_client.sin_addr.s_addr] = decoder->Decode(
+                        enc, m_display_img[sa_client.sin_addr.s_addr]);
+            loaded = !m_display_img[sa_client.sin_addr.s_addr].isNull();
+        }
+        if(loaded)
+        {
+            m_cv.notify_one();
+            stats.Update(idx);
+        }
+        break;
+    }
+    case ImageConverterInterface::Types::Command:
+        qDebug() << "recvd command";
+        break;
+    default:
+        break;
+    }
+}
+
+void SocketReader::StartRecieveDataThread()
+{
+    m_reader_thread = std::async(std::launch::async, [this](){
         ssize_t buffer_size = 1024*1024;
         ssize_t buffer_tail = 0;
         uint8_t *buffer = (uint8_t*) malloc(buffer_size);
@@ -185,7 +244,7 @@ void SocketReader::StartRecieveDataThread(ImageConverterInterface &img_converter
         socklen_t fromlen = sizeof sa_client;
 
         Stats stats;
-        bool found_jpeg_head = false;
+        SocketReader::HeaderMetaData header;
 
         while(!m_stop)
         {
@@ -230,33 +289,23 @@ void SocketReader::StartRecieveDataThread(ImageConverterInterface &img_converter
                     memcpy(&buffer[buffer_tail], read_buffer, bytes_recvd);
                     buffer_tail += bytes_recvd;
 
-                    if(!found_jpeg_head)
+                    if(header.m_type == ImageConverterInterface::Types::None)
                     {
-                        ssize_t idx = img_converter.FindHeader(buffer, buffer_tail);
-                        if(idx == -1) continue;
-                        memmove(buffer, &buffer[idx], buffer_tail - idx);
-                        buffer_tail -= idx;
-                        found_jpeg_head = true;
+                        header = DetectHeaderType(buffer, buffer_tail);
+                        if(header.m_type == ImageConverterInterface::Types::None) { continue; }
+
+                        memmove(buffer, &buffer[header.m_pos], buffer_tail - header.m_pos);
+                        buffer_tail -= header.m_pos;
                         continue;
                     }
-                    ssize_t idx = img_converter.FindHeader(buffer + img_converter.HeaderSize(), buffer_tail);
+                    auto &decoder = m_decoders[header.m_type];
+                    ssize_t idx = decoder->FindHeader(buffer + decoder->HeaderSize(), buffer_tail);
                     if(idx == -1) continue;
 
-                    idx += img_converter.HeaderSize();
-                    if(img_converter.IsValid(buffer, idx))
+                    idx += decoder->HeaderSize();
+                    if(decoder->IsValid(buffer, idx))
                     {
-                        bool loaded = false;
-                        {
-                            std::lock_guard<std::mutex> lk(m_mutex);
-                            EncodedImage enc(buffer, idx);
-                            m_display_img[sa_client.sin_addr.s_addr] = img_converter.Decode(enc, m_display_img[sa_client.sin_addr.s_addr]);
-                            loaded = !m_display_img[sa_client.sin_addr.s_addr].isNull();
-                        }
-                        if(loaded)
-                        {
-                            m_cv.notify_one();
-                        }
-                        stats.Update(idx);
+                        ExtractImage(buffer, idx, header.m_type, sa_client, stats);
                     }
                     memmove(buffer, &buffer[idx], buffer_tail - idx);
                     buffer_tail -= (idx);
@@ -267,6 +316,9 @@ void SocketReader::StartRecieveDataThread(ImageConverterInterface &img_converter
                 //            mylog("total recvd: %i", total);
             }
         }
+
+        free(buffer);
+        free(read_buffer);
     });
 }
 

@@ -34,6 +34,13 @@ struct EncodedImage
 
 struct ImageConverterInterface
 {
+    enum Types {
+        None,
+        Command,
+        Jpeg,
+        Webp
+    };
+
     ImageConverterInterface() {}
     virtual ~ImageConverterInterface() {}
     virtual ssize_t FindHeader(uint8_t* buffer, ssize_t buffer_tail) = 0;

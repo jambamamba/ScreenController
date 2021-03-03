@@ -108,27 +108,29 @@ SET(PROJECT_SOURCES
     ../License/NetworkRequest.h
     ../Updater/UpdaterWidget.cpp
     ../Updater/UpdaterWidget.h
+    CommandMessage.cpp
+    CommandMessage.h
+    ImageConverterInterface.h
+    JpegConverter.cpp
+    JpegConverter.h
     KeyInterface.cpp
     KeyInterface.h
+    MainWindow.cpp
+    MainWindow.h
     MouseInterface.cpp
     MouseInterface.h
-    ScreenStreamer.h
+    NodeNameDialog.cpp
+    NodeNameDialog.h
     ScreenStreamer.cpp
+    ScreenStreamer.h
     SocketReader.cpp
     SocketReader.h
     TransparentMaximizedWindow.cpp
     TransparentMaximizedWindow.h
-    main.cpp
-    MainWindow.cpp
-    MainWindow.h
-    WindowEnumeratorInterface.h
-    JpegConverter.h
-    JpegConverter.cpp
-    NodeNameDialog.h
-    NodeNameDialog.cpp
-    WebPConverter.h
     WebPConverter.cpp
-    ImageConverterInterface.h
+    WebPConverter.h
+    WindowEnumeratorInterface.h
+    main.cpp
 )
 
 IF(UNIX)

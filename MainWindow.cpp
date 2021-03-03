@@ -87,7 +87,7 @@ void MainWindow::NodeDoubleClicked(QModelIndex index)
 
 void MainWindow::PrepareToReceiveStream()
 {
-    m_streamer_socket.StartRecieveDataThread(m_img_converter);
+    m_streamer_socket.StartRecieveDataThread();
     m_streamer_socket.PlaybackImages([this](const QImage&img, uint32_t ip) {
         if(m_transparent_window.find(ip) ==  m_transparent_window.end())
         {

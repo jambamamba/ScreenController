@@ -33,7 +33,7 @@ TransparentMaximizedWindow::TransparentMaximizedWindow(const QString &ip, QWidge
     connect(m_timer, &QTimer::timeout, [this](){
         repaint(rect());
     });
-    m_timer->start(1000);
+    m_timer->start(200);
 }
 
 TransparentMaximizedWindow::~TransparentMaximizedWindow()
