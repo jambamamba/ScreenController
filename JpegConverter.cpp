@@ -142,7 +142,9 @@ EncodedImage JpegConverter::Encode(const uint8_t* image, int width, int height, 
     // Tell libJpeg to encode to memory, this is the bit that's different!
     // Lib will alloc buffer.
     //
-    EncodedImage enc;
+    EncodedImage enc([](uint8_t* data){
+        if(data) { free(data); }
+    });
     jpeg_mem_dest(&cinfo, &enc.m_enc_data, &enc.m_enc_sz);
 
     jpeg_start_compress(&cinfo, TRUE);

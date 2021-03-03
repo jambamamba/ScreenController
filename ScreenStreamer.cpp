@@ -4,17 +4,39 @@
 #include <QDebug>
 #include <QGuiApplication>
 #include <QImage>
+#include <QPainter>
 #include <QPixmap>
 #include <QScreen>
 
 #include "ImageConverterInterface.h"
+#include "MouseInterface.h"
 #include "SocketReader.h"
+#if defined(Win32) || defined(Win64)
+#include "WindowsMouse.h"
+#elif defined(Linux)
+#include "X11Mouse.h"
+#else
+#include "NullMouse.h"
+#endif
 
 namespace  {
-
+static QImage &bltCursorOnImage(QImage &img, const QImage &cursor, const QPoint &pos)
+{
+    QPainter painter(&img);
+    painter.drawImage(pos, cursor);
+    painter.end();
+    return img;
+}
 }//namespace
-ScreenStreamer::ScreenStreamer(SocketReader &socket)
+ScreenStreamer::ScreenStreamer(SocketReader &socket, QObject *parent)
     : m_socket(socket)
+#if defined(Win32) || defined(Win64)
+    ,m_mouse(new WindowsMouse(parent))
+#elif defined(Linux)
+    ,m_mouse(new X11Mouse(parent))
+#else
+    ,m_mouse(new NullMouse(parent))
+#endif
 {
     InitAvailableScreens();
 }
@@ -61,6 +83,34 @@ QScreen *ScreenStreamer::ActiveScreen()
     return m_screens[ActiveScreenIdx()];
 }
 
+QImage& ScreenStreamer::ApplyMouseCursor(QImage& img)
+{
+    QPoint mouse_pos;
+    QImage cursor = m_mouse->getMouseCursor(mouse_pos);
+    if(cursor.isNull())
+    {
+        return img;
+    }
+//    qDebug() << "mouse" << mouse_pos
+//             << "geom" << QGuiApplication::screens().at(m_screen_idx)->geometry();
+    QRect screen_rect = ActiveScreen()->geometry();
+    if(!screen_rect.contains(mouse_pos))
+    {
+        return img;
+    }
+    mouse_pos.setX(mouse_pos.x() - screen_rect.x());
+    mouse_pos.setY(mouse_pos.y() - screen_rect.y());
+
+//    if(!m_region.size().isNull())
+//    {
+//        QPoint region_top_left(m_region_top_left.rx(), m_region_top_left.ry());
+//        mouse_pos = mouse_pos - region_top_left;
+//    }
+    img = bltCursorOnImage(img, cursor, mouse_pos);
+
+    return img;
+}
+
 void ScreenStreamer::StartStreaming(const std::string &ip, size_t port, ImageConverterInterface &img_converter)
 {
     thread_ = std::async(std::launch::async, [this, ip, &img_converter](){
@@ -68,16 +118,14 @@ void ScreenStreamer::StartStreaming(const std::string &ip, size_t port, ImageCon
             std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
             QImage screen_shot = ScreenShot();
+            screen_shot = ApplyMouseCursor(screen_shot);
             if(m_scale_factor*100 != 100)
             {
                 screen_shot = screen_shot.scaled(screen_shot.width()*m_scale_factor, screen_shot.height()*m_scale_factor);
             }
-            unsigned long jpegSize = 0;
-            unsigned char* jpegBuf = nullptr;
             EncodedImage enc = img_converter.Encode(screen_shot.bits(), screen_shot.width(), screen_shot.height(), m_jpeg_quality_percent);
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
             m_socket.SendData(enc.m_enc_data, enc.m_enc_sz, ip, m_socket.GetPort());
-            free(jpegBuf);
             auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
             qDebug() << "elapsed " << elapsed;
         }

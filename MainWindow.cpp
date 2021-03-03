@@ -17,7 +17,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
     , m_streamer_socket(9000)
-    , m_streamer(m_streamer_socket)
+    , m_streamer(m_streamer_socket, this)
     , m_img_converter(*new WebPConverter)//or JpegConverter
 {
     ui->setupUi(this);

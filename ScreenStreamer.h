@@ -10,13 +10,14 @@
 
 #include <QList>
 
-struct ImageConverterInterface;
+class MouseInterface;
 class QScreen;
 class SocketReader;
+struct ImageConverterInterface;
 class ScreenStreamer
 {
 public:
-    ScreenStreamer(SocketReader &socket);
+    ScreenStreamer(SocketReader &socket, QObject *parent);
     ~ScreenStreamer();
     void StartStreaming(const std::string &ip, size_t port, ImageConverterInterface &img_converter);
     QImage ScreenShot();
@@ -24,11 +25,13 @@ public:
 protected:
     void InitAvailableScreens();
     int ActiveScreenIdx() const;
+    QImage& ApplyMouseCursor(QImage& img);
 
     std::future<void> thread_;
     QList<QScreen *> m_screens;
     SocketReader &m_socket;
     int m_jpeg_quality_percent = 10;
     float m_scale_factor = 1;//.85;
+    MouseInterface *m_mouse;
     bool stop_ = false;
 };
