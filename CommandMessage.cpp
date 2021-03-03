@@ -38,8 +38,9 @@ QImage &CommandMessage::Decode(const EncodedImage &enc, QImage &out_image)
 
 bool CommandMessage::IsValid(uint8_t *buffer, ssize_t sz)
 {
-    return (buffer[0] == 0xca && buffer[1] == 0xfe && buffer[2] == 0xba && buffer[3] == 0xbe) &&
-            (buffer[sz-4] == 0xca && buffer[sz-3] == 0xfe && buffer[sz-2] == 0xd0 && buffer[sz-1] == 0xd0);
+    bool ret = (buffer[0] == 0xca && buffer[1] == 0xfe && buffer[2] == 0xba && buffer[3] == 0xbe) &&
+            (buffer[sz-4] == 0xca && buffer[sz-3] == 0xfe && buffer[sz-2] == 0xd0 && buffer[sz-1] == 0x0d);
+    return ret;
 }
 
 ssize_t CommandMessage::HeaderSize() const

@@ -129,7 +129,7 @@ SocketReader::~SocketReader()
     m_playback_thread.wait();
 }
 
-SocketReader::HeaderMetaData SocketReader::DetectHeaderType(uint8_t *buffer, ssize_t sz)
+SocketReader::HeaderMetaData SocketReader::FindHeader(uint8_t *buffer, ssize_t sz)
 {
     SocketReader::HeaderMetaData meta;
     for(const auto &decoder : m_decoders)
@@ -222,8 +222,14 @@ void SocketReader::ExtractImage(uint8_t *buffer,
         break;
     }
     case ImageConverterInterface::Types::Command:
-        qDebug() << "recvd command";
+    {
+        CommandMessage::Packet *pkt = (CommandMessage::Packet*)buffer;
+        qDebug() << "recvd command "
+            << "m_version " << pkt->m_version
+            << "cmd_id " << pkt->m_cmd_id
+            << "m_size " << pkt->m_size;
         break;
+    }
     default:
         break;
     }
@@ -291,7 +297,7 @@ void SocketReader::StartRecieveDataThread()
 
                     if(header.m_type == ImageConverterInterface::Types::None)
                     {
-                        header = DetectHeaderType(buffer, buffer_tail);
+                        header = FindHeader(buffer, buffer_tail);
                         if(header.m_type == ImageConverterInterface::Types::None) { continue; }
 
                         memmove(buffer, &buffer[header.m_pos], buffer_tail - header.m_pos);
@@ -299,16 +305,17 @@ void SocketReader::StartRecieveDataThread()
                         continue;
                     }
                     auto &decoder = m_decoders[header.m_type];
-                    ssize_t idx = decoder->FindHeader(buffer + decoder->HeaderSize(), buffer_tail);
-                    if(idx == -1) continue;
+                    auto next_header = FindHeader(buffer + decoder->HeaderSize(), buffer_tail);
+                    if(next_header.m_type == ImageConverterInterface::Types::None) { continue; }
 
-                    idx += decoder->HeaderSize();
-                    if(decoder->IsValid(buffer, idx))
+                    next_header.m_pos += decoder->HeaderSize();
+                    if(decoder->IsValid(buffer, next_header.m_pos))
                     {
-                        ExtractImage(buffer, idx, header.m_type, sa_client, stats);
+                        ExtractImage(buffer, next_header.m_pos, header.m_type, sa_client, stats);
                     }
-                    memmove(buffer, &buffer[idx], buffer_tail - idx);
-                    buffer_tail -= (idx);
+                    memmove(buffer, &buffer[next_header.m_pos], buffer_tail - next_header.m_pos);
+                    buffer_tail -= (next_header.m_pos);
+                    header = next_header;
                 }
 
                 static size_t total = 0;

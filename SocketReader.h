@@ -39,7 +39,7 @@ protected:
         ImageConverterInterface::Types m_type = ImageConverterInterface::Types::None;
         ssize_t m_pos = -1;
     };
-    HeaderMetaData DetectHeaderType(uint8_t *buffer, ssize_t sz);
+    HeaderMetaData FindHeader(uint8_t *buffer, ssize_t sz);
 
     bool m_using_udp = true;
     uint16_t m_port;
