@@ -145,12 +145,12 @@ SocketReader::HeaderMetaData SocketReader::DetectHeaderType(uint8_t *buffer, ssi
     return meta;
 }
 
-int SocketReader::SendData(uint8_t *buf, int buf_size, const std::string &ip, size_t port)
+int SocketReader::SendData(uint8_t *buf, int buf_size, uint32_t ip, size_t port)
 {
     struct sockaddr_in sa_server;
     memset(&sa_server, 0, sizeof sa_server);
     sa_server.sin_family = AF_INET;
-    sa_server.sin_addr.s_addr = inet_addr(ip.c_str());
+    sa_server.sin_addr.s_addr = ip;
     sa_server.sin_port = htons(port);
 
     if(m_using_udp)
@@ -163,7 +163,7 @@ int SocketReader::SendData(uint8_t *buf, int buf_size, const std::string &ip, si
 
         if (connect(m_client_socket, (struct sockaddr *)&sa_server, sizeof sa_server) == -1)
         {
-            qDebug() << "Failed to connect to server " << ip.c_str() << ":" << port;
+            qDebug() << "Failed to connect to server " << IpToString(ip) << ":" << port;
             close(m_client_socket);
             m_client_socket = 0;
             return 0;

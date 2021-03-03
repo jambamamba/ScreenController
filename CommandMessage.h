@@ -12,6 +12,12 @@ struct CommandMessage : public ImageConverterInterface
         uint16_t m_cmd_id;
         uint32_t m_size;
         uint8_t m_tail_bytes[4] = { 0xca, 0xfe, 0xd0, 0x0d };
+
+        Packet(uint8_t version = 1, uint16_t cmd_id = 0)
+            : m_version(version)
+            , m_cmd_id(cmd_id)
+            , m_size(sizeof (Packet))
+        {}
     };
 
     CommandMessage();

@@ -19,7 +19,8 @@ class ScreenStreamer
 public:
     ScreenStreamer(SocketReader &socket, QObject *parent);
     ~ScreenStreamer();
-    void StartStreaming(const std::string &ip, size_t port, ImageConverterInterface &img_converter);
+    void SendCommand(uint32_t ip);
+    void StartStreaming(uint32_t ip, size_t port, ImageConverterInterface &img_converter);
     QImage ScreenShot();
     QScreen *ActiveScreen();
 protected:

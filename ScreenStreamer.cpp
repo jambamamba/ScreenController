@@ -8,6 +8,7 @@
 #include <QPixmap>
 #include <QScreen>
 
+#include "CommandMessage.h"
 #include "ImageConverterInterface.h"
 #include "MouseInterface.h"
 #include "SocketReader.h"
@@ -111,7 +112,12 @@ QImage& ScreenStreamer::ApplyMouseCursor(QImage& img)
     return img;
 }
 
-void ScreenStreamer::StartStreaming(const std::string &ip, size_t port, ImageConverterInterface &img_converter)
+void ScreenStreamer::SendCommand(uint32_t ip)
+{
+    CommandMessage::Packet pkt;
+    m_socket.SendData((uint8_t*)&pkt, sizeof pkt, ip, m_socket.GetPort());
+}
+void ScreenStreamer::StartStreaming(uint32_t ip, size_t port, ImageConverterInterface &img_converter)
 {
     thread_ = std::async(std::launch::async, [this, ip, &img_converter](){
         while(!stop_){

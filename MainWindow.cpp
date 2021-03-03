@@ -75,10 +75,12 @@ void MainWindow::NodeDoubleClicked(QModelIndex index)
     {
         if(idx == index.row())
         {
-            m_streamer.StartStreaming(
-                        SocketReader::IpToString(node->m_ip),
-                        node->m_port,
-                        m_img_converter);
+            for(int i = 0; i < 100; ++i)
+            m_streamer.SendCommand(node->m_ip);
+//            m_streamer.StartStreaming(
+//                        node->m_ip,
+//                        node->m_port,
+//                        m_img_converter);
             break;
         }
         idx ++;
