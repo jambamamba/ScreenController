@@ -47,10 +47,6 @@ EncodedImage WebPConverter::Encode(const uint8_t* rgb888,
                 WebPEncodeLosslessRGB(rgb888, width, height, width * 3, &enc.m_enc_data):
                 WebPEncodeRGB(rgb888, width, height, width * 3, quality_factor, &enc.m_enc_data);
 
-    QImage out;
-    Decode(enc, out);
-    out.save("/home/dev/oosman/foo.png");
-    exit(0);
     return enc;
 }
 
