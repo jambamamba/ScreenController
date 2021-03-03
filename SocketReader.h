@@ -14,6 +14,7 @@
 #include <libavutil/avutil.h>
 
 #include "ImageConverterInterface.h"
+#include "CommandMessage.h"
 
 struct Stats;
 class SocketReader
@@ -21,7 +22,7 @@ class SocketReader
 public:
     SocketReader(uint16_t port);
     ~SocketReader();
-    void StartRecieveDataThread();
+    void StartRecieveDataThread(std::function<void(const CommandMessage::Packet &pkt, uint32_t ip)> handleCommand);
     int SendData(uint8_t *buf, int buf_size, uint32_t ip, size_t port);
     bool PlaybackImages(std::function<void(const QImage&img, uint32_t from_ip)> renderImageCb);
     uint16_t GetPort() const;
@@ -30,8 +31,9 @@ public:
     void ExtractImage(uint8_t *buffer,
                       ssize_t idx,
                       ImageConverterInterface::Types decoder_type,
-                      const sockaddr_in &sa_client,
-                      Stats &stats);
+                      uint32_t ip,
+                      Stats &stats,
+                      std::function<void(const CommandMessage::Packet &pkt, uint32_t ip)> handleCommand);
 
 protected:
     struct HeaderMetaData
@@ -51,7 +53,7 @@ protected:
     std::future<bool> m_playback_thread;
     std::mutex m_mutex;
     std::condition_variable m_cv;
-    QMap<int /*ip*/, QImage> m_display_img;
+    QMap<uint32_t /*ip*/, QImage> m_display_img;
     std::map<ImageConverterInterface::Types, std::shared_ptr<ImageConverterInterface>> m_decoders;
     bool m_stop = false;
 };

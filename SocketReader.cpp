@@ -196,8 +196,9 @@ int SocketReader::SendData(uint8_t *buf, int buf_size, uint32_t ip, size_t port)
 void SocketReader::ExtractImage(uint8_t *buffer,
                                 ssize_t idx,
                                 ImageConverterInterface::Types decoder_type,
-                                const sockaddr_in &sa_client,
-                                Stats &stats)
+                                uint32_t ip,
+                                Stats &stats,
+                                std::function<void(const CommandMessage::Packet &pkt, uint32_t ip)> handleCommand)
 {
     switch(decoder_type)
     {
@@ -210,9 +211,9 @@ void SocketReader::ExtractImage(uint8_t *buffer,
             EncodedImage enc(buffer, idx);
 
             auto &decoder = m_decoders[decoder_type];
-            m_display_img[sa_client.sin_addr.s_addr] = decoder->Decode(
-                        enc, m_display_img[sa_client.sin_addr.s_addr]);
-            loaded = !m_display_img[sa_client.sin_addr.s_addr].isNull();
+            m_display_img[ip] = decoder->Decode(
+                        enc, m_display_img[ip]);
+            loaded = !m_display_img[ip].isNull();
         }
         if(loaded)
         {
@@ -224,10 +225,7 @@ void SocketReader::ExtractImage(uint8_t *buffer,
     case ImageConverterInterface::Types::Command:
     {
         CommandMessage::Packet *pkt = (CommandMessage::Packet*)buffer;
-        qDebug() << "recvd command "
-            << "m_version " << pkt->m_version
-            << "cmd_id " << pkt->m_cmd_id
-            << "m_size " << pkt->m_size;
+        handleCommand(*pkt, ip);
         break;
     }
     default:
@@ -235,9 +233,9 @@ void SocketReader::ExtractImage(uint8_t *buffer,
     }
 }
 
-void SocketReader::StartRecieveDataThread()
+void SocketReader::StartRecieveDataThread(std::function<void(const CommandMessage::Packet &pkt, uint32_t ip)> handleCommand)
 {
-    m_reader_thread = std::async(std::launch::async, [this](){
+    m_reader_thread = std::async(std::launch::async, [this,handleCommand](){
         ssize_t buffer_size = 1024*1024;
         ssize_t buffer_tail = 0;
         uint8_t *buffer = (uint8_t*) malloc(buffer_size);
@@ -311,7 +309,12 @@ void SocketReader::StartRecieveDataThread()
                     next_header.m_pos += decoder->HeaderSize();
                     if(decoder->IsValid(buffer, next_header.m_pos))
                     {
-                        ExtractImage(buffer, next_header.m_pos, header.m_type, sa_client, stats);
+                        ExtractImage(buffer,
+                                     next_header.m_pos,
+                                     header.m_type,
+                                     sa_client.sin_addr.s_addr,
+                                     stats,
+                                     handleCommand);
                     }
                     memmove(buffer, &buffer[next_header.m_pos], buffer_tail - next_header.m_pos);
                     buffer_tail -= (next_header.m_pos);

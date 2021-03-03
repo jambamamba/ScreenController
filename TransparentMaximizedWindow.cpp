@@ -5,6 +5,7 @@
 #include <windows.h>
 #endif
 
+#include <QtCore/qnamespace.h>
 #include <QScreen>
 #include <QDesktopWidget>
 #include <QDebug>
@@ -15,7 +16,43 @@
 #include <QSizeGrip>
 #include <QTimer>
 
+#include "CommandMessage.h"
+
 static const float WINDOW_OPACITY = 0.5f;
+
+namespace  {
+CommandMessage::Packet CreateKeyCommandPacket(CommandMessage::Packet::EventType event_type, const QKeyEvent *event)
+{
+    CommandMessage::Packet pkt;
+    pkt.m_event = event_type;
+    pkt.m_key = event->key();
+    if(event->modifiers().testFlag(Qt::ShiftModifier))
+    { pkt.m_key_modifier |= Qt::ShiftModifier; }
+    else if(event->modifiers().testFlag(Qt::ControlModifier))
+    { pkt.m_key_modifier |= Qt::ControlModifier; }
+    else if(event->modifiers().testFlag(Qt::AltModifier))
+    { pkt.m_key_modifier |= Qt::AltModifier; }
+    else if(event->modifiers().testFlag(Qt::KeypadModifier))
+    { pkt.m_key_modifier |= Qt::KeypadModifier; }
+    else if(event->modifiers().testFlag(Qt::GroupSwitchModifier))
+    { pkt.m_key_modifier |= Qt::GroupSwitchModifier; }
+    else if(event->modifiers().testFlag(Qt::KeyboardModifierMask))
+    { pkt.m_key_modifier |= Qt::KeyboardModifierMask; }
+
+    return pkt;
+}
+
+CommandMessage::Packet CreateMouseCommandPacket(CommandMessage::Packet::EventType event_type, const QMouseEvent *event)
+{
+    CommandMessage::Packet pkt;
+    pkt.m_event = event_type;
+    pkt.m_mouse_button = event->button();
+    pkt.m_mouse_x = event->pos().x();
+    pkt.m_mouse_y = event->pos().y();
+
+    return pkt;
+}
+}//namespace
 
 TransparentMaximizedWindow::TransparentMaximizedWindow(const QString &ip, QWidget *parent)
     : QWidget(parent)
@@ -65,16 +102,37 @@ void TransparentMaximizedWindow::SetImage(const QImage &img)
 void TransparentMaximizedWindow::keyPressEvent(QKeyEvent *event)
 {
     if((event->key() == 'q' || event->key() == 'Q') &&
-            (event->modifiers() == Qt::AltModifier))
+            (event->modifiers().testFlag(Qt::AltModifier)))
     {
         emit Close();
         exit(0);
     }
+    auto pkt = CreateKeyCommandPacket(CommandMessage::Packet::EventType::KeyPress, event);
+    emit SendCommandToNode(pkt);
 }
 
 void TransparentMaximizedWindow::keyReleaseEvent(QKeyEvent *event)
 {
+    auto pkt = CreateKeyCommandPacket(CommandMessage::Packet::EventType::KeyRelease, event);
+    emit SendCommandToNode(pkt);
+}
 
+void TransparentMaximizedWindow::mousePressEvent(QMouseEvent *event)
+{
+    auto pkt = CreateMouseCommandPacket(CommandMessage::Packet::EventType::MousePress, event);
+    emit SendCommandToNode(pkt);
+}
+
+void TransparentMaximizedWindow::mouseReleaseEvent(QMouseEvent *event)
+{
+    auto pkt = CreateMouseCommandPacket(CommandMessage::Packet::EventType::MouseRelease, event);
+    emit SendCommandToNode(pkt);
+}
+
+void TransparentMaximizedWindow::mouseMoveEvent(QMouseEvent *event)
+{
+    auto pkt = CreateMouseCommandPacket(CommandMessage::Packet::EventType::MouseMove, event);
+    emit SendCommandToNode(pkt);
 }
 
 void TransparentMaximizedWindow::Show(int width, int height, QScreen* screen)

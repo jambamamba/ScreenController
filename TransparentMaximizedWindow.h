@@ -3,6 +3,8 @@
 #include <QWidget>
 #include <mutex>
 
+#include "CommandMessage.h"
+
 namespace Ui {
 class TransparentMaximizedWindow;
 }
@@ -23,12 +25,14 @@ public:
     
     virtual void 	keyPressEvent(QKeyEvent *event);
     virtual void 	keyReleaseEvent(QKeyEvent *event);
-//    virtual void mousePressEvent(QMouseEvent *mouse_event);
-//    virtual void mouseReleaseEvent(QMouseEvent *mouse_event);
-//    virtual void mouseMoveEvent(QMouseEvent *mouse_event);
+    virtual void mousePressEvent(QMouseEvent *event);
+    virtual void mouseReleaseEvent(QMouseEvent *event);
+    virtual void mouseMoveEvent(QMouseEvent *event);
 
 signals:
     void Close();
+    void SendCommandToNode(const CommandMessage::Packet &pkt);
+
 private:
     Ui::TransparentMaximizedWindow *ui;
     QString m_ip;

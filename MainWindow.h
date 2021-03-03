@@ -12,6 +12,7 @@ namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
 #include <QModelIndex>
+#include "CommandMessage.h"
 
 struct Node
 {
@@ -39,14 +40,16 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 signals:
-    void StartPlayback(uint32_t from_ip);
+    void StartPlayback(const QImage&img, uint32_t from_ip);
+    void StartStreaming(uint32_t ip, int decoder_type);
 
 protected:
     void StartDiscoveryService();
     void PrepareToReceiveStream();
+    void HandleCommand(const CommandMessage::Packet &pkt, uint32_t from_ip);
 
 private slots:
-    void ShowTransparentWindowOverlay(uint32_t ip);
+    void ShowTransparentWindowOverlay(const QImage&img, uint32_t from_ip);
     void NodeDoubleClicked(QModelIndex);
 
 private:
@@ -59,7 +62,6 @@ private:
     std::future<void> m_discovery_thread;
     QStandardItemModel *m_node_model;
     QMap<uint32_t /*ip*/, Node*> m_nodes;
-    ImageConverterInterface &m_img_converter;
     bool m_stop = false;
 };
 #endif // MAINWINDOW_H

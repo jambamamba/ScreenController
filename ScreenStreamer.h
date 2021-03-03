@@ -10,19 +10,25 @@
 
 #include <QList>
 
+#include "CommandMessage.h"
+
 class MouseInterface;
 class QScreen;
 class SocketReader;
 struct ImageConverterInterface;
-class ScreenStreamer
+class ScreenStreamer : public QObject
 {
+    Q_OBJECT
+
 public:
     ScreenStreamer(SocketReader &socket, QObject *parent);
     ~ScreenStreamer();
-    void SendCommand(uint32_t ip);
-    void StartStreaming(uint32_t ip, size_t port, ImageConverterInterface &img_converter);
+    void SendCommand(uint32_t ip, const CommandMessage::Packet &pkt);
     QImage ScreenShot();
     QScreen *ActiveScreen();
+public slots:
+    void StartStreaming(uint32_t ip, int decoder_type);
+
 protected:
     void InitAvailableScreens();
     int ActiveScreenIdx() const;

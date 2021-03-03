@@ -8,7 +8,6 @@
 #include <QPixmap>
 #include <QScreen>
 
-#include "CommandMessage.h"
 #include "ImageConverterInterface.h"
 #include "MouseInterface.h"
 #include "SocketReader.h"
@@ -20,6 +19,9 @@
 #include "NullMouse.h"
 #endif
 
+#include "JpegConverter.h"
+#include "WebPConverter.h"
+
 namespace  {
 static QImage &bltCursorOnImage(QImage &img, const QImage &cursor, const QPoint &pos)
 {
@@ -30,7 +32,8 @@ static QImage &bltCursorOnImage(QImage &img, const QImage &cursor, const QPoint 
 }
 }//namespace
 ScreenStreamer::ScreenStreamer(SocketReader &socket, QObject *parent)
-    : m_socket(socket)
+    : QObject(parent)
+    , m_socket(socket)
 #if defined(Win32) || defined(Win64)
     ,m_mouse(new WindowsMouse(parent))
 #elif defined(Linux)
@@ -112,14 +115,22 @@ QImage& ScreenStreamer::ApplyMouseCursor(QImage& img)
     return img;
 }
 
-void ScreenStreamer::SendCommand(uint32_t ip)
+void ScreenStreamer::SendCommand(uint32_t ip, const CommandMessage::Packet &pkt)
 {
-    CommandMessage::Packet pkt;
     m_socket.SendData((uint8_t*)&pkt, sizeof pkt, ip, m_socket.GetPort());
 }
-void ScreenStreamer::StartStreaming(uint32_t ip, size_t port, ImageConverterInterface &img_converter)
+
+void ScreenStreamer::StartStreaming(uint32_t ip, int decoder_type)
 {
-    thread_ = std::async(std::launch::async, [this, ip, &img_converter](){
+    thread_ = std::async(std::launch::async, [this, ip, decoder_type](){
+        ImageConverterInterface *img_converter = nullptr;
+        if(decoder_type == ImageConverterInterface::Types::Webp)
+        { img_converter = new WebPConverter; }
+        else if (decoder_type == ImageConverterInterface::Types::Jpeg)
+        { img_converter = new JpegConverter; }
+        else
+        { qDebug() << "Invalid image decoder"; exit(-1); }
+
         while(!stop_){
             std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
@@ -129,11 +140,13 @@ void ScreenStreamer::StartStreaming(uint32_t ip, size_t port, ImageConverterInte
             {
                 screen_shot = screen_shot.scaled(screen_shot.width()*m_scale_factor, screen_shot.height()*m_scale_factor);
             }
-            EncodedImage enc = img_converter.Encode(screen_shot.bits(), screen_shot.width(), screen_shot.height(), m_jpeg_quality_percent);
+            EncodedImage enc = img_converter->Encode(screen_shot.bits(), screen_shot.width(), screen_shot.height(), m_jpeg_quality_percent);
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
             m_socket.SendData(enc.m_enc_data, enc.m_enc_sz, ip, m_socket.GetPort());
             auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
             qDebug() << "elapsed " << elapsed;
         }
+
+        delete img_converter;
     });
 }

@@ -18,7 +18,6 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
     , m_streamer_socket(9000)
     , m_streamer(m_streamer_socket, this)
-    , m_img_converter(*new WebPConverter)//or JpegConverter
 {
     ui->setupUi(this);
     setWindowTitle("Kingfisher Screen Controller");
@@ -28,6 +27,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(this, &MainWindow::StartPlayback,
             this, &MainWindow::ShowTransparentWindowOverlay,
+            Qt::ConnectionType::QueuedConnection);
+
+    connect(this, &MainWindow::StartStreaming,
+            &m_streamer, &ScreenStreamer::StartStreaming,
             Qt::ConnectionType::QueuedConnection);
 
     ui->listView->setModel(m_node_model);
@@ -41,7 +44,6 @@ MainWindow::~MainWindow()
 {
     m_stop = true;
     m_discovery_thread.wait();
-    delete &m_img_converter;
     delete ui;
 }
 
@@ -75,53 +77,69 @@ void MainWindow::NodeDoubleClicked(QModelIndex index)
     {
         if(idx == index.row())
         {
-            for(int i = 0; i < 100; ++i)
-//            m_streamer.SendCommand(node->m_ip);
-            m_streamer.StartStreaming(
-                        node->m_ip,
-                        node->m_port,
-                        m_img_converter);
+            CommandMessage::Packet pkt;
+            pkt.m_event = CommandMessage::Packet::EventType::StartStreaming;
+            m_streamer.SendCommand(node->m_ip, pkt);
             break;
         }
         idx ++;
     }
 }
 
+void MainWindow::HandleCommand(const CommandMessage::Packet &pkt, uint32_t ip)
+{
+    switch(pkt.m_event)
+    {
+    case CommandMessage::Packet::EventType::StartStreaming:
+        emit StartStreaming(ip, (int)ImageConverterInterface::Types::Webp);
+        break;
+    default:
+        //todo
+        qDebug() << "recvd command from " << ip << ", event " << pkt.m_event;
+        break;
+    }
+
+}
 void MainWindow::PrepareToReceiveStream()
 {
-    m_streamer_socket.StartRecieveDataThread();
+    m_streamer_socket.StartRecieveDataThread([this](const CommandMessage::Packet &pkt, uint32_t ip){
+        HandleCommand(pkt, ip);
+    });
     m_streamer_socket.PlaybackImages([this](const QImage&img, uint32_t ip) {
-        if(m_transparent_window.find(ip) ==  m_transparent_window.end())
-        {
-            emit StartPlayback(ip);
-        }
-        else
-        {
-            m_transparent_window[ip]->SetImage(img);
-        }
+        emit StartPlayback(img, ip);
     });
 }
 
-void MainWindow::ShowTransparentWindowOverlay(uint32_t ip)
+void MainWindow::ShowTransparentWindowOverlay(const QImage &img, uint32_t from_ip)
 {
-    if(m_transparent_window.find(ip) !=  m_transparent_window.end())
+    if(m_transparent_window.find(from_ip) !=  m_transparent_window.end())
+    {
+        m_transparent_window[from_ip]->SetImage(img);
+        return;
+    }
+
+    if(m_nodes.find(from_ip) == m_nodes.end())
     {return;}
 
-    if(m_nodes.find(ip) == m_nodes.end())
-    {return;}
-
-    m_transparent_window[ip] = new TransparentMaximizedWindow(
-                m_nodes[ip]->m_name.c_str(), this);
-    connect(m_transparent_window[ip], &TransparentMaximizedWindow::Close,
-            [this, ip](){
-        if(m_transparent_window.find(ip) != m_transparent_window.end())
+    m_transparent_window[from_ip] = new TransparentMaximizedWindow(
+                m_nodes[from_ip]->m_name.c_str(), this);
+    connect(m_transparent_window[from_ip], &TransparentMaximizedWindow::Close,
+            [this, from_ip](){
+        if(m_transparent_window.find(from_ip) != m_transparent_window.end())
         {
-            TransparentMaximizedWindow *wnd = m_transparent_window[ip];
+            TransparentMaximizedWindow *wnd = m_transparent_window[from_ip];
             wnd->hide();
             wnd->deleteLater();
-            m_transparent_window.remove(ip);
+            m_transparent_window.remove(from_ip);
+        }
+    });
+    connect(m_transparent_window[from_ip], &TransparentMaximizedWindow::SendCommandToNode,
+            [this, from_ip](const CommandMessage::Packet &pkt){
+        if(m_transparent_window.find(from_ip) != m_transparent_window.end())
+        {
+            m_streamer.SendCommand(from_ip, pkt);
         }
     });
     QImage screen_shot = m_streamer.ScreenShot();
-    m_transparent_window[ip]->Show(screen_shot.width(), screen_shot.height(), m_streamer.ActiveScreen());
+    m_transparent_window[from_ip]->Show(screen_shot.width(), screen_shot.height(), m_streamer.ActiveScreen());
 }
