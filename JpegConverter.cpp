@@ -38,6 +38,7 @@ JpegConverter::JpegConverter()
 JpegConverter::~JpegConverter()
 {}
 
+
 QImage &JpegConverter::Decode(const EncodedImage &enc, QImage &out_image)
 {
     struct jpeg_decompress_struct cinfo;
@@ -170,7 +171,7 @@ EncodedImage JpegConverter::Encode(const uint8_t* image, int width, int height, 
 ssize_t JpegConverter::FindHeader(uint8_t* buffer, ssize_t buffer_sz)
 {
     ssize_t idx = 0;
-    for(; idx < buffer_sz - 10; ++idx)
+    for(; idx < buffer_sz - HeaderSize(); ++idx)
     {
 //jpeg header                ff d8 ff e0 00 10 4a 46  49 46
         if(buffer[idx] == 0xff &&
@@ -195,4 +196,9 @@ bool JpegConverter::IsValid(uint8_t* buffer, ssize_t buffer_sz)
 {
     return (buffer[buffer_sz - 2] == 0xff &&
             buffer[buffer_sz - 1] == 0xd9);
+}
+
+ssize_t JpegConverter::HeaderSize() const
+{
+    return 10;
 }

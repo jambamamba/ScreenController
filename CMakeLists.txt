@@ -65,8 +65,8 @@ SET(SSLLibs )
 SET(X11Libs )
 IF(UNIX)
     LINK_DIRECTORIES(
-        ${LIBS_DIR}/turbojpeg/build/
-	/home/dev/oosman/repos/libwebp/build/
+	${LIBS_DIR}/libturbojpeg/build/
+	${LIBS_DIR}/libwebp/build/
     )
     SET(SSLLibs
         crypto

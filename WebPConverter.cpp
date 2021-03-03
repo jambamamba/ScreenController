@@ -13,7 +13,7 @@ WebPConverter::~WebPConverter()
 ssize_t WebPConverter::FindHeader(uint8_t *buffer, ssize_t buffer_tail)
 {
     ssize_t idx = 0;
-    for(; idx < buffer_tail - 15; ++idx)
+    for(; idx < buffer_tail - HeaderSize(); ++idx)
     {
 //webp header                52 49 46 46 08 32 01 00 57 45 42 50 56 50 38
         if(buffer[idx] == 0x52 &&
@@ -45,7 +45,9 @@ EncodedImage WebPConverter::Encode(const uint8_t* rgb888,
                                    int height,
                                    float quality_factor)
 {
-    EncodedImage enc;
+    EncodedImage enc([](uint8_t *data){
+        if(data) { WebPFree(data); }
+    });
     enc.m_enc_sz = (quality_factor > 100) ?
                 WebPEncodeLosslessRGB(rgb888, width, height, width * 3, &enc.m_enc_data):
                 WebPEncodeRGB(rgb888, width, height, width * 3, quality_factor, &enc.m_enc_data);
@@ -78,4 +80,9 @@ bool WebPConverter::IsValid(uint8_t *buffer, ssize_t buffer_tail)
     int width = 0;
     int height = 0;
     return WebPGetInfo(buffer, buffer_tail, &width, &height);
+}
+
+ssize_t WebPConverter::HeaderSize() const
+{
+    return 16;
 }

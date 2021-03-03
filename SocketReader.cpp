@@ -211,10 +211,10 @@ void SocketReader::StartRecieveDataThread(ImageConverterInterface &img_converter
                         found_jpeg_head = true;
                         continue;
                     }
-                    ssize_t idx = img_converter.FindHeader(buffer + 10, buffer_tail);
+                    ssize_t idx = img_converter.FindHeader(buffer + img_converter.HeaderSize(), buffer_tail);
                     if(idx == -1) continue;
 
-                    idx += 10;
+                    idx += img_converter.HeaderSize();
                     if(img_converter.IsValid(buffer, idx))
                     {
                         static int counter = 0;
