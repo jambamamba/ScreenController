@@ -37,6 +37,16 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&m_event_handler, &EventHandler::StopStreaming,
             &m_streamer, &ScreenStreamer::StopStreaming,
             Qt::ConnectionType::QueuedConnection);
+    connect(&m_event_handler, &EventHandler::StoppedStreaming,
+            [this](uint32_t ip){
+        if(m_transparent_window.find(ip) != m_transparent_window.end())
+        {
+            TransparentMaximizedWindow *wnd = m_transparent_window[ip];
+            wnd->close();
+            wnd->deleteLater();
+            m_transparent_window.remove(ip);
+        }
+    });
 
     ui->listView->setModel(m_node_model);
     ui->listView->show();
@@ -119,11 +129,7 @@ void MainWindow::ShowTransparentWindowOverlay(const QImage &img, uint32_t from_i
         m_streamer.SendCommand(from_ip, Command::EventType::StopStreaming);
         if(m_transparent_window.find(from_ip) != m_transparent_window.end())
         {
-            TransparentMaximizedWindow *wnd = m_transparent_window[from_ip];
-            wnd->hide();
-            wnd->close();
-            wnd->deleteLater();
-            m_transparent_window.remove(from_ip);
+            m_transparent_window[from_ip]->hide();
         }
     });
     connect(m_transparent_window[from_ip], &TransparentMaximizedWindow::SendCommandToNode,

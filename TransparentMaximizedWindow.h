@@ -21,6 +21,8 @@ public:
                       const QPoint &point_stop);
     void MoveToScreen(const QScreen *screen);
     void SetImage(const QImage&img);
+    bool IsClosed() const;
+    void ReOpen();
     
     virtual void 	keyPressEvent(QKeyEvent *event) override;
     virtual void 	keyReleaseEvent(QKeyEvent *event) override;
@@ -40,6 +42,7 @@ private:
     std::mutex m_mutex;
     QImage m_image;
     QTimer *m_timer;
+    bool m_closed = false;
 
     void paintEvent(QPaintEvent *);
 //    bool eventFilter(QObject *obj, QEvent *event);

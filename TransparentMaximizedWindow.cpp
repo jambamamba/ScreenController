@@ -96,7 +96,17 @@ void TransparentMaximizedWindow::SetImage(const QImage &img)
 //    while(QApplication::hasPendingEvents())
 //    {
 //        QApplication::processEvents();
-//    }
+    //    }
+}
+
+bool TransparentMaximizedWindow::IsClosed() const
+{
+    return m_closed;
+}
+
+void TransparentMaximizedWindow::ReOpen()
+{
+ m_closed = false;
 }
 
 void TransparentMaximizedWindow::keyPressEvent(QKeyEvent *event)
@@ -104,7 +114,8 @@ void TransparentMaximizedWindow::keyPressEvent(QKeyEvent *event)
     if((event->key() == 'q' || event->key() == 'Q') &&
             (event->modifiers().testFlag(Qt::AltModifier)))
     {
-        emit Close();
+        m_closed = true;
+//        emit Close();
 //        exit(0);//todo
     }
     auto pkt = CreateKeyCommandPacket(Command::EventType::KeyPress, event);

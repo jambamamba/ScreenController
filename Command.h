@@ -14,6 +14,7 @@ struct Command
         None,
         StartStreaming,
         StopStreaming,
+        StoppedStreaming,
         MousePress,
         MouseRelease,
         MouseMove,

@@ -175,4 +175,5 @@ void ScreenStreamer::StopStreaming(uint32_t ip)
     stop_ = true;
     if(thread_.valid()) {thread_.wait();}
     stop_ = false;
+    SendCommand(ip, Command::EventType::StoppedStreaming);
 }

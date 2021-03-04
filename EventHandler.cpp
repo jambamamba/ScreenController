@@ -35,6 +35,9 @@ void EventHandler::HandleCommand(const Command &pkt, uint32_t ip)
     case Command::EventType::StopStreaming:
         emit StopStreaming(ip);
         break;
+    case Command::EventType::StoppedStreaming:
+        emit StoppedStreaming(ip);
+        break;
     case Command::EventType::MouseMove:
         qDebug() << "recvd move mouse command from " << SocketReader::IpToString(ip) << ", event " << pkt.m_event;
         m_mouse->moveTo(pkt.m_mouse_x, pkt.m_mouse_y);
