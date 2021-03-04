@@ -132,7 +132,7 @@ void TransparentMaximizedWindow::keyReleaseEvent(QKeyEvent *event)
 void TransparentMaximizedWindow::mousePressEvent(QMouseEvent *event)
 {
     qDebug() << "TransparentMaximizedWindow::mousePressEvent";
-    auto pkt = CreateMouseCommandPacket(Command::EventType::MouseMove, event);
+    auto pkt = CreateMouseCommandPacket(Command::EventType::MousePress, event);
     emit SendCommandToNode(pkt);
 }
 

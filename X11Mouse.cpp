@@ -7,6 +7,10 @@
 #include <X11/extensions/Xfixes.h>
 #include <QtX11Extras/QX11Info>
 
+//extern "C" {
+//#include "xdotool/xdo.h"
+//}
+
 namespace  {
 // Get mouse coordinates
 void coords(Display *display, int *x, int *y)
@@ -70,12 +74,25 @@ QImage X11Mouse::getMouseCursor(QPoint &pos) const
 
 //https://stackoverflow.com/questions/20595716/control-mouse-by-writing-to-dev-input-mice
 //mouseClick(Button1)
-void X11Mouse::mouseClick(int button)
+void X11Mouse::mousePress(int button)
 {
+    qDebug() << "mousePress " << button;
+    mouseClick(button, ButtonPress);
+}
+
+void X11Mouse::mouseRelease(int button)
+{
+    qDebug() << "mouseRelease " << button;
+    mouseClick(button, ButtonRelease);
+}
+
+void X11Mouse::mouseClick(int button, int press_or_release)
+{
+
     XEvent event;
     memset(&event, 0x00, sizeof(event));
 
-    event.type = ButtonPress;
+    event.type = press_or_release;
     event.xbutton.button = button;
     event.xbutton.same_screen = true;
 
@@ -93,25 +110,15 @@ void X11Mouse::mouseClick(int button)
     if(XSendEvent(m_display, PointerWindow, true, 0xfff, &event) == 0) {fprintf(stderr, "Error\n");}
 
     XFlush(m_display);
-
-    usleep(1000 * 100);
-
-    event.type = ButtonRelease;
-    event.xbutton.state = 0x100;
-
-    if(XSendEvent(m_display, PointerWindow, true, 0xfff, &event) == 0) {fprintf(stderr, "Error\n");}
-
-    XFlush(m_display);
-
-    XCloseDisplay(m_display);
 }
 
 // Move mouse pointer (absolute)
 void X11Mouse::moveTo(int x, int y)
 {
-  int cur_x, cur_y;
-  coords (m_display, &cur_x, &cur_y);
-//  XWarpPointer (m_display, None, None, 0,0,0,0, -cur_x, -cur_y);
-  XWarpPointer (m_display, None, None, 0,0,0,0, x, y);
-  usleep(1000 * 100);
+    qDebug() << "moveTo " << x << "," << y;
+//    static xdo_t* xdo = xdo_new((char*)m_display);
+//    xdo_wait_for_mouse_move_to(xdo, x, y);
+    XSelectInput(m_display, DefaultRootWindow (m_display), KeyReleaseMask);
+    XWarpPointer(m_display, None, DefaultRootWindow (m_display), 0, 0, 0, 0, x, y);
+    XFlush(m_display);
 }

@@ -67,6 +67,7 @@ IF(UNIX)
     LINK_DIRECTORIES(
 	${LIBS_DIR}/libturbojpeg/build/
 	${LIBS_DIR}/libwebp/build/
+#        ${LIBS_DIR}/libxdo/
     )
     SET(SSLLibs
         crypto
@@ -77,6 +78,7 @@ IF(UNIX)
         X11
         Xfixes #/usr/lib/x86_64-linux-gnu/libXfixes.so.3.1.0
         Qt5X11Extras #ln -s /home/developer/oosman/Qt5.12.1/5.12.1/gcc_64/lib/libQt5X11Extras.so ~/work/libs/build/linux/bin/libQt5X11Extras.so
+#        xdo
     )
 #ln -s /usr/lib/x86_64-linux-gnu/libpulse-mainloop-glib.so.0.0.5
     SET(JPEGLib
