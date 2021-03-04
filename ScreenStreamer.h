@@ -23,6 +23,7 @@ public:
     ScreenStreamer(SocketReader &socket, QObject *parent);
     ~ScreenStreamer();
     void SendCommand(uint32_t ip, uint16_t event);
+    void SendCommand(uint32_t ip, const Command &pkt);
     QImage ScreenShot();
     QScreen *ActiveScreen();
 public slots:
