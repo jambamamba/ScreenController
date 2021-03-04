@@ -111,7 +111,7 @@ void X11Mouse::moveTo(int x, int y)
 {
   int cur_x, cur_y;
   coords (m_display, &cur_x, &cur_y);
-  XWarpPointer (m_display, None, None, 0,0,0,0, -cur_x, -cur_y);
+//  XWarpPointer (m_display, None, None, 0,0,0,0, -cur_x, -cur_y);
   XWarpPointer (m_display, None, None, 0,0,0,0, x, y);
   usleep(1000 * 100);
 }

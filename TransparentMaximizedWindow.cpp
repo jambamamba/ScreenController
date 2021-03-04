@@ -106,7 +106,8 @@ bool TransparentMaximizedWindow::IsClosed() const
 
 void TransparentMaximizedWindow::ReOpen()
 {
- m_closed = false;
+    show();
+    m_closed = false;
 }
 
 void TransparentMaximizedWindow::keyPressEvent(QKeyEvent *event)

@@ -80,6 +80,37 @@ void MainWindow::StartDiscoveryService()
 
 }
 
+
+void MainWindow::on_connectButtton_clicked()
+{
+    if(ui->listView->selectedIndexes().size() == 0)
+    { return; }
+
+    int idx = ui->listView->selectedIndexes().first().row();
+    if(idx < 0)
+    { return; }
+
+    int i = 0;
+    for(const auto &node : m_nodes)
+    {
+        if(i == idx)
+        {
+            SendStartStreamingCommand(node->m_ip);
+        }
+        ++i;
+    }
+}
+
+void MainWindow::SendStartStreamingCommand(uint32_t ip)
+{
+    m_streamer.SendCommand(ip, Command::EventType::StartStreaming);
+    m_streamer_socket.Start(ip);
+    if(m_transparent_window.find(ip) != m_transparent_window.end())
+    {
+        m_transparent_window[ip]->ReOpen();
+    }
+}
+
 void MainWindow::NodeDoubleClicked(QModelIndex index)
 {
     int idx = 0;
@@ -87,11 +118,7 @@ void MainWindow::NodeDoubleClicked(QModelIndex index)
     {
         if(idx == index.row())
         {
-            m_streamer.SendCommand(node->m_ip, Command::EventType::StartStreaming);
-            if(m_transparent_window.find(node->m_ip) != m_transparent_window.end())
-            {
-                m_transparent_window[node->m_ip]->ReOpen();
-            }
+            SendStartStreamingCommand(node->m_ip);
             break;
         }
         idx ++;
@@ -110,6 +137,7 @@ void MainWindow::PrepareToReceiveStream()
 
 void MainWindow::DeleteTransparentWindowOverlay(uint32_t ip)
 {
+    m_streamer_socket.Stop(ip);
     return;//todo
     if(m_transparent_window.find(ip) == m_transparent_window.end())
     {

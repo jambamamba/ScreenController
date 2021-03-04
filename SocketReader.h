@@ -34,6 +34,8 @@ public:
                       uint32_t ip,
                       Stats &stats,
                       std::function<void(const Command &pkt, uint32_t ip)> handleCommand);
+    void Stop(uint32_t ip);
+    void Start(uint32_t ip);
 
 protected:
     struct HeaderMetaData
@@ -55,5 +57,6 @@ protected:
     std::condition_variable m_cv;
     QMap<uint32_t /*ip*/, QImage> m_display_img;
     std::map<ImageConverterInterface::Types, std::shared_ptr<ImageConverterInterface>> m_decoders;
-    bool m_stop = false;
+    bool m_play = false;
+    bool m_die = false;
 };

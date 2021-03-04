@@ -114,6 +114,8 @@ SET(PROJECT_SOURCES
     CommandMessage.h
     EventHandler.h
     EventHandler.cpp
+    NodeListView.h
+    NodeListView.cpp
     ImageConverterInterface.h
     JpegConverter.cpp
     JpegConverter.h

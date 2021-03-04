@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>632</width>
-    <height>344</height>
+    <height>252</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -28,7 +28,19 @@
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_2">
        <item>
-        <widget class="QListView" name="listView">
+        <widget class="NodeListView" name="listView">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>100</height>
+          </size>
+         </property>
          <property name="viewMode">
           <enum>QListView::IconMode</enum>
          </property>
@@ -72,7 +84,7 @@
        </spacer>
       </item>
       <item>
-       <widget class="QPushButton" name="testButton">
+       <widget class="QPushButton" name="connectButtton">
         <property name="text">
          <string>Connect</string>
         </property>
@@ -94,6 +106,13 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>NodeListView</class>
+   <extends>QListView</extends>
+   <header>NodeListView.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="screencontroller.qrc"/>
  </resources>

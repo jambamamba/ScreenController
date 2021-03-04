@@ -127,7 +127,7 @@ SocketReader::SocketReader(uint16_t port)
 
 SocketReader::~SocketReader()
 {
-    m_stop = true;
+    m_die = true;
     m_reader_thread.wait();
     m_playback_thread.wait();
 }
@@ -214,8 +214,7 @@ void SocketReader::ExtractImage(uint8_t *buffer,
             EncodedImage enc(buffer, idx);
 
             auto &decoder = m_decoders[decoder_type];
-            m_display_img[ip] = decoder->Decode(
-                        enc, m_display_img[ip]);
+            m_display_img[ip] = decoder->Decode(enc, m_display_img[ip]);
             loaded = !m_display_img[ip].isNull();
         }
         if(loaded)
@@ -236,6 +235,20 @@ void SocketReader::ExtractImage(uint8_t *buffer,
     }
 }
 
+void SocketReader::Stop(uint32_t ip)
+{
+    m_play = false;
+    if(m_display_img.find(ip) != m_display_img.end())
+    {
+        m_display_img[ip] = QImage();
+    }
+}
+
+void SocketReader::Start(uint32_t ip)
+{
+    m_play = true;
+}
+
 void SocketReader::StartRecieveDataThread(std::function<void(const Command &pkt, uint32_t ip)> handleCommand)
 {
     m_reader_thread = std::async(std::launch::async, [this,handleCommand](){
@@ -254,7 +267,7 @@ void SocketReader::StartRecieveDataThread(std::function<void(const Command &pkt,
         Stats stats;
         SocketReader::HeaderMetaData header;
 
-        while(!m_stop)
+        while(!m_die)
         {
             int client_socket = m_using_udp ?
                         m_server_socket :
@@ -267,7 +280,7 @@ void SocketReader::StartRecieveDataThread(std::function<void(const Command &pkt,
             }
             fcntl(client_socket, F_SETFL, fcntl(client_socket, F_GETFL, 0) | O_NONBLOCK);
 
-            while(!m_stop)
+            while(!m_die)
             {
                 //osm: todo use select here so we don't block forever
                 if(!WaitForSocketIO(client_socket, &m_read_set, nullptr))
@@ -338,26 +351,22 @@ void SocketReader::StartRecieveDataThread(std::function<void(const Command &pkt,
 
 bool SocketReader::PlaybackImages(std::function<void(const QImage&img, uint32_t from_ip)> renderImageCb)
 {
-    if(m_playback_thread.valid())
-    {
-        m_stop = true;
-        m_playback_thread.wait();
-        m_stop = false;
-    }
     m_playback_thread = std::async(std::launch::async, [this,renderImageCb](){
         pthread_setname_np(pthread_self(), "playbk");
-        while(!m_stop)
+        while(!m_die)
         {
             std::unique_lock<std::mutex> lk(m_mutex);
-            m_cv.wait_for(lk, std::chrono::seconds(1), [this]{
-                if (m_stop) {return true;}
+            auto sec = std::chrono::seconds(1);
+            m_cv.wait_for(lk, 3*sec, [this]{
+                if (m_die) {return true;}
                 for(const auto &display_image: m_display_img)
                 {
                     if(!display_image.isNull()) { return true; }
                 }
                 return false;
             });
-            if(m_stop) { return false; }
+            if(m_die) { return false; }
+            if(!m_play) { continue; }
 
             for(uint32_t ip: m_display_img.keys())
             {

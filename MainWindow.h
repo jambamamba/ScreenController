@@ -49,10 +49,13 @@ protected:
     void PrepareToReceiveStream();
     void HandleCommand(const Command &pkt, uint32_t from_ip);
     void DeleteTransparentWindowOverlay(uint32_t ip);
+    void SendStartStreamingCommand(uint32_t ip);
 
 private slots:
     void ShowTransparentWindowOverlay(const QImage&img, uint32_t from_ip);
     void NodeDoubleClicked(QModelIndex);
+
+    void on_connectButtton_clicked();
 
 private:
     Ui::MainWindow *ui;
