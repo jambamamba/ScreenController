@@ -117,8 +117,10 @@ QImage& ScreenStreamer::ApplyMouseCursor(QImage& img)
     return img;
 }
 
-void ScreenStreamer::SendCommand(uint32_t ip, const Command &pkt)
+void ScreenStreamer::SendCommand(uint32_t ip, uint16_t event)
 {
+    Command pkt;
+    pkt.m_event = event;
     m_socket.SendData((uint8_t*)&pkt, sizeof(Command), ip, m_socket.GetPort());
 }
 

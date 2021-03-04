@@ -79,9 +79,7 @@ void MainWindow::NodeDoubleClicked(QModelIndex index)
     {
         if(idx == index.row())
         {
-            Command pkt;
-            pkt.m_event = Command::EventType::StartStreaming;
-            m_streamer.SendCommand(node->m_ip, pkt);
+            m_streamer.SendCommand(node->m_ip, Command::EventType::StartStreaming);
             break;
         }
         idx ++;
@@ -120,6 +118,8 @@ void MainWindow::ShowTransparentWindowOverlay(const QImage &img, uint32_t from_i
             wnd->deleteLater();
             m_transparent_window.remove(from_ip);
         }
+        m_streamer.SendCommand(from_ip, Command::EventType::StopStreaming);
+
     });
     connect(m_transparent_window[from_ip], &TransparentMaximizedWindow::SendCommandToNode,
             [this, from_ip](const Command &pkt){

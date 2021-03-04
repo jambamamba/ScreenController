@@ -105,7 +105,7 @@ void TransparentMaximizedWindow::keyPressEvent(QKeyEvent *event)
             (event->modifiers().testFlag(Qt::AltModifier)))
     {
         emit Close();
-        exit(0);
+//        exit(0);
     }
     auto pkt = CreateKeyCommandPacket(Command::EventType::KeyPress, event);
     emit SendCommandToNode(pkt);
@@ -143,7 +143,7 @@ void TransparentMaximizedWindow::Show(int width, int height, QScreen* screen)
     m_screen = screen;
     MoveToScreen(screen);
     m_capturing = false;
-    setMouseTracking(true);
+    setMouseTracking(true);//needed for mouseMove
 //    setWindowState(Qt::WindowFullScreen);
     setWindowFlags(Qt::Window
                    | Qt::FramelessWindowHint
