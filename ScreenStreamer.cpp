@@ -49,7 +49,7 @@ ScreenStreamer::ScreenStreamer(SocketReader &socket, QObject *parent)
 
 ScreenStreamer::~ScreenStreamer()
 {
-    stop_ = true;
+    m_die = true;
     if(thread_.valid()){thread_.wait();}
 }
 
@@ -135,11 +135,12 @@ void ScreenStreamer::SendCommand(uint32_t ip, const Command &pkt)
 
 void ScreenStreamer::StartStreaming(uint32_t ip, int decoder_type)
 {
-    if(thread_.valid())
+    if(m_streaming)
     {
         return;//todo - start streaming to ip if its different than the one we are streaming to.
     }
     thread_ = std::async(std::launch::async, [this, ip, decoder_type](){
+        m_streaming = true;
         pthread_setname_np(pthread_self(), "scrncap");
         ImageConverterInterface *img_converter = nullptr;
         if(decoder_type == ImageConverterInterface::Types::Webp)
@@ -149,7 +150,8 @@ void ScreenStreamer::StartStreaming(uint32_t ip, int decoder_type)
         else
         { qDebug() << "Invalid image decoder"; exit(-1); }
 
-        while(!stop_){
+        while(!m_die)
+        {
             std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
             QImage screen_shot = ScreenShot();
@@ -167,13 +169,14 @@ void ScreenStreamer::StartStreaming(uint32_t ip, int decoder_type)
         }
 
         delete img_converter;
+        m_streaming = false;
     });
 }
 
 void ScreenStreamer::StopStreaming(uint32_t ip)
 {
-    stop_ = true;
+    m_die = true;
     if(thread_.valid()) {thread_.wait();}
-    stop_ = false;
+    m_die = false;
     SendCommand(ip, Command::EventType::StoppedStreaming);
 }

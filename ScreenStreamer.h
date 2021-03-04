@@ -41,5 +41,6 @@ protected:
     int m_jpeg_quality_percent = 10;
     float m_scale_factor = 1;//.85;
     MouseInterface *m_mouse;
-    bool stop_ = false;
+    bool m_streaming = false;
+    bool m_die = false;
 };
