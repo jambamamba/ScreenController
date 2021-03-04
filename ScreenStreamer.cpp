@@ -135,6 +135,10 @@ void ScreenStreamer::SendCommand(uint32_t ip, const Command &pkt)
 
 void ScreenStreamer::StartStreaming(uint32_t ip, int decoder_type)
 {
+    if(thread_.valid())
+    {
+        return;//todo - start streaming to ip if its different than the one we are streaming to.
+    }
     thread_ = std::async(std::launch::async, [this, ip, decoder_type](){
         pthread_setname_np(pthread_self(), "scrncap");
         ImageConverterInterface *img_converter = nullptr;
