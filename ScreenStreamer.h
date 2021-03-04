@@ -28,7 +28,7 @@ public:
     QScreen *ActiveScreen();
 public slots:
     void StartStreaming(uint32_t ip, int decoder_type);
-    void StopStreaming();
+    void StopStreaming(uint32_t ip);
 
 protected:
     void InitAvailableScreens();

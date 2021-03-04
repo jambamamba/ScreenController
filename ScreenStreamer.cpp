@@ -161,7 +161,7 @@ void ScreenStreamer::StartStreaming(uint32_t ip, int decoder_type)
     });
 }
 
-void ScreenStreamer::StopStreaming()
+void ScreenStreamer::StopStreaming(uint32_t ip)
 {
     stop_ = true;
     thread_.wait();
