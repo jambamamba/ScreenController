@@ -42,11 +42,13 @@ public:
     ~MainWindow();
 signals:
     void StartPlayback(const QImage&img, uint32_t from_ip);
+    void StoppedStreaming(uint32_t ip);
 
 protected:
     void StartDiscoveryService();
     void PrepareToReceiveStream();
     void HandleCommand(const Command &pkt, uint32_t from_ip);
+    void DeleteTransparentWindowOverlay(uint32_t ip);
 
 private slots:
     void ShowTransparentWindowOverlay(const QImage&img, uint32_t from_ip);

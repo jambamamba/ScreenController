@@ -38,15 +38,8 @@ MainWindow::MainWindow(QWidget *parent)
             &m_streamer, &ScreenStreamer::StopStreaming,
             Qt::ConnectionType::QueuedConnection);
     connect(&m_event_handler, &EventHandler::StoppedStreaming,
-            [this](uint32_t ip){
-        if(m_transparent_window.find(ip) != m_transparent_window.end())
-        {
-            TransparentMaximizedWindow *wnd = m_transparent_window[ip];
-            wnd->close();
-            wnd->deleteLater();
-            m_transparent_window.remove(ip);
-        }
-    });
+            this, &MainWindow::DeleteTransparentWindowOverlay,
+            Qt::ConnectionType::QueuedConnection);
 
     ui->listView->setModel(m_node_model);
     ui->listView->show();
@@ -95,6 +88,10 @@ void MainWindow::NodeDoubleClicked(QModelIndex index)
         if(idx == index.row())
         {
             m_streamer.SendCommand(node->m_ip, Command::EventType::StartStreaming);
+            if(m_transparent_window.find(node->m_ip) != m_transparent_window.end())
+            {
+                m_transparent_window[node->m_ip]->ReOpen();
+            }
             break;
         }
         idx ++;
@@ -111,34 +108,50 @@ void MainWindow::PrepareToReceiveStream()
     });
 }
 
-void MainWindow::ShowTransparentWindowOverlay(const QImage &img, uint32_t from_ip)
+void MainWindow::DeleteTransparentWindowOverlay(uint32_t ip)
 {
-    if(m_transparent_window.find(from_ip) !=  m_transparent_window.end())
+    return;//todo
+    if(m_transparent_window.find(ip) == m_transparent_window.end())
     {
-        m_transparent_window[from_ip]->SetImage(img);
+        return;
+    }
+    TransparentMaximizedWindow *wnd = m_transparent_window[ip];
+    wnd->close();
+    wnd->deleteLater();
+    m_transparent_window.remove(ip);
+}
+
+void MainWindow::ShowTransparentWindowOverlay(const QImage &img, uint32_t ip)
+{
+    if(m_transparent_window.find(ip) !=  m_transparent_window.end())
+    {
+        if(!m_transparent_window[ip]->IsClosed())
+        {
+            m_transparent_window[ip]->SetImage(img);
+        }
         return;
     }
 
-    if(m_nodes.find(from_ip) == m_nodes.end())
+    if(m_nodes.find(ip) == m_nodes.end())
     {return;}
 
-    m_transparent_window[from_ip] = new TransparentMaximizedWindow(
-                m_nodes[from_ip]->m_name.c_str(), this);
-    connect(m_transparent_window[from_ip], &TransparentMaximizedWindow::Close,
-            [this, from_ip](){
-        m_streamer.SendCommand(from_ip, Command::EventType::StopStreaming);
-        if(m_transparent_window.find(from_ip) != m_transparent_window.end())
+    m_transparent_window[ip] = new TransparentMaximizedWindow(
+                m_nodes[ip]->m_name.c_str(), this);
+    connect(m_transparent_window[ip], &TransparentMaximizedWindow::Close,
+            [this, ip](){
+        m_streamer.SendCommand(ip, Command::EventType::StopStreaming);
+        if(m_transparent_window.find(ip) != m_transparent_window.end())
         {
-            m_transparent_window[from_ip]->hide();
+            m_transparent_window[ip]->hide();
         }
     });
-    connect(m_transparent_window[from_ip], &TransparentMaximizedWindow::SendCommandToNode,
-            [this, from_ip](const Command &pkt){
-        if(m_transparent_window.find(from_ip) != m_transparent_window.end())
+    connect(m_transparent_window[ip], &TransparentMaximizedWindow::SendCommandToNode,
+            [this, ip](const Command &pkt){
+        if(m_transparent_window.find(ip) != m_transparent_window.end())
         {
-            m_streamer.SendCommand(from_ip, pkt);
+            m_streamer.SendCommand(ip, pkt);
         }
     });
     QImage screen_shot = m_streamer.ScreenShot();
-    m_transparent_window[from_ip]->Show(screen_shot.width(), screen_shot.height(), m_streamer.ActiveScreen());
+    m_transparent_window[ip]->Show(screen_shot.width(), screen_shot.height(), m_streamer.ActiveScreen());
 }

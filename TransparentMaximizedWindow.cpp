@@ -116,7 +116,6 @@ void TransparentMaximizedWindow::keyPressEvent(QKeyEvent *event)
     {
         m_closed = true;
         emit Close();
-
 //        exit(0);//todo
     }
     auto pkt = CreateKeyCommandPacket(Command::EventType::KeyPress, event);
