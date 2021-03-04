@@ -1,5 +1,6 @@
 #include "ScreenStreamer.h"
 
+#include <QApplication>
 #include <QCursor>
 #include <QDebug>
 #include <QGuiApplication>
@@ -146,6 +147,7 @@ void ScreenStreamer::StartStreaming(uint32_t ip, int decoder_type)
             m_socket.SendData(enc.m_enc_data, enc.m_enc_sz, ip, m_socket.GetPort());
             auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
             qDebug() << "elapsed " << elapsed;
+            QApplication::processEvents();
         }
 
         delete img_converter;
