@@ -34,6 +34,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&m_event_handler, &EventHandler::StartStreaming,
             &m_streamer, &ScreenStreamer::StartStreaming,
             Qt::ConnectionType::QueuedConnection);
+    connect(&m_event_handler, &EventHandler::StopStreaming,
+            &m_streamer, &ScreenStreamer::StopStreaming,
+            Qt::ConnectionType::QueuedConnection);
 
     ui->listView->setModel(m_node_model);
     ui->listView->show();

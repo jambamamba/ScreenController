@@ -160,3 +160,10 @@ void ScreenStreamer::StartStreaming(uint32_t ip, int decoder_type)
         delete img_converter;
     });
 }
+
+void ScreenStreamer::StopStreaming()
+{
+    stop_ = true;
+    thread_.wait();
+    stop_ = false;
+}
