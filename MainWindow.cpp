@@ -10,6 +10,7 @@
 #include "DiscoveryClient.h"
 #include "TransparentMaximizedWindow.h"
 
+#include "Command.h"
 #include "JpegConverter.h"
 #include "WebPConverter.h"
 
@@ -18,6 +19,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
     , m_streamer_socket(9000)
     , m_streamer(m_streamer_socket, this)
+    , m_event_handler(this)
 {
     ui->setupUi(this);
     setWindowTitle("Kingfisher Screen Controller");
@@ -29,7 +31,7 @@ MainWindow::MainWindow(QWidget *parent)
             this, &MainWindow::ShowTransparentWindowOverlay,
             Qt::ConnectionType::QueuedConnection);
 
-    connect(this, &MainWindow::StartStreaming,
+    connect(&m_event_handler, &EventHandler::StartStreaming,
             &m_streamer, &ScreenStreamer::StartStreaming,
             Qt::ConnectionType::QueuedConnection);
 
@@ -77,8 +79,8 @@ void MainWindow::NodeDoubleClicked(QModelIndex index)
     {
         if(idx == index.row())
         {
-            CommandMessage::Packet pkt;
-            pkt.m_event = CommandMessage::Packet::EventType::StartStreaming;
+            Command pkt;
+            pkt.m_event = Command::EventType::StartStreaming;
             m_streamer.SendCommand(node->m_ip, pkt);
             break;
         }
@@ -86,24 +88,10 @@ void MainWindow::NodeDoubleClicked(QModelIndex index)
     }
 }
 
-void MainWindow::HandleCommand(const CommandMessage::Packet &pkt, uint32_t ip)
-{
-    switch(pkt.m_event)
-    {
-    case CommandMessage::Packet::EventType::StartStreaming:
-        emit StartStreaming(ip, (int)ImageConverterInterface::Types::Webp);
-        break;
-    default:
-        //todo
-        qDebug() << "recvd command from " << ip << ", event " << pkt.m_event;
-        break;
-    }
-
-}
 void MainWindow::PrepareToReceiveStream()
 {
-    m_streamer_socket.StartRecieveDataThread([this](const CommandMessage::Packet &pkt, uint32_t ip){
-        HandleCommand(pkt, ip);
+    m_streamer_socket.StartRecieveDataThread([this](const Command &pkt, uint32_t ip){
+        m_event_handler.HandleCommand(pkt, ip);
     });
     m_streamer_socket.PlaybackImages([this](const QImage&img, uint32_t ip) {
         emit StartPlayback(img, ip);
@@ -134,7 +122,7 @@ void MainWindow::ShowTransparentWindowOverlay(const QImage &img, uint32_t from_i
         }
     });
     connect(m_transparent_window[from_ip], &TransparentMaximizedWindow::SendCommandToNode,
-            [this, from_ip](const CommandMessage::Packet &pkt){
+            [this, from_ip](const Command &pkt){
         if(m_transparent_window.find(from_ip) != m_transparent_window.end())
         {
             m_streamer.SendCommand(from_ip, pkt);

@@ -19,6 +19,7 @@
 #include "NullMouse.h"
 #endif
 
+#include "Command.h"
 #include "JpegConverter.h"
 #include "WebPConverter.h"
 
@@ -115,9 +116,9 @@ QImage& ScreenStreamer::ApplyMouseCursor(QImage& img)
     return img;
 }
 
-void ScreenStreamer::SendCommand(uint32_t ip, const CommandMessage::Packet &pkt)
+void ScreenStreamer::SendCommand(uint32_t ip, const Command &pkt)
 {
-    m_socket.SendData((uint8_t*)&pkt, sizeof pkt, ip, m_socket.GetPort());
+    m_socket.SendData((uint8_t*)&pkt, sizeof(Command), ip, m_socket.GetPort());
 }
 
 void ScreenStreamer::StartStreaming(uint32_t ip, int decoder_type)

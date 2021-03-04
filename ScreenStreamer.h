@@ -10,8 +10,7 @@
 
 #include <QList>
 
-#include "CommandMessage.h"
-
+struct Command;
 class MouseInterface;
 class QScreen;
 class SocketReader;
@@ -23,7 +22,7 @@ class ScreenStreamer : public QObject
 public:
     ScreenStreamer(SocketReader &socket, QObject *parent);
     ~ScreenStreamer();
-    void SendCommand(uint32_t ip, const CommandMessage::Packet &pkt);
+    void SendCommand(uint32_t ip, const Command &pkt);
     QImage ScreenShot();
     QScreen *ActiveScreen();
 public slots:

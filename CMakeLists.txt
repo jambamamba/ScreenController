@@ -108,8 +108,12 @@ SET(PROJECT_SOURCES
     ../License/NetworkRequest.h
     ../Updater/UpdaterWidget.cpp
     ../Updater/UpdaterWidget.h
+    Command.h
+    Command.cpp
     CommandMessage.cpp
     CommandMessage.h
+    EventHandler.h
+    EventHandler.cpp
     ImageConverterInterface.h
     JpegConverter.cpp
     JpegConverter.h

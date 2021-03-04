@@ -16,14 +16,14 @@
 #include <QSizeGrip>
 #include <QTimer>
 
-#include "CommandMessage.h"
+#include "Command.h"
 
 static const float WINDOW_OPACITY = 0.5f;
 
 namespace  {
-CommandMessage::Packet CreateKeyCommandPacket(CommandMessage::Packet::EventType event_type, const QKeyEvent *event)
+Command CreateKeyCommandPacket(Command::EventType event_type, const QKeyEvent *event)
 {
-    CommandMessage::Packet pkt;
+    Command pkt;
     pkt.m_event = event_type;
     pkt.m_key = event->key();
     if(event->modifiers().testFlag(Qt::ShiftModifier))
@@ -42,9 +42,9 @@ CommandMessage::Packet CreateKeyCommandPacket(CommandMessage::Packet::EventType 
     return pkt;
 }
 
-CommandMessage::Packet CreateMouseCommandPacket(CommandMessage::Packet::EventType event_type, const QMouseEvent *event)
+Command CreateMouseCommandPacket(Command::EventType event_type, const QMouseEvent *event)
 {
-    CommandMessage::Packet pkt;
+    Command pkt;
     pkt.m_event = event_type;
     pkt.m_mouse_button = event->button();
     pkt.m_mouse_x = event->pos().x();
@@ -107,31 +107,31 @@ void TransparentMaximizedWindow::keyPressEvent(QKeyEvent *event)
         emit Close();
         exit(0);
     }
-    auto pkt = CreateKeyCommandPacket(CommandMessage::Packet::EventType::KeyPress, event);
+    auto pkt = CreateKeyCommandPacket(Command::EventType::KeyPress, event);
     emit SendCommandToNode(pkt);
 }
 
 void TransparentMaximizedWindow::keyReleaseEvent(QKeyEvent *event)
 {
-    auto pkt = CreateKeyCommandPacket(CommandMessage::Packet::EventType::KeyRelease, event);
+    auto pkt = CreateKeyCommandPacket(Command::EventType::KeyRelease, event);
     emit SendCommandToNode(pkt);
 }
 
 void TransparentMaximizedWindow::mousePressEvent(QMouseEvent *event)
 {
-    auto pkt = CreateMouseCommandPacket(CommandMessage::Packet::EventType::MousePress, event);
+    auto pkt = CreateMouseCommandPacket(Command::EventType::MousePress, event);
     emit SendCommandToNode(pkt);
 }
 
 void TransparentMaximizedWindow::mouseReleaseEvent(QMouseEvent *event)
 {
-    auto pkt = CreateMouseCommandPacket(CommandMessage::Packet::EventType::MouseRelease, event);
+    auto pkt = CreateMouseCommandPacket(Command::EventType::MouseRelease, event);
     emit SendCommandToNode(pkt);
 }
 
 void TransparentMaximizedWindow::mouseMoveEvent(QMouseEvent *event)
 {
-    auto pkt = CreateMouseCommandPacket(CommandMessage::Packet::EventType::MouseMove, event);
+    auto pkt = CreateMouseCommandPacket(Command::EventType::MouseMove, event);
     emit SendCommandToNode(pkt);
 }
 

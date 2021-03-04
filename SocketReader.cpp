@@ -69,24 +69,27 @@ struct Stats
     {
         {
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
+            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - m_begin).count();
+            m_total_bytes += bytes;
 
-            qDebug() << "frame# " << frame_counter++
-                     << bytes
+            qDebug() << "frame# " << m_frame_counter++
+                     << m_total_bytes
                      << " (frame size in bytes), "
-                     << (frame_counter*1000/elapsed)
+                     << (m_frame_counter*1000/elapsed)
                      << " fps, "
-                     << (bytes*8/elapsed)
+                     << (m_total_bytes*8/elapsed)
                      << " kbps.";
             if(elapsed > 1000 * 60)
             {
-                begin = end;
-                frame_counter = 0;
+                m_begin = end;
+                m_frame_counter = 0;
+                m_total_bytes = 0;
             }
         }
     }
-    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-    int frame_counter = 0;
+    std::chrono::steady_clock::time_point m_begin = std::chrono::steady_clock::now();
+    int m_frame_counter = 0;
+    size_t m_total_bytes = 0;
 };
 
 SocketReader::SocketReader(uint16_t port)
@@ -198,7 +201,7 @@ void SocketReader::ExtractImage(uint8_t *buffer,
                                 ImageConverterInterface::Types decoder_type,
                                 uint32_t ip,
                                 Stats &stats,
-                                std::function<void(const CommandMessage::Packet &pkt, uint32_t ip)> handleCommand)
+                                std::function<void(const Command &pkt, uint32_t ip)> handleCommand)
 {
     switch(decoder_type)
     {
@@ -224,7 +227,7 @@ void SocketReader::ExtractImage(uint8_t *buffer,
     }
     case ImageConverterInterface::Types::Command:
     {
-        CommandMessage::Packet *pkt = (CommandMessage::Packet*)buffer;
+        Command *pkt = (Command*)buffer;
         handleCommand(*pkt, ip);
         break;
     }
@@ -233,7 +236,7 @@ void SocketReader::ExtractImage(uint8_t *buffer,
     }
 }
 
-void SocketReader::StartRecieveDataThread(std::function<void(const CommandMessage::Packet &pkt, uint32_t ip)> handleCommand)
+void SocketReader::StartRecieveDataThread(std::function<void(const Command &pkt, uint32_t ip)> handleCommand)
 {
     m_reader_thread = std::async(std::launch::async, [this,handleCommand](){
         ssize_t buffer_size = 1024*1024;

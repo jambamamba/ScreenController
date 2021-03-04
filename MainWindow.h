@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 
+#include "EventHandler.h"
 #include "SocketReader.h"
 #include "ScreenStreamer.h"
 #include "NodeNameDialog.h"
@@ -12,7 +13,6 @@ namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
 #include <QModelIndex>
-#include "CommandMessage.h"
 
 struct Node
 {
@@ -28,6 +28,7 @@ struct Node
     {}
 };
 
+struct Command;
 struct ImageConverterInterface;
 class QStandardItemModel;
 class NodeListModel;
@@ -41,12 +42,11 @@ public:
     ~MainWindow();
 signals:
     void StartPlayback(const QImage&img, uint32_t from_ip);
-    void StartStreaming(uint32_t ip, int decoder_type);
 
 protected:
     void StartDiscoveryService();
     void PrepareToReceiveStream();
-    void HandleCommand(const CommandMessage::Packet &pkt, uint32_t from_ip);
+    void HandleCommand(const Command &pkt, uint32_t from_ip);
 
 private slots:
     void ShowTransparentWindowOverlay(const QImage&img, uint32_t from_ip);
@@ -62,6 +62,7 @@ private:
     std::future<void> m_discovery_thread;
     QStandardItemModel *m_node_model;
     QMap<uint32_t /*ip*/, Node*> m_nodes;
+    EventHandler m_event_handler;
     bool m_stop = false;
 };
 #endif // MAINWINDOW_H

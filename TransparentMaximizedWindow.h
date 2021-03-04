@@ -3,12 +3,11 @@
 #include <QWidget>
 #include <mutex>
 
-#include "CommandMessage.h"
-
 namespace Ui {
 class TransparentMaximizedWindow;
 }
 
+struct Command;
 class TransparentMaximizedWindow : public QWidget
 {
     Q_OBJECT
@@ -31,7 +30,7 @@ public:
 
 signals:
     void Close();
-    void SendCommandToNode(const CommandMessage::Packet &pkt);
+    void SendCommandToNode(const Command &pkt);
 
 private:
     Ui::TransparentMaximizedWindow *ui;

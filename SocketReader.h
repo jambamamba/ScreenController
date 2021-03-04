@@ -14,15 +14,15 @@
 #include <libavutil/avutil.h>
 
 #include "ImageConverterInterface.h"
-#include "CommandMessage.h"
 
+struct Command;
 struct Stats;
 class SocketReader
 {
 public:
     SocketReader(uint16_t port);
     ~SocketReader();
-    void StartRecieveDataThread(std::function<void(const CommandMessage::Packet &pkt, uint32_t ip)> handleCommand);
+    void StartRecieveDataThread(std::function<void(const Command &pkt, uint32_t ip)> handleCommand);
     int SendData(uint8_t *buf, int buf_size, uint32_t ip, size_t port);
     bool PlaybackImages(std::function<void(const QImage&img, uint32_t from_ip)> renderImageCb);
     uint16_t GetPort() const;
@@ -33,7 +33,7 @@ public:
                       ImageConverterInterface::Types decoder_type,
                       uint32_t ip,
                       Stats &stats,
-                      std::function<void(const CommandMessage::Packet &pkt, uint32_t ip)> handleCommand);
+                      std::function<void(const Command &pkt, uint32_t ip)> handleCommand);
 
 protected:
     struct HeaderMetaData
