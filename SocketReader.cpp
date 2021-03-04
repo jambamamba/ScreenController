@@ -344,7 +344,7 @@ bool SocketReader::PlaybackImages(std::function<void(const QImage&img, uint32_t 
         m_stop = false;
     }
     m_playback_thread = std::async(std::launch::async, [this,renderImageCb](){
-        while(true)
+        while(!m_stop)
         {
             std::unique_lock<std::mutex> lk(m_mutex);
             m_cv.wait_for(lk, std::chrono::seconds(1), [this]{
