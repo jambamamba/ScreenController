@@ -118,6 +118,7 @@ void MainWindow::ShowTransparentWindowOverlay(const QImage &img, uint32_t from_i
         {
             TransparentMaximizedWindow *wnd = m_transparent_window[from_ip];
             wnd->hide();
+            wnd->close();
             wnd->deleteLater();
             m_transparent_window.remove(from_ip);
         }
