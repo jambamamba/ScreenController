@@ -114,6 +114,7 @@ void MainWindow::ShowTransparentWindowOverlay(const QImage &img, uint32_t from_i
                 m_nodes[from_ip]->m_name.c_str(), this);
     connect(m_transparent_window[from_ip], &TransparentMaximizedWindow::Close,
             [this, from_ip](){
+        m_streamer.SendCommand(from_ip, Command::EventType::StopStreaming);
         if(m_transparent_window.find(from_ip) != m_transparent_window.end())
         {
             TransparentMaximizedWindow *wnd = m_transparent_window[from_ip];
@@ -122,8 +123,6 @@ void MainWindow::ShowTransparentWindowOverlay(const QImage &img, uint32_t from_i
             wnd->deleteLater();
             m_transparent_window.remove(from_ip);
         }
-        m_streamer.SendCommand(from_ip, Command::EventType::StopStreaming);
-
     });
     connect(m_transparent_window[from_ip], &TransparentMaximizedWindow::SendCommandToNode,
             [this, from_ip](const Command &pkt){
