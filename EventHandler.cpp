@@ -4,6 +4,7 @@
 
 #include "Command.h"
 #include "ImageConverterInterface.h"
+#include "SocketReader.h"
 
 #if defined(Win32) || defined(Win64)
 #include "WindowsMouse.h"
@@ -32,11 +33,12 @@ void EventHandler::HandleCommand(const Command &pkt, uint32_t ip)
         emit StartStreaming(ip, (int)ImageConverterInterface::Types::Webp);
         break;
     case Command::EventType::MouseMove:
+        qDebug() << "recvd move mouse command from " << SocketReader::IpToString(ip) << ", event " << pkt.m_event;
         m_mouse->moveTo(pkt.m_mouse_x, pkt.m_mouse_y);
         break;
     default:
         //todo
-        qDebug() << "recvd command from " << ip << ", event " << pkt.m_event;
+        qDebug() << "recvd command from " << SocketReader::IpToString(ip) << ", event " << pkt.m_event;
         break;
     }
 }
