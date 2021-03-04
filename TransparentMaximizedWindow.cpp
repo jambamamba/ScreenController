@@ -115,7 +115,8 @@ void TransparentMaximizedWindow::keyPressEvent(QKeyEvent *event)
             (event->modifiers().testFlag(Qt::AltModifier)))
     {
         m_closed = true;
-//        emit Close();
+        emit Close();
+
 //        exit(0);//todo
     }
     auto pkt = CreateKeyCommandPacket(Command::EventType::KeyPress, event);
