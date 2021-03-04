@@ -127,6 +127,10 @@ void ScreenStreamer::SendCommand(uint32_t ip, uint16_t event)
 void ScreenStreamer::SendCommand(uint32_t ip, const Command &pkt)
 {
     m_socket.SendData((uint8_t*)&pkt, sizeof(Command), ip, m_socket.GetPort());
+
+    Command pkt2;
+    pkt2.m_event = Command::EventType::None;
+    m_socket.SendData((uint8_t*)&pkt, sizeof(Command), ip, m_socket.GetPort());
 }
 
 void ScreenStreamer::StartStreaming(uint32_t ip, int decoder_type)
