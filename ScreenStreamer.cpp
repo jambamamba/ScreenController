@@ -136,6 +136,7 @@ void ScreenStreamer::SendCommand(uint32_t ip, const Command &pkt)
 void ScreenStreamer::StartStreaming(uint32_t ip, int decoder_type)
 {
     thread_ = std::async(std::launch::async, [this, ip, decoder_type](){
+        pthread_setname_np(pthread_self(), "scrncap");
         ImageConverterInterface *img_converter = nullptr;
         if(decoder_type == ImageConverterInterface::Types::Webp)
         { img_converter = new WebPConverter; }
@@ -168,6 +169,6 @@ void ScreenStreamer::StartStreaming(uint32_t ip, int decoder_type)
 void ScreenStreamer::StopStreaming(uint32_t ip)
 {
     stop_ = true;
-    thread_.wait();
+    if(thread_.valid()) {thread_.wait();}
     stop_ = false;
 }

@@ -239,6 +239,7 @@ void SocketReader::ExtractImage(uint8_t *buffer,
 void SocketReader::StartRecieveDataThread(std::function<void(const Command &pkt, uint32_t ip)> handleCommand)
 {
     m_reader_thread = std::async(std::launch::async, [this,handleCommand](){
+        pthread_setname_np(pthread_self(), "sockrdr");
         ssize_t buffer_size = 1024*1024;
         ssize_t buffer_tail = 0;
         uint8_t *buffer = (uint8_t*) malloc(buffer_size);
@@ -344,6 +345,7 @@ bool SocketReader::PlaybackImages(std::function<void(const QImage&img, uint32_t 
         m_stop = false;
     }
     m_playback_thread = std::async(std::launch::async, [this,renderImageCb](){
+        pthread_setname_np(pthread_self(), "playbk");
         while(!m_stop)
         {
             std::unique_lock<std::mutex> lk(m_mutex);

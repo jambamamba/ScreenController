@@ -55,6 +55,7 @@ MainWindow::~MainWindow()
 void MainWindow::StartDiscoveryService()
 {
     m_discovery_thread = std::async(std::launch::async, [this](){
+        pthread_setname_np(pthread_self(), "discover");
         DiscoveryService discovery(m_node_name.GetFileAbsolutePathName().toUtf8().data());
         DiscoveryClient client(m_node_name.GetFileAbsolutePathName().toUtf8().data(),
                                [this](DiscoveryData *data, std::string ip, uint16_t port){
@@ -69,6 +70,7 @@ void MainWindow::StartDiscoveryService()
         while(!m_stop)
         {
             client.Discover();
+            QApplication::processEvents();
             usleep(3 * 1000 * 1000);
         }
     });
