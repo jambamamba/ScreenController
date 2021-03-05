@@ -31,6 +31,7 @@ public:
     virtual void mousePressEvent(QMouseEvent *event) override;
     virtual void mouseReleaseEvent(QMouseEvent *event) override;
     virtual void mouseMoveEvent(QMouseEvent *event) override;
+    virtual void mouseDoubleClickEvent(QMouseEvent *event) override;
 
 signals:
     void Close();
@@ -48,6 +49,7 @@ private:
         None,
         MousePress,
         MouseRelease,
+        MouseDoubleClicked,
         MouseMove,
         KeyPress,
         KeyRelease,

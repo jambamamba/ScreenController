@@ -17,6 +17,7 @@ struct Command
         StoppedStreaming,
         MousePress,
         MouseRelease,
+        MouseDoubleClicked,
         MouseMove,
         KeyPress,
         KeyRelease

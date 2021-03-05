@@ -45,8 +45,8 @@ Command CreateMouseCommandPacket(Command::EventType event_type, const QMouseEven
     Command pkt;
     pkt.m_event = event_type;
     pkt.m_mouse_button = event->button();
-    pkt.m_mouse_x = event->pos().x();
-    pkt.m_mouse_y = event->pos().y();
+    pkt.m_mouse_x = event->globalX();
+    pkt.m_mouse_y = event->globalY();
 
     return pkt;
 }
@@ -174,6 +174,12 @@ void TransparentMaximizedWindow::mouseReleaseEvent(QMouseEvent *event)
 void TransparentMaximizedWindow::mouseMoveEvent(QMouseEvent *event)
 {
     auto pkt = CreateMouseCommandPacket(Command::EventType::MouseMove, event);
+    emit SendCommandToNode(pkt);
+}
+
+void TransparentMaximizedWindow::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    auto pkt = CreateMouseCommandPacket(Command::EventType::MouseDoubleClicked, event);
     emit SendCommandToNode(pkt);
 }
 
