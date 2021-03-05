@@ -14,6 +14,7 @@ protected slots:
     virtual void onRegisterHotKey(quint32 key, quint32 modifiers) override;
     virtual void onUnRegisterHotKey(quint32 key, quint32 modifiers) override;
     virtual void keyPress(unsigned int keyCode, unsigned int keyModifiers) override;
+    virtual void keyRelease(unsigned int keyCode, unsigned int keyModifiers) override;
 
 protected:
     _XDisplay* m_display;

@@ -1,3 +1,4 @@
+//xinput --test-xi2 --root
 #include "X11Mouse.h"
 #include <QDebug>
 

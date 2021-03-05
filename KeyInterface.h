@@ -37,6 +37,7 @@ public:
     KeyInterface(QObject *parent);
     virtual ~KeyInterface();
     virtual void keyPress(unsigned int keyCode, unsigned int keyModifiers) = 0;
+    virtual void keyRelease(unsigned int keyCode, unsigned int keyModifiers) = 0;
 
 protected slots:
     virtual void testHotKeyPress() = 0;

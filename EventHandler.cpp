@@ -54,6 +54,9 @@ void EventHandler::HandleCommand(const Command &pkt, uint32_t ip)
     case Command::EventType::KeyPress:
         m_key->keyPress(pkt.m_key, pkt.m_key_modifier);
         break;
+    case Command::EventType::KeyRelease:
+        m_key->keyRelease(pkt.m_key, pkt.m_key_modifier);
+        break;
     case Command::EventType::None:
         break;
     default:

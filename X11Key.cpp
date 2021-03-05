@@ -141,33 +141,48 @@ void X11Key::onUnRegisterHotKey(quint32 key, quint32 modifiers)
 void X11Key::keyPress(unsigned int keyCode, unsigned int keyModifiers)
 {
 	qDebug() << "X11Key::keyPress key:" << keyCode;
-	for(size_t i =0; KeyTbl[i] != 0; ++i)
-	{
-		if(KeyTbl[i] == keyCode)
-		{
-			keyCode = KeyTbl[i-1];
-			break;
-		}
-	}
-	qDebug() << "X11Key::keyPress key:" << keyCode << XStringToKeysym("a");
+//	for(size_t i =0; KeyTbl[i] != 0; ++i)
+//	{
+//		if(KeyTbl[i] == keyCode)
+//		{
+//			keyCode = KeyTbl[i-1];
+//			break;
+//		}
+//	}
+//	qDebug() << "X11Key::keyPress key:" << keyCode << XStringToKeysym("a");
 //	keyCode = XStringToKeysym("a");
 //	keyCode = XKeycodeToKeysym(m_display, keyCode);
 
-	// Get the root window for the current display.
-        Window winRoot = XDefaultRootWindow(m_display);
+    // Get the root window for the current display.
+    Window winRoot = XDefaultRootWindow(m_display);
 
-	// Find the window which has the current keyboard focus.
-		Window winFocus;
-		int    revert;
-		XGetInputFocus(m_display, &winFocus, &revert);
+    // Find the window which has the current keyboard focus.
+    Window winFocus;
+    int    revert;
+    XGetInputFocus(m_display, &winFocus, &revert);
 
-	// Send a fake key press event to the window.
-		XKeyEvent event = createKeyEvent(m_display, winFocus, winRoot, true, keyCode, 0);
-		XSendEvent(event.display, event.window, True, KeyPressMask, (XEvent *)&event);
+    // Send a fake key press event to the window.
+    XKeyEvent event = createKeyEvent(m_display, winFocus, winRoot, true, keyCode, keyModifiers);
+    XSendEvent(event.display, event.window, True, KeyPressMask, (XEvent *)&event);
 
-	// Send a fake key release event to the window.
-		event = createKeyEvent(m_display, winFocus, winRoot, false, keyCode, 0);
-		XSendEvent(event.display, event.window, True, KeyPressMask, (XEvent *)&event);
+    XFlush(m_display);
+}
 
-	XFlush(m_display);
+void X11Key::keyRelease(unsigned int keyCode, unsigned int keyModifiers)
+{
+    qDebug() << "X11Key::keyRelease key:" << keyCode;
+
+    // Get the root window for the current display.
+    Window winRoot = XDefaultRootWindow(m_display);
+
+    // Find the window which has the current keyboard focus.
+    Window winFocus;
+    int    revert;
+    XGetInputFocus(m_display, &winFocus, &revert);
+
+    // Send a fake key press event to the window.
+    XKeyEvent event = createKeyEvent(m_display, winFocus, winRoot, true, keyCode, keyModifiers);
+    XSendEvent(event.display, event.window, True, KeyReleaseMask, (XEvent *)&event);
+
+    XFlush(m_display);
 }
