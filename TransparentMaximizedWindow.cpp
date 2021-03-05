@@ -135,6 +135,7 @@ void TransparentMaximizedWindow::keyPressEvent(QKeyEvent *event)
     { return; }
 
     auto pkt = CreateKeyCommandPacket(Command::EventType::KeyPress, event);
+    qDebug() << "keyPress key:" << pkt.m_key << "modifier:" << pkt.m_key_modifier;
     emit SendCommandToNode(pkt);
 }
 
