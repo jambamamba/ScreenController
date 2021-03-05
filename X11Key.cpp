@@ -139,7 +139,8 @@ void X11Key::onUnRegisterHotKey(quint32 key, quint32 modifiers)
 
 void X11Key::keyPress(int keyCode)
 {
-	qDebug() << "X11Key::keyPress key:" << keyCode;
+	qDebug() << "X11Key::keyPress key:" << keyCode << XStringToKeysym("a");
+	keyCode = XStringToKeysym("a");
 
 	// Get the root window for the current display.
 		Window winRoot = XDefaultRootWindow(m_display);

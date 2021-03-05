@@ -119,7 +119,7 @@ bool TransparentMaximizedWindow::Debounce(DebounceEvents event, int *out_elapsed
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - m_debounce_interval[event]).count();
     m_debounce_interval[event] = t1;
     if(out_elapsed) { *out_elapsed = elapsed; }
-    return elapsed < 500;
+    return elapsed < 100;
 }
 
 void TransparentMaximizedWindow::keyPressEvent(QKeyEvent *event)
