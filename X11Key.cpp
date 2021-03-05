@@ -154,7 +154,7 @@ void X11Key::keyPress(unsigned int keyCode)
 //	keyCode = XKeycodeToKeysym(m_display, keyCode);
 
 	// Get the root window for the current display.
-		Window winRoot = XDefaultRootWindow(m_display);
+        Window winRoot = XDefaultRootWindow(m_display);
 
 	// Find the window which has the current keyboard focus.
 		Window winFocus;

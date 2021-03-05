@@ -108,20 +108,20 @@ void X11Mouse::mouseClick(int button, int press_or_release, int x, int y)
     event.xbutton.x = x;
     event.xbutton.y = y;
 
-//    while(event.xbutton.subwindow)
-//    {
-//        event.xbutton.window = event.xbutton.subwindow;
+    while(event.xbutton.subwindow)
+    {
+        event.xbutton.window = event.xbutton.subwindow;
 
-//        XQueryPointer(m_display,
-//                      event.xbutton.window,
-//                      &event.xbutton.root,
-//                      &event.xbutton.subwindow,
-//                      &event.xbutton.x_root,
-//                      &event.xbutton.y_root,
-//                      &event.xbutton.x,
-//                      &event.xbutton.y,
-//                      &event.xbutton.state);
-//    }
+        XQueryPointer(m_display,
+                      event.xbutton.window,
+                      &event.xbutton.root,
+                      &event.xbutton.subwindow,
+                      &event.xbutton.x_root,
+                      &event.xbutton.y_root,
+                      &event.xbutton.x,
+                      &event.xbutton.y,
+                      &event.xbutton.state);
+    }
 
     qDebug() << ((press_or_release == ButtonPress) ? "mousePress" : "mouseRelease")
              << "button" << button
@@ -130,8 +130,9 @@ void X11Mouse::mouseClick(int button, int press_or_release, int x, int y)
              << ","
              << event.xbutton.y;
 
-    if(XSendEvent(m_display, PointerWindow, true, 0xfff, &event) == 0)
-    {fprintf(stderr, "Error\n");}
+    int ret = XSendEvent(m_display, PointerWindow, false, 0xfff, &event);
+    if(ret == 0)
+    {qDebug() << "Error" << errno << strerror(errno);}
     XFlush(m_display);
 }
 
@@ -145,4 +146,5 @@ void X11Mouse::moveTo(int x, int y)
     XSelectInput(m_display, DefaultRootWindow (m_display), KeyReleaseMask);
     XWarpPointer(m_display, None, DefaultRootWindow (m_display), 0, 0, 0, 0, x, y);
     XFlush(m_display);
+
 }
