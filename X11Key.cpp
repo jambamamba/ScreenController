@@ -10,11 +10,42 @@
 #include <X11/extensions/Xfixes.h>
 
 static bool s_last_x11_error = false;
+
+namespace  {
+
 static int MyX11ErrorHandler(Display *, XErrorEvent *)
 {
     qDebug() << "X11 Error";
     s_last_x11_error = true;
 }
+
+XKeyEvent createKeyEvent(Display *display, Window &win,
+                         Window &winRoot, bool press,
+                         int keycode, int modifiers)
+{
+    XKeyEvent event;
+
+	event.display     = display;
+	event.window      = win;
+	event.root        = winRoot;
+	event.subwindow   = None;
+	event.time        = CurrentTime;
+	event.x           = 1;
+	event.y           = 1;
+	event.x_root      = 1;
+	event.y_root      = 1;
+	event.same_screen = True;
+	event.keycode     = XKeysymToKeycode(display, keycode);
+	event.state       = modifiers;
+	if(press)
+		event.type = KeyPress;
+	else
+		event.type = KeyRelease;
+
+	return event;
+}
+
+}//namespace
 
 X11Key::X11Key(QObject *parent)
     : KeyInterface(parent)
@@ -108,12 +139,23 @@ void X11Key::onUnRegisterHotKey(quint32 key, quint32 modifiers)
 
 void X11Key::keyPress(int keyCode)
 {
-    qDebug() << "X11Key::keyPress key:" << keyCode;
+	qDebug() << "X11Key::keyPress key:" << keyCode;
 
-    KeyCode modcode = XKeysymToKeycode(m_display,
-//                                       keyCode
-                                       XStringToKeysym("a")
-                                       );
-    XTestFakeKeyEvent(m_display, modcode, false, 0);
-    XFlush(m_display);
+	// Get the root window for the current display.
+		Window winRoot = XDefaultRootWindow(m_display);
+
+	// Find the window which has the current keyboard focus.
+		Window winFocus;
+		int    revert;
+		XGetInputFocus(m_display, &winFocus, &revert);
+
+	// Send a fake key press event to the window.
+		XKeyEvent event = createKeyEvent(m_display, winFocus, winRoot, true, keyCode, 0);
+		XSendEvent(event.display, event.window, True, KeyPressMask, (XEvent *)&event);
+
+	// Send a fake key release event to the window.
+		event = createKeyEvent(m_display, winFocus, winRoot, false, keyCode, 0);
+		XSendEvent(event.display, event.window, True, KeyPressMask, (XEvent *)&event);
+
+	XFlush(m_display);
 }
