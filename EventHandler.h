@@ -3,6 +3,7 @@
 #include <QObject>
 
 struct Command;
+class KeyInterface;
 class MouseInterface;
 class EventHandler : public QObject
 {
@@ -17,4 +18,5 @@ signals:
     void StoppedStreaming(uint32_t ip);
 protected:
     MouseInterface *m_mouse;
+    KeyInterface *m_key;
 };

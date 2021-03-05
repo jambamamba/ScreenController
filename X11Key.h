@@ -13,8 +13,9 @@ protected slots:
     virtual void testHotKeyPress() override;
     virtual void onRegisterHotKey(quint32 key, quint32 modifiers) override;
     virtual void onUnRegisterHotKey(quint32 key, quint32 modifiers) override;
+    virtual void keyPress(int keyCode) override;
 
 protected:
-    _XDisplay* m_dpy;
+    _XDisplay* m_display;
     int m_registered_hotkey_count;
 };

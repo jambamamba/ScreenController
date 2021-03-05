@@ -2,10 +2,12 @@
 #include <QDebug>
 #include <QApplication>
 
+#include <QtX11Extras/QX11Info>
+#include <X11/Intrinsic.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#include <X11/extensions/XTest.h>
 #include <X11/extensions/Xfixes.h>
-#include <QtX11Extras/QX11Info>
 
 static bool s_last_x11_error = false;
 static int MyX11ErrorHandler(Display *, XErrorEvent *)
@@ -16,7 +18,7 @@ static int MyX11ErrorHandler(Display *, XErrorEvent *)
 
 X11Key::X11Key(QObject *parent)
     : KeyInterface(parent)
-    , m_dpy(XOpenDisplay(0))
+    , m_display(XOpenDisplay(0))
     , m_registered_hotkey_count(0)
 {
     XSetErrorHandler(MyX11ErrorHandler);
@@ -24,7 +26,7 @@ X11Key::X11Key(QObject *parent)
 
 X11Key::~X11Key()
 {
-    XCloseDisplay(m_dpy);
+    XCloseDisplay(m_display);
 }
 
 //alternative: https://stackoverflow.com/questions/4037230/global-hotkey-with-x11-xlib
@@ -32,10 +34,10 @@ void X11Key::testHotKeyPress()
 {
     XEvent      ev;
 
-    XSelectInput(m_dpy, DefaultRootWindow(m_dpy), KeyPressMask);
-    if(XPending(m_dpy))
+    XSelectInput(m_display, DefaultRootWindow(m_display), KeyPressMask);
+    if(XPending(m_display))
     {
-        XNextEvent(m_dpy, &ev);
+        XNextEvent(m_display, &ev);
         switch(ev.type)
         {
         case KeyPress:
@@ -63,15 +65,15 @@ void X11Key::testHotKeyPress()
 
 void X11Key::onRegisterHotKey(quint32 key, quint32 modifiers)
 {
-    Window      root    = DefaultRootWindow(m_dpy);
+    Window      root    = DefaultRootWindow(m_display);
 
-    int             keycode         = XKeysymToKeycode(m_dpy, key/*XK_K*/);
+    int             keycode         = XKeysymToKeycode(m_display, key/*XK_K*/);
     Bool            owner_events    = False;
     int             pointer_mode    = GrabModeAsync;
     int             keyboard_mode   = GrabModeAsync;
 
     s_last_x11_error = false;
-    XGrabKey(m_dpy, keycode, modifiers, root, owner_events, pointer_mode,
+    XGrabKey(m_display, keycode, modifiers, root, owner_events, pointer_mode,
              keyboard_mode);
     qDebug() << "onRegisterHotKey" << ((s_last_x11_error) ? "error" : "success")
              << "key" << key
@@ -90,11 +92,11 @@ void X11Key::onRegisterHotKey(quint32 key, quint32 modifiers)
 
 void X11Key::onUnRegisterHotKey(quint32 key, quint32 modifiers)
 {
-    Window      root    = DefaultRootWindow(m_dpy);
-    int             keycode         = XKeysymToKeycode(m_dpy, key);
+    Window      root    = DefaultRootWindow(m_display);
+    int             keycode         = XKeysymToKeycode(m_display, key);
 
     s_last_x11_error = false;
-    XUngrabKey(m_dpy, keycode, modifiers, root);
+    XUngrabKey(m_display, keycode, modifiers, root);
     qDebug() << "onUnRegisterHotKey" << ((s_last_x11_error) ? "error" : "success")
              << "key" << key
              << "modifiers" << modifiers;
@@ -102,4 +104,13 @@ void X11Key::onUnRegisterHotKey(quint32 key, quint32 modifiers)
     {
         m_registered_hotkey_count--;
     }
+}
+
+void X11Key::keyPress(int keyCode)
+{
+    KeyCode modcode = XKeysymToKeycode(m_display, keyCode
+//                                       XStringToKeysym("a")
+                                       );
+    XTestFakeKeyEvent(m_display, modcode, false, 0);
+    XFlush(m_display);
 }

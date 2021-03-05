@@ -36,6 +36,7 @@ class KeyInterface : public QObject
 public:
     KeyInterface(QObject *parent);
     virtual ~KeyInterface();
+    virtual void keyPress(int keyCode) = 0;
 
 protected slots:
     virtual void testHotKeyPress() = 0;

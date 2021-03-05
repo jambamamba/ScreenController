@@ -10,6 +10,7 @@
 #include "WindowsMouse.h"
 #elif defined(Linux)
 #include "X11Mouse.h"
+#include "X11Key.h"
 #else
 #include "NullMouse.h"
 #endif
@@ -18,10 +19,13 @@ EventHandler::EventHandler(QObject *parent)
     : QObject(parent)
 #if defined(Win32) || defined(Win64)
     ,m_mouse(new WindowsMouse(parent))
+    ,m_key(new WindowsKey(parent))
 #elif defined(Linux)
     ,m_mouse(new X11Mouse(parent))
+    ,m_key(new X11Key(parent))
 #else
     ,m_mouse(new NullMouse(parent))
+    ,m_key(new NullKey(parent))
 #endif
 {}
 
@@ -46,6 +50,9 @@ void EventHandler::HandleCommand(const Command &pkt, uint32_t ip)
         break;
     case Command::EventType::MouseRelease:
         m_mouse->mouseRelease(pkt.m_mouse_button, pkt.m_mouse_x, pkt.m_mouse_y);
+        break;
+    case Command::EventType::KeyPress:
+        m_key->keyPress(pkt.m_key);
         break;
     case Command::EventType::None:
         break;
