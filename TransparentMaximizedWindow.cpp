@@ -155,6 +155,8 @@ void TransparentMaximizedWindow::mousePressEvent(QMouseEvent *event)
 
     m_mouse_button_state = DebounceEvents::MousePress;
     auto pkt = CreateMouseCommandPacket(Command::EventType::MousePress, event);
+    pkt.m_mouse_x = m_mouse_pos.x();
+    pkt.m_mouse_y = m_mouse_pos.y();
     qDebug() << "mousePress @ " << pkt.m_mouse_x << "," << pkt.m_mouse_y;
     emit SendCommandToNode(pkt);
 }
@@ -167,6 +169,8 @@ void TransparentMaximizedWindow::mouseReleaseEvent(QMouseEvent *event)
 
     m_mouse_button_state = DebounceEvents::MouseRelease;
     auto pkt = CreateMouseCommandPacket(Command::EventType::MouseRelease, event);
+    pkt.m_mouse_x = m_mouse_pos.x();
+    pkt.m_mouse_y = m_mouse_pos.y();
     qDebug() << "mouseRelease @ " << pkt.m_mouse_x << "," << pkt.m_mouse_y;
     emit SendCommandToNode(pkt);
 }
@@ -174,6 +178,8 @@ void TransparentMaximizedWindow::mouseReleaseEvent(QMouseEvent *event)
 void TransparentMaximizedWindow::mouseMoveEvent(QMouseEvent *event)
 {
     auto pkt = CreateMouseCommandPacket(Command::EventType::MouseMove, event);
+    qDebug() << "mouseMove @ " << pkt.m_mouse_x << "," << pkt.m_mouse_y;
+    m_mouse_pos = QPoint(pkt.m_mouse_x, pkt.m_mouse_y);
     emit SendCommandToNode(pkt);
 }
 

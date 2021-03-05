@@ -103,6 +103,8 @@ void X11Mouse::mouseClick(int button, int press_or_release, int x, int y)
                   &event.xbutton.y,
                   &event.xbutton.state);
     event.xbutton.subwindow = event.xbutton.window;
+    event.xbutton.x = x;
+    event.xbutton.y = y;
 
     while(event.xbutton.subwindow)
     {

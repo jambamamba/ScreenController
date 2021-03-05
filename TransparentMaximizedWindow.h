@@ -45,6 +45,7 @@ private:
     std::mutex m_mutex;
     QImage m_image;
     QTimer *m_timer;
+    QPoint m_mouse_pos;
     enum DebounceEvents : int {
         None,
         MousePress,
