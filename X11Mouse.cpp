@@ -84,44 +84,65 @@ void X11Mouse::mouseRelease(int button, int x, int y)
     mouseClick(button, ButtonRelease, x, y);
 }
 
-void X11Mouse::mouseClick(int button, int press_or_release, int x, int y)
+void X11Mouse::mouseClick(int button, int press_or_release, int, int)
 {
     XEvent event;
-    memset(&event, 0x00, sizeof(event));
+         memset(&event, 0x00, sizeof(event));
 
-    event.type = press_or_release;
-    event.xbutton.button = button;
-    event.xbutton.same_screen = true;
+        event.type = press_or_release;
+        event.xbutton.button = button;
+        event.xbutton.same_screen = True;
 
-    XQueryPointer(m_display,
-                  RootWindow(m_display, DefaultScreen(m_display)),
-                  &event.xbutton.root,
-                  &event.xbutton.window,
-                  &event.xbutton.x_root,
-                  &event.xbutton.y_root,
-                  &event.xbutton.x,
-                  &event.xbutton.y,
-                  &event.xbutton.state);
-    event.xbutton.subwindow = event.xbutton.window;
-    event.xbutton.x_root = x;
-    event.xbutton.y_root = y;
-    event.xbutton.x = x;
-    event.xbutton.y = y;
+        XQueryPointer(m_display, RootWindow(m_display, DefaultScreen(m_display)), &event.xbutton.root, &event.xbutton.window, &event.xbutton.x_root, &event.xbutton.y_root, &event.xbutton.x, &event.xbutton.y, &event.xbutton.state);
 
-    while(event.xbutton.subwindow)
-    {
-        event.xbutton.window = event.xbutton.subwindow;
+        event.xbutton.subwindow = event.xbutton.window;
 
-        XQueryPointer(m_display,
-                      event.xbutton.window,
-                      &event.xbutton.root,
-                      &event.xbutton.subwindow,
-                      &event.xbutton.x_root,
-                      &event.xbutton.y_root,
-                      &event.xbutton.x,
-                      &event.xbutton.y,
-                      &event.xbutton.state);
-    }
+        while(event.xbutton.subwindow)
+        {
+            event.xbutton.window = event.xbutton.subwindow;
+
+            XQueryPointer(m_display, event.xbutton.window, &event.xbutton.root, &event.xbutton.subwindow, &event.xbutton.x_root, &event.xbutton.y_root, &event.xbutton.x, &event.xbutton.y, &event.xbutton.state);
+        }
+
+        if(XSendEvent(m_display, PointerWindow, True, 0xfff, &event) == 0) fprintf(stderr, "Errore nell'invio dell'evento !!!\n");
+
+        XFlush(m_display);
+//    XEvent event;
+//    memset(&event, 0x00, sizeof(event));
+
+//    event.type = press_or_release;
+//    event.xbutton.button = button;
+//    event.xbutton.same_screen = true;
+
+//    XQueryPointer(m_display,
+//                  RootWindow(m_display, DefaultScreen(m_display)),
+//                  &event.xbutton.root,
+//                  &event.xbutton.window,
+//                  &event.xbutton.x_root,
+//                  &event.xbutton.y_root,
+//                  &event.xbutton.x,
+//                  &event.xbutton.y,
+//                  &event.xbutton.state);
+//    event.xbutton.subwindow = event.xbutton.window;
+//    event.xbutton.x_root = 0;
+//    event.xbutton.y_root = 0;
+//    event.xbutton.x = x;
+//    event.xbutton.y = y;
+
+//    while(event.xbutton.subwindow)
+//    {
+//        event.xbutton.window = event.xbutton.subwindow;
+
+//        XQueryPointer(m_display,
+//                      event.xbutton.window,
+//                      &event.xbutton.root,
+//                      &event.xbutton.subwindow,
+//                      &event.xbutton.x_root,
+//                      &event.xbutton.y_root,
+//                      &event.xbutton.x,
+//                      &event.xbutton.y,
+//                      &event.xbutton.state);
+//    }
 
     qDebug() << ((press_or_release == ButtonPress) ? "mousePress" : "mouseRelease")
              << "button" << button
@@ -130,10 +151,10 @@ void X11Mouse::mouseClick(int button, int press_or_release, int x, int y)
              << ","
              << event.xbutton.y;
 
-    int ret = XSendEvent(m_display, PointerWindow, false, 0xfff, &event);
-    if(ret == 0)
-    {qDebug() << "Error" << errno << strerror(errno);}
-    XFlush(m_display);
+//    int ret = XSendEvent(m_display, PointerWindow, false, 0xfff, &event);
+//    if(ret == 0)
+//    {qDebug() << "Error" << errno << strerror(errno);}
+//    XFlush(m_display);
 }
 
 void X11Mouse::moveTo(int x, int y)
