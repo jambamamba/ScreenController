@@ -3,6 +3,8 @@
 #include <QWidget>
 #include <mutex>
 
+#include "Command.h"
+
 namespace Ui {
 class TransparentMaximizedWindow;
 }
@@ -42,8 +44,18 @@ private:
     std::mutex m_mutex;
     QImage m_image;
     QTimer *m_timer;
+    enum DebounceEvents : int {
+        MousePress,
+        MouseRelease,
+        MouseMove,
+        KeyPress,
+        KeyRelease,
+        TotalEvents
+    };
+    std::chrono::steady_clock::time_point m_debounce_interval[TotalEvents];
     bool m_closed = false;
 
     void paintEvent(QPaintEvent *);
+    bool Debounce(Command::EventType event);
 //    bool eventFilter(QObject *obj, QEvent *event);
 };

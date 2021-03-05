@@ -65,20 +65,20 @@ bool WaitForSocketIO(int socket, fd_set *readset, fd_set *writeset)
 
 struct Stats
 {
-    void Update(ssize_t bytes)
+    void Update(ssize_t frame_sz)
     {
         {
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
             auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - m_begin).count();
-            m_total_bytes += bytes;
+            m_total_bytes += frame_sz;
 
-            qDebug() << "frame# " << m_frame_counter++
-                     << m_total_bytes
-                     << " (frame size in bytes), "
+            qDebug() << "frame# " << m_frame_counter++ << ","
+                     << frame_sz/1024
+                     << "KBytes, "
                      << (m_frame_counter*1000/elapsed)
-                     << " fps, "
+                     << "fps, "
                      << (m_total_bytes*8/elapsed)
-                     << " kbps.";
+                     << "kbps.";
             if(elapsed > 1000 * 60)
             {
                 m_begin = end;
@@ -357,7 +357,7 @@ bool SocketReader::PlaybackImages(std::function<void(const QImage&img, uint32_t 
         {
             std::unique_lock<std::mutex> lk(m_mutex);
             auto sec = std::chrono::seconds(1);
-            m_cv.wait_for(lk, 3*sec, [this]{
+            m_cv.wait_for(lk, 2*sec, [this]{
                 if (m_die) {return true;}
                 for(const auto &display_image: m_display_img)
                 {

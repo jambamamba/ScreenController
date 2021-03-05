@@ -16,8 +16,6 @@
 #include <QSizeGrip>
 #include <QTimer>
 
-#include "Command.h"
-
 static const float WINDOW_OPACITY = 0.5f;
 
 namespace  {
@@ -62,6 +60,11 @@ TransparentMaximizedWindow::TransparentMaximizedWindow(const QString &ip, QWidge
     , m_timer(new QTimer(this))
 {
     ui->setupUi(this);
+
+    for(int i = 0; i < DebounceEvents::TotalEvents; ++i)
+    {
+        m_debounce_interval[i] = std::chrono::steady_clock::now();
+    }
 
 //    installEventFilter(this);
 //    grabKeyboard();
@@ -110,6 +113,14 @@ void TransparentMaximizedWindow::ReOpen()
     m_closed = false;
 }
 
+bool TransparentMaximizedWindow::Debounce(Command::EventType event)
+{
+    std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - m_debounce_interval[event]).count();
+    m_debounce_interval[event] = t1;
+    return elapsed < 500;
+}
+
 void TransparentMaximizedWindow::keyPressEvent(QKeyEvent *event)
 {
     if((event->key() == 'q' || event->key() == 'Q') &&
@@ -119,33 +130,36 @@ void TransparentMaximizedWindow::keyPressEvent(QKeyEvent *event)
         emit Close();
 //        exit(0);//todo
     }
+    if(Debounce(Command::EventType::KeyPress))
+    { return; }
+
     auto pkt = CreateKeyCommandPacket(Command::EventType::KeyPress, event);
     emit SendCommandToNode(pkt);
 }
 
 void TransparentMaximizedWindow::keyReleaseEvent(QKeyEvent *event)
 {
+    if(Debounce(Command::EventType::KeyRelease))
+    { return; }
+
     auto pkt = CreateKeyCommandPacket(Command::EventType::KeyRelease, event);
     emit SendCommandToNode(pkt);
 }
 
 void TransparentMaximizedWindow::mousePressEvent(QMouseEvent *event)
 {
-    qDebug() << "TransparentMaximizedWindow::mousePressEvent";
     auto pkt = CreateMouseCommandPacket(Command::EventType::MousePress, event);
     emit SendCommandToNode(pkt);
 }
 
 void TransparentMaximizedWindow::mouseReleaseEvent(QMouseEvent *event)
 {
-    qDebug() << "TransparentMaximizedWindow::mouseReleaseEvent";
     auto pkt = CreateMouseCommandPacket(Command::EventType::MouseRelease, event);
     emit SendCommandToNode(pkt);
 }
 
 void TransparentMaximizedWindow::mouseMoveEvent(QMouseEvent *event)
 {
-    qDebug() << "TransparentMaximizedWindow::mouseMoveEvent";
     auto pkt = CreateMouseCommandPacket(Command::EventType::MouseMove, event);
     emit SendCommandToNode(pkt);
 }

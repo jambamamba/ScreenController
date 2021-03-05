@@ -115,7 +115,6 @@ void X11Mouse::mouseClick(int button, int press_or_release)
 // Move mouse pointer (absolute)
 void X11Mouse::moveTo(int x, int y)
 {
-    qDebug() << "moveTo " << x << "," << y;
 //    static xdo_t* xdo = xdo_new((char*)m_display);
 //    xdo_wait_for_mouse_move_to(xdo, x, y);
     XSelectInput(m_display, DefaultRootWindow (m_display), KeyReleaseMask);

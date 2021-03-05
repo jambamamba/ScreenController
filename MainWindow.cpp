@@ -74,7 +74,7 @@ void MainWindow::StartDiscoveryService()
         {
             client.Discover();
             QApplication::processEvents();
-            usleep(3 * 1000 * 1000);
+            usleep(2 * 1000 * 1000);
         }
     });
 
@@ -114,7 +114,7 @@ void MainWindow::SendStartStreamingCommand(uint32_t ip)
 void MainWindow::NodeDoubleClicked(QModelIndex index)
 {
     int idx = 0;
-    for(const auto &node : m_nodes)
+    for(const auto &node     : m_nodes)
     {
         if(idx == index.row())
         {
