@@ -110,8 +110,9 @@ void X11Key::keyPress(int keyCode)
 {
     qDebug() << "X11Key::keyPress key:" << keyCode;
 
-    KeyCode modcode = XKeysymToKeycode(m_display, keyCode
-//                                       XStringToKeysym("a")
+    KeyCode modcode = XKeysymToKeycode(m_display,
+//                                       keyCode
+                                       XStringToKeysym("a")
                                        );
     XTestFakeKeyEvent(m_display, modcode, false, 0);
     XFlush(m_display);
