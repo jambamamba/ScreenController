@@ -103,23 +103,25 @@ void X11Mouse::mouseClick(int button, int press_or_release, int x, int y)
                   &event.xbutton.y,
                   &event.xbutton.state);
     event.xbutton.subwindow = event.xbutton.window;
+    event.xbutton.x_root = x;
+    event.xbutton.y_root = y;
     event.xbutton.x = x;
     event.xbutton.y = y;
 
-    while(event.xbutton.subwindow)
-    {
-        event.xbutton.window = event.xbutton.subwindow;
+//    while(event.xbutton.subwindow)
+//    {
+//        event.xbutton.window = event.xbutton.subwindow;
 
-        XQueryPointer(m_display,
-                      event.xbutton.window,
-                      &event.xbutton.root,
-                      &event.xbutton.subwindow,
-                      &event.xbutton.x_root,
-                      &event.xbutton.y_root,
-                      &event.xbutton.x,
-                      &event.xbutton.y,
-                      &event.xbutton.state);
-    }
+//        XQueryPointer(m_display,
+//                      event.xbutton.window,
+//                      &event.xbutton.root,
+//                      &event.xbutton.subwindow,
+//                      &event.xbutton.x_root,
+//                      &event.xbutton.y_root,
+//                      &event.xbutton.x,
+//                      &event.xbutton.y,
+//                      &event.xbutton.state);
+//    }
 
     qDebug() << ((press_or_release == ButtonPress) ? "mousePress" : "mouseRelease")
              << "button" << button
