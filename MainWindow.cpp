@@ -14,7 +14,8 @@
 #include "JpegConverter.h"
 #include "WebPConverter.h"
 
-#include "/home/dev/oosman/Qt/5/Src/qtvirtualkeyboard/tests/manual/x11vkbwrapper/xcbkeyboard.h"
+#include "X11Key.h"
+#include <QtX11Extras/QX11Info>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -50,6 +51,14 @@ MainWindow::MainWindow(QWidget *parent)
     PrepareToReceiveStream();
 
     grabKeyboard();
+//    static auto foo = std::async([this](){
+//        X11Key x11(this);
+//        uint32_t key = 0;
+//        uint32_t modifier = 0;
+//        int type = 0;
+//        x11.testKeyEvent(winId(), key, modifier, type);
+//        qDebug() << "x11 key" << key << modifier << type;
+//    });
 }
 
 MainWindow::~MainWindow()
@@ -190,7 +199,12 @@ void MainWindow::ShowTransparentWindowOverlay(const QImage &img, uint32_t ip)
 
 void MainWindow::keyPressEvent(QKeyEvent *event)
 {
-//    qDebug() << "key pressed " << event->key();
-//    qDebug() << "native " << event->nativeVirtualKey() ;
-//    qDebug() << "x11 lshift " << XK_Shift_L << "," << XK_Shift_R;
+    //todo : do this in transparent window in loop and use select on keyboard device id to wait to read
+    X11Key x11(this);
+    uint32_t key = 0;
+    uint32_t modifier = 0;
+    int type = 0;
+    x11.testKeyEvent(winId(), key, modifier, type);
+    qDebug() << "x11 key" << key << modifier << type;
+
 }

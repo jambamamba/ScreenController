@@ -9,6 +9,7 @@
 #include <unistd.h>
 
 #include <QList>
+#include <QImage>
 
 struct Command;
 class MouseInterface;

@@ -3,6 +3,7 @@
 #include <QImage>
 #include <QMap>
 #include <QPair>
+#include <functional>
 
 struct HotKey
 {
@@ -38,6 +39,7 @@ public:
     virtual ~KeyInterface();
     virtual void keyPress(unsigned int keyCode, unsigned int keyModifiers) = 0;
     virtual void keyRelease(unsigned int keyCode, unsigned int keyModifiers) = 0;
+    virtual bool testKeyEvent(int window, uint32_t &key, uint32_t &modifier, int &type) = 0;
 
 protected slots:
     virtual void testHotKeyPress() = 0;

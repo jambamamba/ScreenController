@@ -1,6 +1,7 @@
 #include "X11Key.h"
 #include <QDebug>
 #include <QApplication>
+#include "unistd.h"
 
 #include <QtX11Extras/QX11Info>
 #include <X11/Intrinsic.h>
@@ -8,7 +9,7 @@
 #include <X11/Xutil.h>
 #include <X11/extensions/XTest.h>
 #include <X11/extensions/Xfixes.h>
-#include <x11vkbwrapper/xcbkeyboard.h>
+//#include <x11vkbwrapper/xcbkeyboard.h>
 
 static bool s_last_x11_error = false;
 
@@ -58,23 +59,57 @@ X11Key::~X11Key()
     XCloseDisplay(m_display);
 }
 
+bool X11Key::testKeyEvent(int window, uint32_t &key, uint32_t &modifier, int &type)
+{
+    //use select on keyboad device
+    //to get keybaord device:
+    //ls -alh /dev/input/by-path | grep kbd
+    if(window == 0)
+    {
+        window = DefaultRootWindow(m_display);
+    }
+    XSelectInput(m_display,
+                 window,
+                 KeyPressMask|KeyReleaseMask );
+    XMapWindow(m_display, window);
+//    qDebug() << "x11 lshift " << XK_Shift_L << ", rshift" << XK_Shift_R;
+//    qDebug() << "x11 lcontrol " << XK_Control_L << ", rcontrol" << XK_Control_R;
+    if(XPending(m_display))
+    {
+        XEvent event;
+        XNextEvent(m_display, &event);
+        switch(event.type)
+        {
+        case KeyPress:
+        case KeyRelease:
+            key = event.xkey.keycode;
+            modifier = event.xkey.state;
+            type = event.type;
+//            qDebug() << "x11 key" << key << modifiers << XKeycodeToKeysym(m_display, key, 0);
+            return true;
+        default:
+            break;
+        }
+    }
+    return false;
+}
 //alternative: https://stackoverflow.com/questions/4037230/global-hotkey-with-x11-xlib
 void X11Key::testHotKeyPress()
 {
-    XEvent      ev;
+    XEvent      event;
 
     XSelectInput(m_display, DefaultRootWindow(m_display), KeyPressMask);
     if(XPending(m_display))
     {
-        XNextEvent(m_display, &ev);
-        switch(ev.type)
+        XNextEvent(m_display, &event);
+        switch(event.type)
         {
         case KeyPress:
 //            qDebug() << "Hot key pressed!"
 //                     << "type" << ev.type
 //                     << "modifier" << ev.xkey.state
 //                     << "key" << XKeycodeToKeysym(m_dpy, ev.xkey.keycode, 0);
-            emit hotKeyPressed(XLookupKeysym(&ev.xkey, 0), ev.xkey.state);
+            emit hotKeyPressed(XLookupKeysym(&event.xkey, 0), event.xkey.state);
             break;
         default:
 //            qDebug() << "key press detected"
@@ -138,14 +173,15 @@ void X11Key::onUnRegisterHotKey(quint32 key, quint32 modifiers)
 void X11Key::keyPress(unsigned int keyCode, unsigned int keyModifiers)
 {
 	qDebug() << "X11Key::keyPress key:" << keyCode;
-    for(size_t i =0; KeyTbl[i] != 0; ++i)
-    {
-        if(KeyTbl[i] == keyCode)
-        {
-            keyCode = KeyTbl[i-1];
-            break;
-        }
-    }
+//    for(size_t i =0; KeyTbl[i] != 0; ++i)
+//    {
+//        if(KeyTbl[i] == keyCode)
+//        {
+//            keyCode = KeyTbl[i-1];
+//            break;
+//        }
+//    }
+
 //	qDebug() << "X11Key::keyPress key:" << keyCode << XStringToKeysym("a");
 //	keyCode = XStringToKeysym("a");
 //	keyCode = XKeycodeToKeysym(m_display, keyCode);
@@ -168,14 +204,14 @@ void X11Key::keyPress(unsigned int keyCode, unsigned int keyModifiers)
 void X11Key::keyRelease(unsigned int keyCode, unsigned int keyModifiers)
 {
     qDebug() << "X11Key::keyRelease key:" << keyCode;
-    for(size_t i =0; KeyTbl[i] != 0; ++i)
-    {
-        if(KeyTbl[i] == keyCode)
-        {
-            keyCode = KeyTbl[i-1];
-            break;
-        }
-    }
+//    for(size_t i =0; KeyTbl[i] != 0; ++i)
+//    {
+//        if(KeyTbl[i] == keyCode)
+//        {
+//            keyCode = KeyTbl[i-1];
+//            break;
+//        }
+//    }
 
     // Get the root window for the current display.
     Window winRoot = XDefaultRootWindow(m_display);
