@@ -8,7 +8,7 @@
 #include <X11/Xutil.h>
 #include <X11/extensions/XTest.h>
 #include <X11/extensions/Xfixes.h>
-#include "/home/dev/oosman/Qt/5/5.15.0/Src/qtvirtualkeyboard/tests/manual/x11vkbwrapper/xcbkeyboard.h"
+#include <x11vkbwrapper/xcbkeyboard.h>
 
 static bool s_last_x11_error = false;
 

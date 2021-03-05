@@ -6,7 +6,7 @@ set(CMAKE_CXX_FLAGS  -Wall)
 set(CMAKE_C_FLAGS_RELEASE  -s -O3)
 set(CMAKE_CXX_FLAGS_RELEASE  -s -O3)
 set(LIBS_DIR "$ENV{HOME}/$ENV{DOCKERUSER}/.leila/lib")
-set(QT_DIR "$ENV{HOME}/$ENV{DOCKERUSER}/Qt/5.15.0")
+set(QT_DIR "$ENV{HOME}/$ENV{DOCKERUSER}/Qt/5")
 
 SET(PROJECT_NAME ScreenController)
 PROJECT(${PROJECT_NAME})
@@ -30,6 +30,7 @@ FIND_PACKAGE(Qt5WinExtras REQUIRED)
 ENDIF(UNIX)
 
 INCLUDE_DIRECTORIES(
+    ${QT_DIR}/Src/qtvirtualkeyboard/tests/manual/
     ${LIBS_DIR}/turbojpeg/build
     ${LIBS_DIR}/turbojpeg
     ${LIBS_DIR}/openssl/include
