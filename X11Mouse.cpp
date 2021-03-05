@@ -133,6 +133,11 @@ void X11Mouse::mouseClick(int button, int press_or_release, int x, int y)
 
 void X11Mouse::moveTo(int x, int y)
 {
+    qDebug() << "mouseTo"
+             << x
+             << ","
+             << y;
+
     XSelectInput(m_display, DefaultRootWindow (m_display), KeyReleaseMask);
     XWarpPointer(m_display, None, DefaultRootWindow (m_display), 0, 0, 0, 0, x, y);
     XFlush(m_display);
