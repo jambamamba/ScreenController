@@ -12,7 +12,7 @@ public:
     virtual ~MouseInterface();
 
     virtual QImage getMouseCursor(QPoint &pos) const = 0;
-    virtual void mousePress(int button) = 0;
-    virtual void mouseRelease(int button) = 0;
+    virtual void mousePress(int button, int x, int y) = 0;
+    virtual void mouseRelease(int button, int x, int y) = 0;
     virtual void moveTo(int x, int y) = 0;
 };

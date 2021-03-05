@@ -74,19 +74,17 @@ QImage X11Mouse::getMouseCursor(QPoint &pos) const
 
 //https://stackoverflow.com/questions/20595716/control-mouse-by-writing-to-dev-input-mice
 //mouseClick(Button1)
-void X11Mouse::mousePress(int button)
+void X11Mouse::mousePress(int button, int x, int y)
 {
-    qDebug() << "mousePress " << button;
-    mouseClick(button, ButtonPress);
+    mouseClick(button, ButtonPress, x, y);
 }
 
-void X11Mouse::mouseRelease(int button)
+void X11Mouse::mouseRelease(int button, int x, int y)
 {
-    qDebug() << "mouseRelease " << button;
-    mouseClick(button, ButtonRelease);
+    mouseClick(button, ButtonRelease, x, y);
 }
 
-void X11Mouse::mouseClick(int button, int press_or_release)
+void X11Mouse::mouseClick(int button, int press_or_release, int x, int y)
 {
     XEvent event;
     memset(&event, 0x00, sizeof(event));
@@ -95,27 +93,46 @@ void X11Mouse::mouseClick(int button, int press_or_release)
     event.xbutton.button = button;
     event.xbutton.same_screen = true;
 
-    XQueryPointer(m_display, RootWindow(m_display, DefaultScreen(m_display)), &event.xbutton.root, &event.xbutton.window, &event.xbutton.x_root, &event.xbutton.y_root, &event.xbutton.x, &event.xbutton.y, &event.xbutton.state);
-
+    XQueryPointer(m_display,
+                  RootWindow(m_display, DefaultScreen(m_display)),
+                  &event.xbutton.root,
+                  &event.xbutton.window,
+                  &event.xbutton.x_root,
+                  &event.xbutton.y_root,
+                  &event.xbutton.x,
+                  &event.xbutton.y,
+                  &event.xbutton.state);
     event.xbutton.subwindow = event.xbutton.window;
 
     while(event.xbutton.subwindow)
     {
         event.xbutton.window = event.xbutton.subwindow;
 
-        XQueryPointer(m_display, event.xbutton.window, &event.xbutton.root, &event.xbutton.subwindow, &event.xbutton.x_root, &event.xbutton.y_root, &event.xbutton.x, &event.xbutton.y, &event.xbutton.state);
+        XQueryPointer(m_display,
+                      event.xbutton.window,
+                      &event.xbutton.root,
+                      &event.xbutton.subwindow,
+                      &event.xbutton.x_root,
+                      &event.xbutton.y_root,
+                      &event.xbutton.x,
+                      &event.xbutton.y,
+                      &event.xbutton.state);
     }
 
-    if(XSendEvent(m_display, PointerWindow, true, 0xfff, &event) == 0) {fprintf(stderr, "Error\n");}
+    qDebug() << ((press_or_release == ButtonPress) ? "mousePress" : "mouseRelease")
+             << "button" << button
+             << "@"
+             << event.xbutton.x
+             << ","
+             << event.xbutton.y;
 
+    if(XSendEvent(m_display, PointerWindow, true, 0xfff, &event) == 0)
+    {fprintf(stderr, "Error\n");}
     XFlush(m_display);
 }
 
-// Move mouse pointer (absolute)
 void X11Mouse::moveTo(int x, int y)
 {
-//    static xdo_t* xdo = xdo_new((char*)m_display);
-//    xdo_wait_for_mouse_move_to(xdo, x, y);
     XSelectInput(m_display, DefaultRootWindow (m_display), KeyReleaseMask);
     XWarpPointer(m_display, None, DefaultRootWindow (m_display), 0, 0, 0, 0, x, y);
     XFlush(m_display);

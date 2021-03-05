@@ -42,10 +42,10 @@ void EventHandler::HandleCommand(const Command &pkt, uint32_t ip)
         m_mouse->moveTo(pkt.m_mouse_x, pkt.m_mouse_y);
         break;
     case Command::EventType::MousePress:
-        m_mouse->mousePress(pkt.m_mouse_button);
+        m_mouse->mousePress(pkt.m_mouse_button, pkt.m_mouse_x, pkt.m_mouse_y);
         break;
     case Command::EventType::MouseRelease:
-        m_mouse->mouseRelease(pkt.m_mouse_button);
+        m_mouse->mouseRelease(pkt.m_mouse_button, pkt.m_mouse_x, pkt.m_mouse_y);
         break;
     case Command::EventType::None:
         break;
