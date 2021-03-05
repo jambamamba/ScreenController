@@ -25,7 +25,7 @@ Command CreateKeyCommandPacket(Command::EventType event_type, const QKeyEvent *e
     Command pkt;
     pkt.m_event = event_type;
     pkt.m_key = event->key();
-    pkt.m_modifier = event->nativeVirtualKey();//todo: works for linux, may not work on windows or osx
+    pkt.m_modifier = 0;//event->nativeVirtualKey();//todo: works for linux, may not work on windows or osx
 //    if(event->modifiers().testFlag(Qt::ShiftModifier))
 //    { pkt.m_key_modifier |= XKB_KEY_Shift_L; }
 //    else if(event->modifiers().testFlag(Qt::ControlModifier))
