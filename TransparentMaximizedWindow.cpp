@@ -113,7 +113,7 @@ void TransparentMaximizedWindow::ReOpen()
     m_closed = false;
 }
 
-bool TransparentMaximizedWindow::Debounce(Command::EventType event)
+bool TransparentMaximizedWindow::Debounce(DebounceEvents event)
 {
     std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - m_debounce_interval[event]).count();
@@ -130,7 +130,7 @@ void TransparentMaximizedWindow::keyPressEvent(QKeyEvent *event)
         emit Close();
 //        exit(0);//todo
     }
-    if(Debounce(Command::EventType::KeyPress))
+    if(Debounce(DebounceEvents::KeyPress))
     { return; }
 
     auto pkt = CreateKeyCommandPacket(Command::EventType::KeyPress, event);
@@ -139,7 +139,7 @@ void TransparentMaximizedWindow::keyPressEvent(QKeyEvent *event)
 
 void TransparentMaximizedWindow::keyReleaseEvent(QKeyEvent *event)
 {
-    if(Debounce(Command::EventType::KeyRelease))
+    if(Debounce(DebounceEvents::KeyRelease))
     { return; }
 
     auto pkt = CreateKeyCommandPacket(Command::EventType::KeyRelease, event);
@@ -148,12 +148,18 @@ void TransparentMaximizedWindow::keyReleaseEvent(QKeyEvent *event)
 
 void TransparentMaximizedWindow::mousePressEvent(QMouseEvent *event)
 {
+    if(Debounce(DebounceEvents::MousePress))
+    { return; }
+
     auto pkt = CreateMouseCommandPacket(Command::EventType::MousePress, event);
     emit SendCommandToNode(pkt);
 }
 
 void TransparentMaximizedWindow::mouseReleaseEvent(QMouseEvent *event)
 {
+    if(Debounce(DebounceEvents::MouseRelease))
+    { return; }
+
     auto pkt = CreateMouseCommandPacket(Command::EventType::MouseRelease, event);
     emit SendCommandToNode(pkt);
 }

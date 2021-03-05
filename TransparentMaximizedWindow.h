@@ -56,6 +56,6 @@ private:
     bool m_closed = false;
 
     void paintEvent(QPaintEvent *);
-    bool Debounce(Command::EventType event);
+    bool Debounce(DebounceEvents event);
 //    bool eventFilter(QObject *obj, QEvent *event);
 };
