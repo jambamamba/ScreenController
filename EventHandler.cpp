@@ -52,7 +52,7 @@ void EventHandler::HandleCommand(const Command &pkt, uint32_t ip)
         m_mouse->mouseRelease(pkt.m_mouse_button, pkt.m_mouse_x, pkt.m_mouse_y);
         break;
     case Command::EventType::KeyPress:
-        m_key->keyPress(pkt.m_key);
+        m_key->keyPress(pkt.m_key, pkt.m_key_modifier);
         break;
     case Command::EventType::None:
         break;

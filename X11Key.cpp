@@ -138,7 +138,7 @@ void X11Key::onUnRegisterHotKey(quint32 key, quint32 modifiers)
     }
 }
 
-void X11Key::keyPress(unsigned int keyCode)
+void X11Key::keyPress(unsigned int keyCode, unsigned int keyModifiers)
 {
 	qDebug() << "X11Key::keyPress key:" << keyCode;
 	for(size_t i =0; KeyTbl[i] != 0; ++i)
