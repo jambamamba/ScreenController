@@ -8,6 +8,7 @@
 #include <X11/Xutil.h>
 #include <X11/extensions/XTest.h>
 #include <X11/extensions/Xfixes.h>
+#include "/home/dev/oosman/Qt/5/5.15.0/Src/qtvirtualkeyboard/tests/manual/x11vkbwrapper/xcbkeyboard.h"
 
 static bool s_last_x11_error = false;
 
@@ -137,8 +138,16 @@ void X11Key::onUnRegisterHotKey(quint32 key, quint32 modifiers)
     }
 }
 
-void X11Key::keyPress(int keyCode)
+void X11Key::keyPress(unsigned int keyCode)
 {
+	for(size_t i =0; KeyTbl[i] != 0; ++i)
+	{
+		if(KeyTbl[i] == keyCode)
+		{
+			keyCode = KeyTbl[i-1];
+			break;
+		}
+	}
 	qDebug() << "X11Key::keyPress key:" << keyCode << XStringToKeysym("a");
 	keyCode = XStringToKeysym("a");
 
