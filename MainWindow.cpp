@@ -14,6 +14,8 @@
 #include "JpegConverter.h"
 #include "WebPConverter.h"
 
+#include "/home/dev/oosman/Qt/5/Src/qtvirtualkeyboard/tests/manual/x11vkbwrapper/xcbkeyboard.h"
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -46,6 +48,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     StartDiscoveryService();
     PrepareToReceiveStream();
+
+    grabKeyboard();
 }
 
 MainWindow::~MainWindow()
@@ -182,4 +186,11 @@ void MainWindow::ShowTransparentWindowOverlay(const QImage &img, uint32_t ip)
     });
     QImage screen_shot = m_streamer.ScreenShot();
     m_transparent_window[ip]->Show(screen_shot.width(), screen_shot.height(), m_streamer.ActiveScreen());
+}
+
+void MainWindow::keyPressEvent(QKeyEvent *event)
+{
+//    qDebug() << "key pressed " << event->key();
+//    qDebug() << "native " << event->nativeVirtualKey() ;
+//    qDebug() << "x11 lshift " << XK_Shift_L << "," << XK_Shift_R;
 }

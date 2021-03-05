@@ -25,12 +25,13 @@ Command CreateKeyCommandPacket(Command::EventType event_type, const QKeyEvent *e
     Command pkt;
     pkt.m_event = event_type;
     pkt.m_key = event->key();
-    if(event->modifiers().testFlag(Qt::ShiftModifier))
-    { pkt.m_key_modifier |= XKB_KEY_Shift_L; }
-    else if(event->modifiers().testFlag(Qt::ControlModifier))
-    { pkt.m_key_modifier |= XKB_KEY_Control_L; }
-    else if(event->modifiers().testFlag(Qt::AltModifier))
-    { pkt.m_key_modifier |= XKB_KEY_Alt_L; }
+    pkt.m_modifier = event->nativeVirtualKey();//todo: works for linux, may not work on windows or osx
+//    if(event->modifiers().testFlag(Qt::ShiftModifier))
+//    { pkt.m_key_modifier |= XKB_KEY_Shift_L; }
+//    else if(event->modifiers().testFlag(Qt::ControlModifier))
+//    { pkt.m_key_modifier |= XKB_KEY_Control_L; }
+//    else if(event->modifiers().testFlag(Qt::AltModifier))
+//    { pkt.m_key_modifier |= XKB_KEY_Alt_L; }
 
     return pkt;
 }
@@ -130,7 +131,7 @@ void TransparentMaximizedWindow::keyPressEvent(QKeyEvent *event)
     { return; }
 
     auto pkt = CreateKeyCommandPacket(Command::EventType::KeyPress, event);
-    qDebug() << "keyPress key:" << pkt.m_key << "modifier:" << pkt.m_key_modifier;
+    qDebug() << "keyPress key:" << pkt.m_key << "modifier:" << pkt.m_modifier;
     emit SendCommandToNode(pkt);
 }
 

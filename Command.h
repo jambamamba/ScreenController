@@ -24,9 +24,9 @@ struct Command
     };
     uint16_t m_event = None;
     uint32_t m_size = sizeof (Command);
-    uint32_t m_key_modifier = Qt::KeyboardModifier::NoModifier;
+    uint32_t m_modifier = 0;
     int m_key = -1;
-    int m_mouse_button = Qt::MouseButton::NoButton;
+    int m_mouse_button = 0;
     int m_mouse_x = -1;
     int m_mouse_y = -1;
     uint8_t m_tail_bytes[4] = { 0xca, 0xfe, 0xd0, 0x0d };
