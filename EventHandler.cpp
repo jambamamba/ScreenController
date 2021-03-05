@@ -47,9 +47,10 @@ void EventHandler::HandleCommand(const Command &pkt, uint32_t ip)
     case Command::EventType::MouseRelease:
         m_mouse->mouseRelease(pkt.m_mouse_button);
         break;
+    case Command::EventType::None:
+        break;
     default:
-        //todo
-        qDebug() << "recvd command from " << SocketReader::IpToString(ip) << ", event " << pkt.m_event;
+        qDebug() << "recvd unhandled command from " << SocketReader::IpToString(ip) << ", event " << pkt.m_event;
         break;
     }
 }
