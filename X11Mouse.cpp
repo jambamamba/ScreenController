@@ -88,7 +88,6 @@ void X11Mouse::mouseRelease(int button)
 
 void X11Mouse::mouseClick(int button, int press_or_release)
 {
-
     XEvent event;
     memset(&event, 0x00, sizeof(event));
 

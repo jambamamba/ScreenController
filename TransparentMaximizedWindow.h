@@ -45,6 +45,7 @@ private:
     QImage m_image;
     QTimer *m_timer;
     enum DebounceEvents : int {
+        None,
         MousePress,
         MouseRelease,
         MouseMove,
@@ -53,9 +54,10 @@ private:
         TotalEvents
     };
     std::chrono::steady_clock::time_point m_debounce_interval[TotalEvents];
+    DebounceEvents m_mouse_button_state = DebounceEvents::None;
     bool m_closed = false;
 
     void paintEvent(QPaintEvent *);
-    bool Debounce(DebounceEvents event);
+    bool Debounce(DebounceEvents event, int *out_elapsed = nullptr);
 //    bool eventFilter(QObject *obj, QEvent *event);
 };

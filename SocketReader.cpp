@@ -72,6 +72,7 @@ struct Stats
             auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - m_begin).count();
             m_total_bytes += frame_sz;
 
+            if(0)//todo
             qDebug() << "frame# " << m_frame_counter++ << ","
                      << frame_sz/1024
                      << "KBytes, "

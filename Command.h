@@ -8,8 +8,8 @@
 struct Command
 {
     uint8_t m_sync_bytes[4] = { 0xca, 0xfe, 0xba, 0xbe };
-    uint8_t m_version;
-    uint8_t m_padding;
+    uint8_t m_version = 1;
+    uint8_t m_padding = 0;
     enum EventType : int {
         None,
         StartStreaming,
@@ -21,8 +21,8 @@ struct Command
         KeyPress,
         KeyRelease
     };
-    uint16_t m_event;
-    uint32_t m_size;
+    uint16_t m_event = None;
+    uint32_t m_size = sizeof (Command);
     uint32_t m_key_modifier = Qt::KeyboardModifier::NoModifier;
     int m_key = -1;
     int m_mouse_button = Qt::MouseButton::NoButton;

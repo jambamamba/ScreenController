@@ -113,11 +113,12 @@ void TransparentMaximizedWindow::ReOpen()
     m_closed = false;
 }
 
-bool TransparentMaximizedWindow::Debounce(DebounceEvents event)
+bool TransparentMaximizedWindow::Debounce(DebounceEvents event, int *out_elapsed)
 {
     std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - m_debounce_interval[event]).count();
     m_debounce_interval[event] = t1;
+    if(out_elapsed) { *out_elapsed = elapsed; }
     return elapsed < 500;
 }
 
@@ -128,9 +129,9 @@ void TransparentMaximizedWindow::keyPressEvent(QKeyEvent *event)
     {
         m_closed = true;
         emit Close();
-//        exit(0);//todo
     }
-    if(Debounce(DebounceEvents::KeyPress))
+    int elapsed = 0;
+    if(Debounce(DebounceEvents::KeyPress, &elapsed))
     { return; }
 
     auto pkt = CreateKeyCommandPacket(Command::EventType::KeyPress, event);
@@ -148,19 +149,25 @@ void TransparentMaximizedWindow::keyReleaseEvent(QKeyEvent *event)
 
 void TransparentMaximizedWindow::mousePressEvent(QMouseEvent *event)
 {
-    if(Debounce(DebounceEvents::MousePress))
-    { return; }
+    if(m_mouse_button_state == DebounceEvents::MousePress) { return; }
+//    if(Debounce(DebounceEvents::MousePress))
+//    { return; }
 
+    m_mouse_button_state = DebounceEvents::MousePress;
     auto pkt = CreateMouseCommandPacket(Command::EventType::MousePress, event);
+    qDebug() << "mousePress @ " << pkt.m_mouse_x << "," << pkt.m_mouse_y;
     emit SendCommandToNode(pkt);
 }
 
 void TransparentMaximizedWindow::mouseReleaseEvent(QMouseEvent *event)
 {
-    if(Debounce(DebounceEvents::MouseRelease))
-    { return; }
+    if(m_mouse_button_state == DebounceEvents::MouseRelease) { return; }
+//    if(Debounce(DebounceEvents::MouseRelease))
+//    { return; }
 
+    m_mouse_button_state = DebounceEvents::MouseRelease;
     auto pkt = CreateMouseCommandPacket(Command::EventType::MouseRelease, event);
+    qDebug() << "mouseRelease @ " << pkt.m_mouse_x << "," << pkt.m_mouse_y;
     emit SendCommandToNode(pkt);
 }
 
