@@ -15,6 +15,7 @@
 #include <QLabel>
 #include <QSizeGrip>
 #include <QTimer>
+#include <xkbcommon/xkbcommon-keysyms.h>
 
 static const float WINDOW_OPACITY = 0.5f;
 
@@ -25,17 +26,11 @@ Command CreateKeyCommandPacket(Command::EventType event_type, const QKeyEvent *e
     pkt.m_event = event_type;
     pkt.m_key = event->key();
     if(event->modifiers().testFlag(Qt::ShiftModifier))
-    { pkt.m_key_modifier |= Qt::ShiftModifier; }
+    { pkt.m_key_modifier |= XKB_KEY_Shift_L; }
     else if(event->modifiers().testFlag(Qt::ControlModifier))
-    { pkt.m_key_modifier |= Qt::ControlModifier; }
+    { pkt.m_key_modifier |= XKB_KEY_Control_L; }
     else if(event->modifiers().testFlag(Qt::AltModifier))
-    { pkt.m_key_modifier |= Qt::AltModifier; }
-    else if(event->modifiers().testFlag(Qt::KeypadModifier))
-    { pkt.m_key_modifier |= Qt::KeypadModifier; }
-    else if(event->modifiers().testFlag(Qt::GroupSwitchModifier))
-    { pkt.m_key_modifier |= Qt::GroupSwitchModifier; }
-    else if(event->modifiers().testFlag(Qt::KeyboardModifierMask))
-    { pkt.m_key_modifier |= Qt::KeyboardModifierMask; }
+    { pkt.m_key_modifier |= XKB_KEY_Alt_L; }
 
     return pkt;
 }
