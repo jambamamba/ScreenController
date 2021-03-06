@@ -37,7 +37,7 @@ XKeyEvent createKeyEvent(Display *display, Window &win,
 	event.x_root      = 1;
 	event.y_root      = 1;
 	event.same_screen = True;
-	event.keycode     = XKeysymToKeycode(display, keycode);
+	event.keycode     = keycode;//XKeysymToKeycode(display, keycode);
 	event.state       = modifiers;
     event.type = event_type;
 
