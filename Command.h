@@ -19,16 +19,25 @@ struct Command
         MouseRelease,
         MouseDoubleClicked,
         MouseMove,
-        KeyPress,
-        KeyRelease
+        KeyEvent,
     };
     uint16_t m_event = None;
     uint32_t m_size = sizeof (Command);
-    uint32_t m_modifier = 0;
-    int m_key = -1;
-    int m_mouse_button = 0;
-    int m_mouse_x = -1;
-    int m_mouse_y = -1;
+    struct Key {
+        uint32_t m_code = 0;
+        uint32_t m_modifier = 0;
+        uint32_t m_type = 0;
+    };
+    struct Mouse {
+        int m_button = 0;
+        int m_x = -1;
+        int m_y = -1;
+    };
+    union U {
+        Key m_key;
+        Mouse m_mouse;
+        U(){}
+    } u;
     uint8_t m_tail_bytes[4] = { 0xca, 0xfe, 0xd0, 0x0d };
 
     Command(uint8_t version = 1, uint16_t cmd_id = 0);

@@ -8,9 +8,8 @@ class X11Key : public KeyInterface
 public:
     X11Key(QObject *parent);
     virtual ~X11Key();
-    virtual void keyPress(unsigned int keyCode, unsigned int keyModifiers) override;
-    virtual void keyRelease(unsigned int keyCode, unsigned int keyModifiers) override;
-    virtual bool testKeyEvent(int window, uint32_t &key, uint32_t &modifier, int &type) override;
+    virtual void keyEvent(uint32_t key, uint32_t modifier, uint32_t type) override;
+    virtual bool testKeyEvent(int window, uint32_t &key, uint32_t &modifier, uint32_t &type) override;
 
 protected slots:
     virtual void testHotKeyPress() override;

@@ -18,15 +18,18 @@
 EventHandler::EventHandler(QObject *parent)
     : QObject(parent)
 #if defined(Win32) || defined(Win64)
-    ,m_mouse(new WindowsMouse(parent))
-    ,m_key(new WindowsKey(parent))
+    ,m_mouse(std::make_unique<WindowsMouse>(parent))
+    ,m_key(std::make_unique<WindowsKey>(parent))
 #elif defined(Linux)
-    ,m_mouse(new X11Mouse(parent))
-    ,m_key(new X11Key(parent))
+    ,m_mouse(std::make_unique<X11Mouse>(parent))
+    ,m_key(std::make_unique<X11Key>(parent))
 #else
-    ,m_mouse(new NullMouse(parent))
-    ,m_key(new NullKey(parent))
+    ,m_mouse(std::make_unique<NullMouse>(parent))
+    ,m_key(std::make_unique<NullKey>(parent))
 #endif
+{}
+
+EventHandler::~EventHandler()
 {}
 
 void EventHandler::HandleCommand(const Command &pkt, uint32_t ip)
@@ -43,19 +46,16 @@ void EventHandler::HandleCommand(const Command &pkt, uint32_t ip)
         emit StoppedStreaming(ip);
         break;
     case Command::EventType::MouseMove:
-        m_mouse->moveTo(pkt.m_mouse_x, pkt.m_mouse_y);
+        m_mouse->moveTo(pkt.u.m_mouse.m_x, pkt.u.m_mouse.m_y);
         break;
     case Command::EventType::MousePress:
-        m_mouse->mousePress(pkt.m_mouse_button, pkt.m_mouse_x, pkt.m_mouse_y);
+        m_mouse->mousePress(pkt.u.m_mouse.m_button, pkt.u.m_mouse.m_x, pkt.u.m_mouse.m_y);
         break;
     case Command::EventType::MouseRelease:
-        m_mouse->mouseRelease(pkt.m_mouse_button, pkt.m_mouse_x, pkt.m_mouse_y);
+        m_mouse->mouseRelease(pkt.u.m_mouse.m_button, pkt.u.m_mouse.m_x, pkt.u.m_mouse.m_y);
         break;
-    case Command::EventType::KeyPress:
-        m_key->keyPress(pkt.m_key, pkt.m_modifier);
-        break;
-    case Command::EventType::KeyRelease:
-        m_key->keyRelease(pkt.m_key, pkt.m_modifier);
+    case Command::EventType::KeyEvent:
+        m_key->keyEvent(pkt.u.m_key.m_code, pkt.u.m_key.m_modifier, pkt.u.m_key.m_type);
         break;
     case Command::EventType::None:
         break;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QObject>
+#include <memory>
 
 struct Command;
 class KeyInterface;
@@ -10,6 +11,7 @@ class EventHandler : public QObject
     Q_OBJECT
 public:
     EventHandler(QObject *parent);
+    ~EventHandler();
     void HandleCommand(const Command &pkt, uint32_t ip);
 
 signals:
@@ -17,6 +19,6 @@ signals:
     void StopStreaming(uint32_t ip);
     void StoppedStreaming(uint32_t ip);
 protected:
-    MouseInterface *m_mouse;
-    KeyInterface *m_key;
+    std::unique_ptr<MouseInterface> m_mouse;
+    std::unique_ptr<KeyInterface> m_key;
 };

@@ -1,7 +1,9 @@
 #pragma once
 
 #include <QWidget>
+#include <future>
 #include <mutex>
+#include <memory>
 
 #include "Command.h"
 
@@ -9,6 +11,8 @@ namespace Ui {
 class TransparentMaximizedWindow;
 }
 
+class KeyInterface;
+class MouseInterface;
 struct Command;
 class TransparentMaximizedWindow : public QWidget
 {
@@ -26,8 +30,10 @@ public:
     bool IsClosed() const;
     void ReOpen();
     
+#if 0
     virtual void 	keyPressEvent(QKeyEvent *event) override;
     virtual void 	keyReleaseEvent(QKeyEvent *event) override;
+#endif//0
     virtual void mousePressEvent(QMouseEvent *event) override;
     virtual void mouseReleaseEvent(QMouseEvent *event) override;
     virtual void mouseMoveEvent(QMouseEvent *event) override;
@@ -58,9 +64,12 @@ private:
     };
     std::chrono::steady_clock::time_point m_debounce_interval[TotalEvents];
     DebounceEvents m_mouse_button_state = DebounceEvents::None;
-    bool m_closed = false;
+    std::unique_ptr<MouseInterface> m_mouse;
+    std::unique_ptr<KeyInterface> m_key;
+    std::future<void> m_event_capture_thread;
+    bool m_die = false;
 
-    void paintEvent(QPaintEvent *);
+    virtual void paintEvent(QPaintEvent *) override;
     bool Debounce(DebounceEvents event, int *out_elapsed = nullptr);
 //    bool eventFilter(QObject *obj, QEvent *event);
 };

@@ -50,15 +50,7 @@ MainWindow::MainWindow(QWidget *parent)
     StartDiscoveryService();
     PrepareToReceiveStream();
 
-    grabKeyboard();
-//    static auto foo = std::async([this](){
-//        X11Key x11(this);
-//        uint32_t key = 0;
-//        uint32_t modifier = 0;
-//        int type = 0;
-//        x11.testKeyEvent(winId(), key, modifier, type);
-//        qDebug() << "x11 key" << key << modifier << type;
-//    });
+//    grabKeyboard();
 }
 
 MainWindow::~MainWindow()
@@ -200,11 +192,11 @@ void MainWindow::ShowTransparentWindowOverlay(const QImage &img, uint32_t ip)
 void MainWindow::keyPressEvent(QKeyEvent *event)
 {
     //todo : do this in transparent window in loop and use select on keyboard device id to wait to read
-    X11Key x11(this);
-    uint32_t key = 0;
-    uint32_t modifier = 0;
-    int type = 0;
-    x11.testKeyEvent(winId(), key, modifier, type);
-    qDebug() << "x11 key" << key << modifier << type;
+//    X11Key x11(this);
+//    uint32_t key = 0;
+//    uint32_t modifier = 0;
+//    uint32_t type = 0;
+//    x11.testKeyEvent(winId(), key, modifier, type);
+//    qDebug() << "x11 key" << key << modifier << type;
 
 }

@@ -17,21 +17,25 @@
 #include <QTimer>
 #include <xkbcommon/xkbcommon-keysyms.h>
 
+#if defined(Win32) || defined(Win64)
+#include "WindowsMouse.h"
+#elif defined(Linux)
+#include "X11Mouse.h"
+#include "X11Key.h"
+#else
+#include "NullMouse.h"
+#endif
+
 static const float WINDOW_OPACITY = 0.5f;
 
 namespace  {
-Command CreateKeyCommandPacket(Command::EventType event_type, const QKeyEvent *event)
+Command CreateKeyCommandPacket(uint32_t key, uint32_t modifier, uint32_t type)
 {
     Command pkt;
-    pkt.m_event = event_type;
-    pkt.m_key = event->key();
-    pkt.m_modifier = 0;//event->nativeVirtualKey();//todo: works for linux, may not work on windows or osx
-//    if(event->modifiers().testFlag(Qt::ShiftModifier))
-//    { pkt.m_key_modifier |= XKB_KEY_Shift_L; }
-//    else if(event->modifiers().testFlag(Qt::ControlModifier))
-//    { pkt.m_key_modifier |= XKB_KEY_Control_L; }
-//    else if(event->modifiers().testFlag(Qt::AltModifier))
-//    { pkt.m_key_modifier |= XKB_KEY_Alt_L; }
+    pkt.m_event = Command::EventType::KeyEvent;
+    pkt.u.m_key.m_code = key;
+    pkt.u.m_key.m_modifier = modifier;
+    pkt.u.m_key.m_type = type;
 
     return pkt;
 }
@@ -40,9 +44,9 @@ Command CreateMouseCommandPacket(Command::EventType event_type, const QMouseEven
 {
     Command pkt;
     pkt.m_event = event_type;
-    pkt.m_mouse_button = event->button();
-    pkt.m_mouse_x = event->globalX();
-    pkt.m_mouse_y = event->globalY();
+    pkt.u.m_mouse.m_button = event->button();
+    pkt.u.m_mouse.m_x = event->globalX();
+    pkt.u.m_mouse.m_y = event->globalY();
 
     return pkt;
 }
@@ -54,6 +58,16 @@ TransparentMaximizedWindow::TransparentMaximizedWindow(const QString &ip, QWidge
     , m_ip(ip)
     , m_capturing(false)
     , m_timer(new QTimer(this))
+#if defined(Win32) || defined(Win64)
+    ,m_mouse(std::make_unique<WindowsMouse>(parent))
+    ,m_key(std::make_unique<WindowsKey>(parent))
+#elif defined(Linux)
+    ,m_mouse(std::make_unique<X11Mouse>(parent))
+    ,m_key(std::make_unique<X11Key>(parent))
+#else
+    ,m_mouse(std::make_unique<NullMouse>(parent))
+    ,m_key(std::make_unique<NullKey>(parent))
+#endif
 {
     ui->setupUi(this);
 
@@ -61,6 +75,10 @@ TransparentMaximizedWindow::TransparentMaximizedWindow(const QString &ip, QWidge
     {
         m_debounce_interval[i] = std::chrono::steady_clock::now();
     }
+    //        uint32_t key = 0;
+    //        uint32_t modifier = 0;
+    //        int type = 0;
+    //        x11.testKeyEvent(winId(), key, modifier, type);
 
 //    installEventFilter(this);
 //    grabKeyboard();
@@ -70,10 +88,24 @@ TransparentMaximizedWindow::TransparentMaximizedWindow(const QString &ip, QWidge
         repaint(rect());
     });
     m_timer->start(200);
+
+    m_event_capture_thread = std::async([this](){
+        while(true)
+        {
+            uint32_t key = 0;
+            uint32_t modifier = 0;
+            uint32_t type = 0;
+            if(m_key->testKeyEvent(winId(), key, modifier, type))
+            {
+                emit SendCommandToNode(CreateKeyCommandPacket(key, modifier, type));
+            }
+        }
+    });
 }
 
 TransparentMaximizedWindow::~TransparentMaximizedWindow()
 {
+    m_event_capture_thread.wait();
     delete ui;
 }
 
@@ -100,13 +132,13 @@ void TransparentMaximizedWindow::SetImage(const QImage &img)
 
 bool TransparentMaximizedWindow::IsClosed() const
 {
-    return m_closed;
+    return m_die;
 }
 
 void TransparentMaximizedWindow::ReOpen()
 {
     show();
-    m_closed = false;
+    m_die = false;
 }
 
 bool TransparentMaximizedWindow::Debounce(DebounceEvents event, int *out_elapsed)
@@ -118,12 +150,13 @@ bool TransparentMaximizedWindow::Debounce(DebounceEvents event, int *out_elapsed
     return elapsed < 100;
 }
 
+#if 0
 void TransparentMaximizedWindow::keyPressEvent(QKeyEvent *event)
 {
     if((event->key() == 'q' || event->key() == 'Q') &&
             (event->modifiers().testFlag(Qt::AltModifier)))
     {
-        m_closed = true;
+        m_die = true;
         emit Close();
     }
     int elapsed = 0;
@@ -143,6 +176,7 @@ void TransparentMaximizedWindow::keyReleaseEvent(QKeyEvent *event)
     auto pkt = CreateKeyCommandPacket(Command::EventType::KeyRelease, event);
     emit SendCommandToNode(pkt);
 }
+#endif//0
 
 void TransparentMaximizedWindow::mousePressEvent(QMouseEvent *event)
 {
@@ -152,9 +186,9 @@ void TransparentMaximizedWindow::mousePressEvent(QMouseEvent *event)
 
     m_mouse_button_state = DebounceEvents::MousePress;
     auto pkt = CreateMouseCommandPacket(Command::EventType::MousePress, event);
-    pkt.m_mouse_x = m_mouse_pos.x();
-    pkt.m_mouse_y = m_mouse_pos.y();
-    qDebug() << "mousePress @ " << pkt.m_mouse_x << "," << pkt.m_mouse_y;
+    pkt.u.m_mouse.m_x = m_mouse_pos.x();
+    pkt.u.m_mouse.m_y = m_mouse_pos.y();
+    qDebug() << "mousePress @ " << pkt.u.m_mouse.m_x << "," << pkt.u.m_mouse.m_y;
     emit SendCommandToNode(pkt);
 }
 
@@ -166,17 +200,17 @@ void TransparentMaximizedWindow::mouseReleaseEvent(QMouseEvent *event)
 
     m_mouse_button_state = DebounceEvents::MouseRelease;
     auto pkt = CreateMouseCommandPacket(Command::EventType::MouseRelease, event);
-    pkt.m_mouse_x = m_mouse_pos.x();
-    pkt.m_mouse_y = m_mouse_pos.y();
-    qDebug() << "mouseRelease @ " << pkt.m_mouse_x << "," << pkt.m_mouse_y;
+    pkt.u.m_mouse.m_x = m_mouse_pos.x();
+    pkt.u.m_mouse.m_y = m_mouse_pos.y();
+    qDebug() << "mouseRelease @ " << pkt.u.m_mouse.m_x << "," << pkt.u.m_mouse.m_y;
     emit SendCommandToNode(pkt);
 }
 
 void TransparentMaximizedWindow::mouseMoveEvent(QMouseEvent *event)
 {
     auto pkt = CreateMouseCommandPacket(Command::EventType::MouseMove, event);
-    qDebug() << "mouseMove @ " << pkt.m_mouse_x << "," << pkt.m_mouse_y;
-    m_mouse_pos = QPoint(pkt.m_mouse_x, pkt.m_mouse_y);
+    qDebug() << "mouseMove @ " << pkt.u.m_mouse.m_x << "," << pkt.u.m_mouse.m_y;
+    m_mouse_pos = QPoint(pkt.u.m_mouse.m_x, pkt.u.m_mouse.m_y);
     emit SendCommandToNode(pkt);
 }
 
