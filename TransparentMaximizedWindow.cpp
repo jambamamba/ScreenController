@@ -26,6 +26,8 @@
 #include "NullMouse.h"
 #endif
 
+#include "/home/dev/oosman/Qt/5/5.15.0/Src/qtvirtualkeyboard/tests/manual/x11vkbwrapper/xcbkeyboard.h" //temp code
+
 static const float WINDOW_OPACITY = 0.5f;
 
 namespace  {
@@ -75,10 +77,6 @@ TransparentMaximizedWindow::TransparentMaximizedWindow(const QString &ip, QWidge
     {
         m_debounce_interval[i] = std::chrono::steady_clock::now();
     }
-    //        uint32_t key = 0;
-    //        uint32_t modifier = 0;
-    //        int type = 0;
-    //        x11.testKeyEvent(winId(), key, modifier, type);
 
 //    installEventFilter(this);
 //    grabKeyboard();
@@ -90,7 +88,7 @@ TransparentMaximizedWindow::TransparentMaximizedWindow(const QString &ip, QWidge
     m_timer->start(200);
 
     m_event_capture_thread = std::async([this](){
-        while(true)
+        while(!m_die)
         {
             uint32_t key = 0;
             uint32_t modifier = 0;
@@ -98,6 +96,13 @@ TransparentMaximizedWindow::TransparentMaximizedWindow(const QString &ip, QWidge
             if(m_key->testKeyEvent(winId(), key, modifier, type))
             {
                 emit SendCommandToNode(CreateKeyCommandPacket(key, modifier, type));
+
+                if((key == 'q' || key == 'Q') &&
+                        (modifier & XK_Alt_L) == XK_Alt_L)
+                {
+                    m_die = true;
+                    emit Close();
+                }
             }
         }
     });
@@ -118,16 +123,10 @@ void TransparentMaximizedWindow::MoveToScreen(const QScreen* screen)
 
 void TransparentMaximizedWindow::SetImage(const QImage &img)
 {
-//    static int counter = 0;
-//    qDebug() << "set image " << counter++;
     {
         std::lock_guard<std::mutex> lk(m_mutex);
         m_image = img;
     }
-//    while(QApplication::hasPendingEvents())
-//    {
-//        QApplication::processEvents();
-    //    }
 }
 
 bool TransparentMaximizedWindow::IsClosed() const
@@ -181,8 +180,6 @@ void TransparentMaximizedWindow::keyReleaseEvent(QKeyEvent *event)
 void TransparentMaximizedWindow::mousePressEvent(QMouseEvent *event)
 {
     if(m_mouse_button_state == DebounceEvents::MousePress) { return; }
-//    if(Debounce(DebounceEvents::MousePress))
-//    { return; }
 
     m_mouse_button_state = DebounceEvents::MousePress;
     auto pkt = CreateMouseCommandPacket(Command::EventType::MousePress, event);
@@ -195,8 +192,6 @@ void TransparentMaximizedWindow::mousePressEvent(QMouseEvent *event)
 void TransparentMaximizedWindow::mouseReleaseEvent(QMouseEvent *event)
 {
     if(m_mouse_button_state == DebounceEvents::MouseRelease) { return; }
-//    if(Debounce(DebounceEvents::MouseRelease))
-//    { return; }
 
     m_mouse_button_state = DebounceEvents::MouseRelease;
     auto pkt = CreateMouseCommandPacket(Command::EventType::MouseRelease, event);

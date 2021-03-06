@@ -72,8 +72,6 @@ bool X11Key::testKeyEvent(int window, uint32_t &key, uint32_t &modifier, uint32_
                  window,
                  KeyPressMask|KeyReleaseMask);
     XMapWindow(m_display, window);
-//    qDebug() << "x11 lshift " << XK_Shift_L << ", rshift" << XK_Shift_R;
-//    qDebug() << "x11 lcontrol " << XK_Control_L << ", rcontrol" << XK_Control_R;
     if(XPending(m_display))
     {
         XEvent event;
@@ -85,7 +83,7 @@ bool X11Key::testKeyEvent(int window, uint32_t &key, uint32_t &modifier, uint32_
             key = event.xkey.keycode;
             modifier = event.xkey.state;
             type = event.type;
-            qDebug() << "x11 key" << key << modifier << type << XKeycodeToKeysym(m_display, key, 0);
+//            qDebug() << "x11 key" << key << modifier << type << XKeycodeToKeysym(m_display, key, 0);
             return true;
         default:
             break;
@@ -105,17 +103,9 @@ void X11Key::testHotKeyPress()
         switch(event.type)
         {
         case KeyPress:
-//            qDebug() << "Hot key pressed!"
-//                     << "type" << ev.type
-//                     << "modifier" << ev.xkey.state
-//                     << "key" << XKeycodeToKeysym(m_dpy, ev.xkey.keycode, 0);
             emit hotKeyPressed(XLookupKeysym(&event.xkey, 0), event.xkey.state);
             break;
         default:
-//            qDebug() << "key press detected"
-//                     << "type" << ev.type
-//                     << "state" << ev.xkey.state
-//                     << "keycode" << ev.xkey.keycode;
             break;
         }
     }
@@ -173,19 +163,6 @@ void X11Key::onUnRegisterHotKey(quint32 key, quint32 modifiers)
 void X11Key::keyEvent(uint32_t key, uint32_t modifier, uint32_t type)
 {
     qDebug() << "X11Key::keyEvent key:" << key << modifier << type;
-//    for(size_t i =0; KeyTbl[i] != 0; ++i)
-//    {
-//        if(KeyTbl[i] == keyCode)
-//        {
-//            keyCode = KeyTbl[i-1];
-//            break;
-//        }
-//    }
-
-//	qDebug() << "X11Key::keyPress key:" << keyCode << XStringToKeysym("a");
-//	keyCode = XStringToKeysym("a");
-//	keyCode = XKeycodeToKeysym(m_display, keyCode);
-
     // Get the root window for the current display.
     Window winRoot = XDefaultRootWindow(m_display);
 

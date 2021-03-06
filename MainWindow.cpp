@@ -49,8 +49,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     StartDiscoveryService();
     PrepareToReceiveStream();
-
-//    grabKeyboard();
 }
 
 MainWindow::~MainWindow()
@@ -187,16 +185,4 @@ void MainWindow::ShowTransparentWindowOverlay(const QImage &img, uint32_t ip)
     });
     QImage screen_shot = m_streamer.ScreenShot();
     m_transparent_window[ip]->Show(screen_shot.width(), screen_shot.height(), m_streamer.ActiveScreen());
-}
-
-void MainWindow::keyPressEvent(QKeyEvent *event)
-{
-    //todo : do this in transparent window in loop and use select on keyboard device id to wait to read
-//    X11Key x11(this);
-//    uint32_t key = 0;
-//    uint32_t modifier = 0;
-//    uint32_t type = 0;
-//    x11.testKeyEvent(winId(), key, modifier, type);
-//    qDebug() << "x11 key" << key << modifier << type;
-
 }
