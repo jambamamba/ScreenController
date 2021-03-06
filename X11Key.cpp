@@ -73,7 +73,7 @@ bool X11Key::testKeyEvent(int window, uint32_t &key, uint32_t &modifier, uint32_
                  window,
                  KeyPressMask|KeyReleaseMask);
     XMapWindow(m_display, window);
-    if(XPending(m_display))
+//    if(XPending(m_display))
     {
         XEvent event;
         XNextEvent(m_display, &event);//blocking call
@@ -85,7 +85,7 @@ bool X11Key::testKeyEvent(int window, uint32_t &key, uint32_t &modifier, uint32_
             modifier = event.xkey.state;
             type = event.type;
             qDebug() << "x11 key" << key
-                     << "modiifer" << modifier
+                     << "modifer" << modifier
                      << "type"
                      << type
                      << "symbol"
@@ -102,7 +102,14 @@ bool X11Key::testKey(char symbol, uint32_t key)
 {
     return (key == XKeysymToKeycode(m_display, symbol));
 }
-
+bool X11Key::testKeyPress(uint32_t type)
+{
+    return type == KeyPress;
+}
+bool X11Key::testKeyRelease(uint32_t type)
+{
+    return type = KeyRelease;
+}
 bool X11Key::testAltModifier(uint32_t modifier)
 {
     return (8 == modifier);

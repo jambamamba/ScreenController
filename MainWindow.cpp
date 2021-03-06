@@ -185,10 +185,6 @@ void MainWindow::ShowTransparentWindowOverlay(const QImage &img, uint32_t ip)
     connect(m_transparent_window[ip], &TransparentMaximizedWindow::Close,
             [this, ip](){
         m_streamer.SendCommand(ip, Command::EventType::StopStreaming);
-        if(m_transparent_window.find(ip) != m_transparent_window.end())
-        {
-            m_transparent_window[ip]->hide();
-        }
     });
     connect(m_transparent_window[ip], &TransparentMaximizedWindow::SendCommandToNode,
             [this, ip](const Command &pkt){

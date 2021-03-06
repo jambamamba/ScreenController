@@ -84,9 +84,19 @@ TransparentMaximizedWindow::TransparentMaximizedWindow(const QString &ip, QWidge
         repaint(rect());
     });
     m_timer->start(200);
+    StartKeyCapture();
+}
 
+TransparentMaximizedWindow::~TransparentMaximizedWindow()
+{
+    m_event_capture_thread.wait();
+    delete ui;
+}
+
+void TransparentMaximizedWindow::StartKeyCapture()
+{
     m_event_capture_thread = std::async([this](){
-        while(!m_die)
+        while(!m_stop)
         {
             uint32_t key = 0;
             uint32_t modifier = 0;
@@ -96,22 +106,19 @@ TransparentMaximizedWindow::TransparentMaximizedWindow(const QString &ip, QWidge
                 emit SendCommandToNode(CreateKeyCommandPacket(key, modifier, type));
 
                 if((m_key->testKey('q', key) &&
+                    m_key->testKeyPress(type) &&
                     m_key->testAltModifier(modifier)))
                 {
-                    m_die = true;
+                    qDebug() << "Close window";
+                    m_stop = true;
+                    hide();
                     emit Close();
                 }
             }
         }
+        qDebug() << "exit key capture";
     });
 }
-
-TransparentMaximizedWindow::~TransparentMaximizedWindow()
-{
-    m_event_capture_thread.wait();
-    delete ui;
-}
-
 void TransparentMaximizedWindow::MoveToScreen(const QScreen* screen)
 {
     QRect screen_geometry = screen->geometry();
@@ -129,13 +136,14 @@ void TransparentMaximizedWindow::SetImage(const QImage &img)
 
 bool TransparentMaximizedWindow::IsClosed() const
 {
-    return m_die;
+    return m_stop;
 }
 
 void TransparentMaximizedWindow::ReOpen()
 {
     show();
-    m_die = false;
+    m_stop = false;
+    StartKeyCapture();
 }
 
 bool TransparentMaximizedWindow::Debounce(DebounceEvents event, int *out_elapsed)
@@ -146,34 +154,6 @@ bool TransparentMaximizedWindow::Debounce(DebounceEvents event, int *out_elapsed
     if(out_elapsed) { *out_elapsed = elapsed; }
     return elapsed < 100;
 }
-
-#if 0
-void TransparentMaximizedWindow::keyPressEvent(QKeyEvent *event)
-{
-    if((event->key() == 'q' || event->key() == 'Q') &&
-            (event->modifiers().testFlag(Qt::AltModifier)))
-    {
-        m_die = true;
-        emit Close();
-    }
-    int elapsed = 0;
-    if(Debounce(DebounceEvents::KeyPress, &elapsed))
-    { return; }
-
-    auto pkt = CreateKeyCommandPacket(Command::EventType::KeyPress, event);
-    qDebug() << "keyPress key:" << pkt.m_key << "modifier:" << pkt.m_modifier;
-    emit SendCommandToNode(pkt);
-}
-
-void TransparentMaximizedWindow::keyReleaseEvent(QKeyEvent *event)
-{
-    if(Debounce(DebounceEvents::KeyRelease))
-    { return; }
-
-    auto pkt = CreateKeyCommandPacket(Command::EventType::KeyRelease, event);
-    emit SendCommandToNode(pkt);
-}
-#endif//0
 
 void TransparentMaximizedWindow::mousePressEvent(QMouseEvent *event)
 {

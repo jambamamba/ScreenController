@@ -30,10 +30,6 @@ public:
     bool IsClosed() const;
     void ReOpen();
     
-#if 0
-    virtual void 	keyPressEvent(QKeyEvent *event) override;
-    virtual void 	keyReleaseEvent(QKeyEvent *event) override;
-#endif//0
     virtual void mousePressEvent(QMouseEvent *event) override;
     virtual void mouseReleaseEvent(QMouseEvent *event) override;
     virtual void mouseMoveEvent(QMouseEvent *event) override;
@@ -67,9 +63,10 @@ private:
     std::unique_ptr<MouseInterface> m_mouse;
     std::unique_ptr<KeyInterface> m_key;
     std::future<void> m_event_capture_thread;
-    bool m_die = false;
+    bool m_stop = false;
 
     virtual void paintEvent(QPaintEvent *) override;
     bool Debounce(DebounceEvents event, int *out_elapsed = nullptr);
+    void StartKeyCapture();
 //    bool eventFilter(QObject *obj, QEvent *event);
 };
