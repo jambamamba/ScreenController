@@ -26,8 +26,6 @@
 #include "NullMouse.h"
 #endif
 
-#include "/home/dev/oosman/Qt/5/5.15.0/Src/qtvirtualkeyboard/tests/manual/x11vkbwrapper/xcbkeyboard.h" //temp code
-
 static const float WINDOW_OPACITY = 0.5f;
 
 namespace  {
