@@ -9,6 +9,7 @@
 #include <X11/Xutil.h>
 #include <X11/extensions/XTest.h>
 #include <X11/extensions/Xfixes.h>
+#include <X11/keysymdef.h>
 //#include <x11vkbwrapper/xcbkeyboard.h>
 
 static bool s_last_x11_error = false;
@@ -83,7 +84,12 @@ bool X11Key::testKeyEvent(int window, uint32_t &key, uint32_t &modifier, uint32_
             key = event.xkey.keycode;
             modifier = event.xkey.state;
             type = event.type;
-//            qDebug() << "x11 key" << key << modifier << type << XKeycodeToKeysym(m_display, key, 0);
+            qDebug() << "x11 key" << key
+                     << "modiifer" << modifier
+                     << "type"
+                     << type
+                     << "symbol"
+                     << (char)XKeycodeToKeysym(m_display, key, 0);
             return true;
         default:
             break;
@@ -91,6 +97,25 @@ bool X11Key::testKeyEvent(int window, uint32_t &key, uint32_t &modifier, uint32_
     }
     return false;
 }
+
+bool X11Key::testKey(char symbol, uint32_t key)
+{
+    return (key == XKeysymToKeycode(m_display, symbol));
+}
+
+bool X11Key::testAltModifier(uint32_t modifier)
+{
+    return (8 == modifier);
+}
+bool X11Key::testControlModifier(uint32_t modifier)
+{
+    return (4 == modifier);
+}
+bool X11Key::testShiftModifier(uint32_t modifier)
+{
+    return (1 == modifier);
+}
+
 //alternative: https://stackoverflow.com/questions/4037230/global-hotkey-with-x11-xlib
 void X11Key::testHotKeyPress()
 {

@@ -39,6 +39,10 @@ public:
     virtual ~KeyInterface();
     virtual void keyEvent(uint32_t keyCode, uint32_t keyModifiers, uint32_t type) = 0;
     virtual bool testKeyEvent(int window, uint32_t &key, uint32_t &modifier, uint32_t &type) = 0;
+    virtual bool testKey(char symbol, uint32_t key) = 0;
+    virtual bool testAltModifier(uint32_t modifier) = 0;
+    virtual bool testControlModifier(uint32_t modifier) = 0;
+    virtual bool testShiftModifier(uint32_t modifier) = 0;
 
 protected slots:
     virtual void testHotKeyPress() = 0;

@@ -97,8 +97,8 @@ TransparentMaximizedWindow::TransparentMaximizedWindow(const QString &ip, QWidge
             {
                 emit SendCommandToNode(CreateKeyCommandPacket(key, modifier, type));
 
-                if((key == 'q' || key == 'Q') &&
-                        (modifier & XK_Alt_L) == XK_Alt_L)
+                if((m_key->testKey('q', key) &&
+                    m_key->testAltModifier(modifier)))
                 {
                     m_die = true;
                     emit Close();

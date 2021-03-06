@@ -49,6 +49,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     StartDiscoveryService();
     PrepareToReceiveStream();
+    grabKeyboard();
 }
 
 MainWindow::~MainWindow()
@@ -56,6 +57,19 @@ MainWindow::~MainWindow()
     m_stop = true;
     m_discovery_thread.wait();
     delete ui;
+}
+
+void MainWindow::keyPressEvent(QKeyEvent *event)
+{
+//    X11Key x11(this);
+//    uint32_t key = 0;
+//    uint32_t modifier = 0;
+//    uint32_t type = 0;
+//    for(int i = 0; i < 2; ++i)
+//    {
+//        x11.testKeyEvent(winId(), key, modifier, type);
+//        qDebug() << x11.testKey('q', key) << x11.testAltModifier(modifier);
+//    }
 }
 
 void MainWindow::StartDiscoveryService()

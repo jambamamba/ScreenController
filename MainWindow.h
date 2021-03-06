@@ -40,6 +40,7 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+    virtual void keyPressEvent(QKeyEvent *event) override;
 signals:
     void StartPlayback(const QImage&img, uint32_t from_ip);
     void StoppedStreaming(uint32_t ip);
