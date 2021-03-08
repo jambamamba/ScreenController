@@ -195,7 +195,7 @@ void X11Key::onUnRegisterHotKey(quint32 key, quint32 modifiers)
 void X11Key::keyEvent(uint32_t key, uint32_t modifier, uint32_t type)
 {
     qDebug() << "X11Key::keyEvent key:" << key << modifier << type;
-#if 1//this method is rejected by some windows like Terminal, Chrome, etc.
+#if 0//this method is rejected by some windows like Terminal, Chrome, etc.
     {
         // Get the root window for the current display.
         Window winRoot = XDefaultRootWindow(m_display);
