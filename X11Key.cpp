@@ -209,7 +209,7 @@ void X11Key::keyEvent(uint32_t key, uint32_t modifier, uint32_t type)
         XSendEvent(event.display, event.window, true, KeyPressMask, (XEvent *)&event);
     }
 #else
-    XTestFakeKeyEvent(m_display, key, type == KeyPress ? True:False, 0);
+    XTestFakeKeyEvent(m_display, key, (type == KeyPress) ? True:False, 0);
 #endif
     XFlush(m_display);
 }
