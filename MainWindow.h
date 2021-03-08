@@ -16,7 +16,7 @@ QT_END_NAMESPACE
 
 struct Node
 {
-    const std::string m_name;
+    std::string m_name;
     uint32_t m_ip;
     uint16_t m_port;
     Node(const std::string &name,

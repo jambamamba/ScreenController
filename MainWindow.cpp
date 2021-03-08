@@ -85,6 +85,10 @@ void MainWindow::StartDiscoveryService()
                 m_nodes.insert(ip_, new Node(data->m_name, ip_, port));
                 m_node_model->appendRow(new QStandardItem(QIcon(":/resources/laptop-icon-19517.png"), data->m_name));
             }
+           else if(m_nodes[ip_]->m_name != data->m_name)
+           {
+               m_nodes[ip_]->m_name = data->m_name;
+           }
         });
         while(!m_stop)
         {
