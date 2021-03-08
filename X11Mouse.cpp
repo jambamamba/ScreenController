@@ -6,6 +6,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/extensions/Xfixes.h>
+#include <X11/extensions/XTest.h>
 #include <QtX11Extras/QX11Info>
 
 //extern "C" {
@@ -77,12 +78,16 @@ QImage X11Mouse::getMouseCursor(QPoint &pos) const
 //mouseClick(Button1)
 void X11Mouse::mousePress(int button, int x, int y)
 {
-    mouseClick(button, ButtonPress, x, y);
+//    mouseClick(button, ButtonPress, x, y);
+    XTestFakeButtonEvent(m_display, button, true, CurrentTime);
+    XFlush(m_display);
 }
 
 void X11Mouse::mouseRelease(int button, int x, int y)
 {
-    mouseClick(button, ButtonRelease, x, y);
+//    mouseClick(button, ButtonRelease, x, y);
+    XTestFakeButtonEvent(m_display, button, false, CurrentTime);
+    XFlush(m_display);
 }
 
 void X11Mouse::mouseClick(int button, int press_or_release, int, int)

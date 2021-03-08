@@ -157,7 +157,7 @@ bool TransparentMaximizedWindow::Debounce(DebounceEvents event, int *out_elapsed
 
 void TransparentMaximizedWindow::mousePressEvent(QMouseEvent *event)
 {
-    if(m_mouse_button_state == DebounceEvents::MousePress) { return; }
+//    if(m_mouse_button_state == DebounceEvents::MousePress) { return; }
 
     m_mouse_button_state = DebounceEvents::MousePress;
     auto pkt = CreateMouseCommandPacket(Command::EventType::MousePress, event);
@@ -169,7 +169,7 @@ void TransparentMaximizedWindow::mousePressEvent(QMouseEvent *event)
 
 void TransparentMaximizedWindow::mouseReleaseEvent(QMouseEvent *event)
 {
-    if(m_mouse_button_state == DebounceEvents::MouseRelease) { return; }
+//    if(m_mouse_button_state == DebounceEvents::MouseRelease) { return; }
 
     m_mouse_button_state = DebounceEvents::MouseRelease;
     auto pkt = CreateMouseCommandPacket(Command::EventType::MouseRelease, event);
