@@ -195,17 +195,20 @@ void X11Key::onUnRegisterHotKey(quint32 key, quint32 modifiers)
 void X11Key::keyEvent(uint32_t key, uint32_t modifier, uint32_t type)
 {
     qDebug() << "X11Key::keyEvent key:" << key << modifier << type;
-    // Get the root window for the current display.
-    Window winRoot = XDefaultRootWindow(m_display);
+    if(0)
+    {
+        // Get the root window for the current display.
+        Window winRoot = XDefaultRootWindow(m_display);
 
-    // Find the window which has the current keyboard focus.
-    Window winFocus;
-    int    revert;
-    XGetInputFocus(m_display, &winFocus, &revert);
+        // Find the window which has the current keyboard focus.
+        Window winFocus;
+        int    revert;
+        XGetInputFocus(m_display, &winFocus, &revert);
 
-    XKeyEvent event = createKeyEvent(m_display, winFocus, winRoot, type, key, modifier);
-    XSendEvent(event.display, event.window, true, KeyPressMask, (XEvent *)&event);
-//    XTestFakeKeyEvent(m_display, key, type == KeyPress ? True:False, CurrentTime);
+        XKeyEvent event = createKeyEvent(m_display, winFocus, winRoot, type, key, modifier);
+        XSendEvent(event.display, event.window, true, KeyPressMask, (XEvent *)&event);
+    }
+    XTestFakeKeyEvent(m_display, key, type == KeyPress ? True:False, 0);
 
     XFlush(m_display);
 }

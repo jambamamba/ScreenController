@@ -76,14 +76,14 @@ QImage X11Mouse::getMouseCursor(QPoint &pos) const
 
 //https://stackoverflow.com/questions/20595716/control-mouse-by-writing-to-dev-input-mice
 //mouseClick(Button1)
-void X11Mouse::mousePress(int button, int x, int y)
+void X11Mouse::buttonPress(int button, int x, int y)
 {
     mouseClick(button, ButtonPress, x, y);
 //    XTestFakeButtonEvent(m_display, button, true, CurrentTime);
 //    XFlush(m_display);
 }
 
-void X11Mouse::mouseRelease(int button, int x, int y)
+void X11Mouse::buttonRelease(int button, int x, int y)
 {
     mouseClick(button, ButtonRelease, x, y);
 //    XTestFakeButtonEvent(m_display, button, false, CurrentTime);
@@ -93,26 +93,26 @@ void X11Mouse::mouseRelease(int button, int x, int y)
 void X11Mouse::mouseClick(int button, int press_or_release, int, int)
 {
     XEvent event;
-         memset(&event, 0x00, sizeof(event));
+    memset(&event, 0x00, sizeof(event));
 
-        event.type = press_or_release;
-        event.xbutton.button = button;
-        event.xbutton.same_screen = True;
+    event.type = press_or_release;
+    event.xbutton.button = button;
+    event.xbutton.same_screen = True;
 
-        XQueryPointer(m_display, RootWindow(m_display, DefaultScreen(m_display)), &event.xbutton.root, &event.xbutton.window, &event.xbutton.x_root, &event.xbutton.y_root, &event.xbutton.x, &event.xbutton.y, &event.xbutton.state);
+    XQueryPointer(m_display, RootWindow(m_display, DefaultScreen(m_display)), &event.xbutton.root, &event.xbutton.window, &event.xbutton.x_root, &event.xbutton.y_root, &event.xbutton.x, &event.xbutton.y, &event.xbutton.state);
 
-        event.xbutton.subwindow = event.xbutton.window;
+    event.xbutton.subwindow = event.xbutton.window;
 
-        while(event.xbutton.subwindow)
-        {
-            event.xbutton.window = event.xbutton.subwindow;
+    while(event.xbutton.subwindow)
+    {
+        event.xbutton.window = event.xbutton.subwindow;
 
-            XQueryPointer(m_display, event.xbutton.window, &event.xbutton.root, &event.xbutton.subwindow, &event.xbutton.x_root, &event.xbutton.y_root, &event.xbutton.x, &event.xbutton.y, &event.xbutton.state);
-        }
+        XQueryPointer(m_display, event.xbutton.window, &event.xbutton.root, &event.xbutton.subwindow, &event.xbutton.x_root, &event.xbutton.y_root, &event.xbutton.x, &event.xbutton.y, &event.xbutton.state);
+    }
 
-        if(XSendEvent(m_display, PointerWindow, True, 0xfff, &event) == 0) fprintf(stderr, "Errore nell'invio dell'evento !!!\n");
+    if(XSendEvent(m_display, PointerWindow, True, 0xfff, &event) == 0) fprintf(stderr, "Errore nell'invio dell'evento !!!\n");
 
-        XFlush(m_display);
+    XFlush(m_display);
 //    XEvent event;
 //    memset(&event, 0x00, sizeof(event));
 

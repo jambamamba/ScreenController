@@ -10,8 +10,8 @@ public:
     virtual ~X11Mouse();
 
     virtual QImage getMouseCursor(QPoint &pos) const override;
-    virtual void mousePress(int button, int x, int y) override;
-    virtual void mouseRelease(int button, int x, int y) override;
+    virtual void buttonPress(int button, int x, int y) override;
+    virtual void buttonRelease(int button, int x, int y) override;
     virtual void moveTo(int x, int y) override;
 
 protected:
