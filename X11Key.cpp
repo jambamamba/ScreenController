@@ -195,7 +195,7 @@ void X11Key::onUnRegisterHotKey(quint32 key, quint32 modifiers)
 void X11Key::keyEvent(uint32_t key, uint32_t modifier, uint32_t type)
 {
     qDebug() << "X11Key::keyEvent key:" << key << modifier << type;
-    if(0)
+#if 0//this method is rejected by some windows like Terminal, Chrome, etc.
     {
         // Get the root window for the current display.
         Window winRoot = XDefaultRootWindow(m_display);
@@ -208,7 +208,8 @@ void X11Key::keyEvent(uint32_t key, uint32_t modifier, uint32_t type)
         XKeyEvent event = createKeyEvent(m_display, winFocus, winRoot, type, key, modifier);
         XSendEvent(event.display, event.window, true, KeyPressMask, (XEvent *)&event);
     }
+#else
     XTestFakeKeyEvent(m_display, key, type == KeyPress ? True:False, 0);
-
+#endif
     XFlush(m_display);
 }

@@ -49,7 +49,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     StartDiscoveryService();
     PrepareToReceiveStream();
-    grabKeyboard();
+//    grabKeyboard();
 }
 
 MainWindow::~MainWindow()
