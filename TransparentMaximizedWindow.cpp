@@ -202,7 +202,7 @@ void TransparentMaximizedWindow::Show(int width, int height, QScreen* screen)
 //    setWindowState(Qt::WindowFullScreen);
     setWindowFlags(Qt::Window
                    | Qt::FramelessWindowHint
-//                   | Qt::WindowStaysOnTopHint
+                   | Qt::WindowStaysOnTopHint
 //                   | Qt::X11BypassWindowManagerHint
                    );
 #ifdef Linux
