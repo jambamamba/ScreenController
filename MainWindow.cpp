@@ -3,6 +3,7 @@
 #include <QDebug>
 #include <QListWidgetItem>
 #include <QStandardItemModel>
+#include <QTimer>
 
 #include "ui_MainWindow.h"
 

@@ -108,10 +108,12 @@ void TransparentMaximizedWindow::StartKeyCapture()
                     m_key->testKeyPress(type) &&
                     m_key->testAltModifier(modifier)))
                 {
+                    QTimer::singleShot(1000, [this](){
                     qDebug() << "Close window";
                     m_stop = true;
                     hide();
                     emit Close();
+                    });
                 }
             }
         }
