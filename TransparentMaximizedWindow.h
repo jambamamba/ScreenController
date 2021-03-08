@@ -28,7 +28,6 @@ public:
     void MoveToScreen(const QScreen *screen);
     void SetImage(const QImage&img);
     bool IsClosed() const;
-    void ReOpen();
     
     virtual void mousePressEvent(QMouseEvent *event) override;
     virtual void mouseReleaseEvent(QMouseEvent *event) override;

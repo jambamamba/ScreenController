@@ -141,7 +141,8 @@ void MainWindow::SendStartStreamingCommand(uint32_t ip)
     m_streamer_socket.Start(ip);
     if(m_transparent_window.find(ip) != m_transparent_window.end())
     {
-        m_transparent_window[ip]->ReOpen();
+        QImage screen_shot = m_streamer.ScreenShot();
+        m_transparent_window[ip]->Show(screen_shot.width(), screen_shot.height(), m_streamer.ActiveScreen());
     }
 }
 

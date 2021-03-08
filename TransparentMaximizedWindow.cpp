@@ -84,7 +84,6 @@ TransparentMaximizedWindow::TransparentMaximizedWindow(const QString &ip, QWidge
         repaint(rect());
     });
     m_timer->start(200);
-    StartKeyCapture();
 }
 
 TransparentMaximizedWindow::~TransparentMaximizedWindow()
@@ -137,13 +136,6 @@ void TransparentMaximizedWindow::SetImage(const QImage &img)
 bool TransparentMaximizedWindow::IsClosed() const
 {
     return m_stop;
-}
-
-void TransparentMaximizedWindow::ReOpen()
-{
-    show();
-    m_stop = false;
-    StartKeyCapture();
 }
 
 bool TransparentMaximizedWindow::Debounce(DebounceEvents event, int *out_elapsed)
@@ -212,6 +204,9 @@ void TransparentMaximizedWindow::Show(int width, int height, QScreen* screen)
 #endif
     setFixedSize(width, height);
     QWidget::showFullScreen();
+
+    m_stop = false;
+    StartKeyCapture();
 }
 
 //bool TransparentMaximizedWindow::eventFilter(QObject *obj, QEvent *event)
