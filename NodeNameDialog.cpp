@@ -69,7 +69,6 @@ void NodeNameDialog::SetName(const QString &name)
     {
         ui->lineEdit->setText(name);
         accept();
-        emit NameChanged();
     }
     else
     {
@@ -88,6 +87,7 @@ void NodeNameDialog::accept()
     node_file.write((QString("serialnumber:123")).toUtf8());
     node_file.write((QString("\n")).toUtf8());
     node_file.write((QString("name:") + ui->lineEdit->text()).toUtf8());
+    emit NameChanged();
     QDialog::accept();
 }
 
@@ -95,5 +95,4 @@ void NodeNameDialog::reject()
 {
     ui->lineEdit->setText("KingFisher1");
     accept();
-    emit NameChanged();
 }
