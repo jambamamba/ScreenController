@@ -41,10 +41,12 @@ void EventHandler::HandleCommand(const Command &pkt, uint32_t ip)
         break;
     case Command::EventType::StopStreaming:
         emit StopStreaming(ip);
+        qDebug() << "############ StopStreaming";
+        m_key = std::make_unique<X11Key>(parent());
         break;
     case Command::EventType::StoppedStreaming:
         emit StoppedStreaming(ip);
-        qDebug() << "############";
+        qDebug() << "############ StoppedStreaming";
         m_key = std::make_unique<X11Key>(parent());
         break;
     case Command::EventType::MouseMove:
