@@ -88,7 +88,7 @@ bool X11Key::testKeyEvent(int window, uint32_t &key, uint32_t &modifier, uint32_
             qDebug() << "x11 key" << key
                      << "modifer" << modifier
                      << "type"
-                     << type
+                     << type << (type==KeyPress ? "press" : "release")
                      << "symbol"
                      << (char)XKeycodeToKeysym(m_display, key, 0);
             return true;
@@ -195,7 +195,7 @@ void X11Key::onUnRegisterHotKey(quint32 key, quint32 modifiers)
 
 void X11Key::keyEvent(uint32_t key, uint32_t modifier, uint32_t type)
 {
-    qDebug() << "X11Key::keyEvent key:" << key << modifier << type;
+    qDebug() << "X11Key::keyEvent key:" << key << modifier << type << (type==KeyPress ? "press" : "release");
 #if 0//this method is rejected by some windows like Terminal, Chrome, etc.
     {
         // Get the root window for the current display.
