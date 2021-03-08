@@ -205,7 +205,7 @@ void X11Key::keyEvent(uint32_t key, uint32_t modifier, uint32_t type)
 
 //    XKeyEvent event = createKeyEvent(m_display, winFocus, winRoot, type, key, modifier);
 //    XSendEvent(event.display, event.window, true, KeyPressMask, (XEvent *)&event);
-    XTestFakeKeyEvent(m_display, key, True, CurrentTime);
+    XTestFakeKeyEvent(m_display, key, type == KeyPress ? True:False, CurrentTime);
 
     XFlush(m_display);
 }
