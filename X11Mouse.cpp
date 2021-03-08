@@ -78,16 +78,16 @@ QImage X11Mouse::getMouseCursor(QPoint &pos) const
 //mouseClick(Button1)
 void X11Mouse::buttonPress(int button, int x, int y)
 {
-    mouseClick(button, ButtonPress, x, y);
-//    XTestFakeButtonEvent(m_display, button, true, CurrentTime);
-//    XFlush(m_display);
+//    mouseClick(button, ButtonPress, x, y);
+    XTestFakeButtonEvent(m_display, button, true, CurrentTime);
+    XFlush(m_display);
 }
 
 void X11Mouse::buttonRelease(int button, int x, int y)
 {
-    mouseClick(button, ButtonRelease, x, y);
-//    XTestFakeButtonEvent(m_display, button, false, CurrentTime);
-//    XFlush(m_display);
+//    mouseClick(button, ButtonRelease, x, y);
+    XTestFakeButtonEvent(m_display, button, false, CurrentTime);
+    XFlush(m_display);
 }
 
 void X11Mouse::mouseClick(int button, int press_or_release, int, int)
