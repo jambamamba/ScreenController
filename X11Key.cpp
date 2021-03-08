@@ -211,7 +211,7 @@ void X11Key::keyEvent(uint32_t key, uint32_t modifier, uint32_t type)
     }
 #else
     //this method leaves Terminal in a key pressed state
-    if(type == type)
+    if(type == KeyPress)
     {
         XTestFakeKeyEvent(m_display, key, true, 0);
         XFlush(m_display);
