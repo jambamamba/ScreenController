@@ -69,6 +69,7 @@ void NodeNameDialog::SetName(const QString &name)
     {
         ui->lineEdit->setText(name);
         accept();
+        emit NameChanged();
     }
     else
     {
@@ -94,4 +95,5 @@ void NodeNameDialog::reject()
 {
     ui->lineEdit->setText("KingFisher1");
     accept();
+    emit NameChanged();
 }

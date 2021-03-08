@@ -29,11 +29,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     m_node_model = new QStandardItemModel(ui->listView);
     connect(ui->listView, &QListView::doubleClicked,this,&MainWindow::NodeDoubleClicked);
-
+    connect(&m_node_name, &NodeNameDialog::NameChanged, [this](){ m_node_name_changed = true; });
     connect(this, &MainWindow::StartPlayback,
             this, &MainWindow::ShowTransparentWindowOverlay,
             Qt::ConnectionType::QueuedConnection);
-
     connect(&m_event_handler, &EventHandler::StartStreaming,
             &m_streamer, &ScreenStreamer::StartStreaming,
             Qt::ConnectionType::QueuedConnection);
@@ -76,7 +75,7 @@ void MainWindow::StartDiscoveryService()
 {
     m_discovery_thread = std::async(std::launch::async, [this](){
         pthread_setname_np(pthread_self(), "discover");
-        DiscoveryService discovery(m_node_name.GetFileAbsolutePathName().toUtf8().data());
+        DiscoveryService service(m_node_name.GetFileAbsolutePathName().toUtf8().data());
         DiscoveryClient client(m_node_name.GetFileAbsolutePathName().toUtf8().data(),
                                [this](DiscoveryData *data, std::string ip, uint16_t port){
 //            qDebug() << "Discovered node " << QString(data->m_name) << " at " << QString(ip.c_str()) << ":" << port;
@@ -92,6 +91,13 @@ void MainWindow::StartDiscoveryService()
             client.Discover();
             QApplication::processEvents();
             usleep(2 * 1000 * 1000);
+
+            if(m_node_name_changed)
+            {
+                m_node_name_changed = false;
+                service.UpdateDeviceId(m_node_name.GetFileAbsolutePathName().toUtf8().data());
+                client.UpdateDeviceId(m_node_name.GetFileAbsolutePathName().toUtf8().data());
+            }
         }
     });
 

@@ -69,6 +69,7 @@ private:
     QStandardItemModel *m_node_model;
     QMap<uint32_t /*ip*/, Node*> m_nodes;
     EventHandler m_event_handler;
+    bool m_node_name_changed = false;
     bool m_stop = false;
 };
 #endif // MAINWINDOW_H

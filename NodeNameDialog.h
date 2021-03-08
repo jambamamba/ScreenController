@@ -19,6 +19,9 @@ public:
     virtual void accept() override;
     virtual void reject() override;
 
+signals:
+    void NameChanged();
+
 private:
     Ui::NodeNameDialog *ui;
 };
