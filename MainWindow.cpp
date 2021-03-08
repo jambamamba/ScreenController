@@ -88,6 +88,9 @@ void MainWindow::StartDiscoveryService()
            else if(m_nodes[ip_]->m_name != data->m_name)
            {
                m_nodes[ip_]->m_name = data->m_name;
+               m_node_model->removeRows(0, m_node_model->rowCount());//todo get the correct item and update it onl
+               m_node_model->appendRow(new QStandardItem(QIcon(":/resources/laptop-icon-19517.png"), data->m_name));
+//               qDebug() << "update ist view with new name " << data->m_name;
            }
         });
         while(!m_stop)

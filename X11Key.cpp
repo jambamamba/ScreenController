@@ -57,6 +57,7 @@ X11Key::X11Key(QObject *parent)
 
 X11Key::~X11Key()
 {
+    qDebug() << "Close display from X11Key";
     XCloseDisplay(m_display);
 }
 
