@@ -55,6 +55,10 @@ MainWindow::~MainWindow()
 {
     m_stop = true;
     m_discovery_thread.wait();
+    for(auto &window : m_transparent_window)
+    {
+        delete window;
+    }
     delete ui;
 }
 
