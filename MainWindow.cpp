@@ -28,8 +28,15 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     setWindowTitle("Kingfisher Screen Controller");
 
+    m_node_model = new NodeModel(ui->listView);
+    ui->listView->setModel(m_node_model);
+    ui->listView->show();
+    qRegisterMetaType<uint32_t>("uint32_t");
+    qRegisterMetaType<uint16_t>("uint16_t");
+
     connect(ui->listView, &QListView::doubleClicked,this,&MainWindow::NodeActivated);
-//    connect(ui->listView, &NodeListView::NodeActivated,this,&MainWindow::NodeActivated);
+    connect(ui->listView, &NodeListView::NodeActivated,this,&MainWindow::NodeActivated);
+    connect(this, &MainWindow::DiscoveredNode, m_node_model, &NodeModel::DiscoveredNode);
     connect(&m_node_name, &NodeNameDialog::NameChanged, [this](){ m_node_name_changed = true; });
     connect(this, &MainWindow::StartPlayback,
             this, &MainWindow::ShowTransparentWindowOverlay,
@@ -43,10 +50,6 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&m_event_handler, &EventHandler::StoppedStreaming,
             this, &MainWindow::DeleteTransparentWindowOverlay,
             Qt::ConnectionType::QueuedConnection);
-
-    m_node_model = new NodeModel(ui->listView);
-    ui->listView->setModel(m_node_model);
-    ui->listView->show();
 
     StartDiscoveryService();
     PrepareToReceiveStream();

@@ -1,35 +1,71 @@
 #include "NodeModel.h"
 
+#include <QDebug>
+#include <QIcon>
 #include <QString>
 
 NodeModel::NodeModel(QObject *parent)
-    : QStandardItemModel(parent)
+    : QAbstractItemModel(parent)
 {
+}
+
+int NodeModel::rowCount(const QModelIndex &parent) const
+{
+    qDebug() << "rowCount " << m_nodes.size();
+    return m_nodes.size() > 0 ? m_nodes.size() : 1;//without initial 1, it never draws anything!
+}
+
+int NodeModel::columnCount(const QModelIndex &) const
+{
+    return 1;
 }
 
 QVariant NodeModel::data(const QModelIndex &index, int role) const
 {
+    qDebug() << "data " << index.row() << m_nodes.size() ;
     if (!index.isValid() ||
-            index.row() > m_nodes.size())
+            index.row() >= m_nodes.size())
     {
         return QVariant();
     }
 
+    const Node *node = GetNodeAtPosition(index.row());
     switch(role)
     {
     case Qt::DisplayRole:
-        return GetNodeAtPosition(index.row())->m_name;
+        return node ? node->m_name : "";
     case Qt::DecorationRole:
-        return QIcon(":/resources/laptop-icon-19517.png");
+        return node ? QIcon(":/resources/laptop-icon-19517.png") : QIcon();
     case Qt::UserRole:
     {
         QVariant var;
-        var.setValue(GetNodeAtPosition(index.row()));
+        var.setValue(node);
         return var;
     }
     default:
        return QVariant();
     }
+}
+
+bool NodeModel::setData(const QModelIndex &index, const QVariant &value, int role)
+{
+    qDebug() << "setData";
+    Node *node = qvariant_cast<Node *>(value);
+    m_nodes.insert(node->m_ip, node);
+    emit dataChanged(index, index,
+                QVector<int>() << Qt::DisplayRole << Qt::EditRole);
+    return true;
+}
+
+QModelIndex NodeModel::index(int row, int column, const QModelIndex &parent) const
+{
+    return QAbstractItemModel::createIndex(row, column, (void*)GetNodeAtPosition(row));
+}
+
+QModelIndex NodeModel::parent(const QModelIndex &index) const
+{
+//    return QAbstractItemModel::createIndex(0, 0, nullptr);
+    return QModelIndex();
 }
 
 const NodeModel::Node *NodeModel::GetNodeAtPosition(size_t pos) const
@@ -66,19 +102,28 @@ QString NodeModel::Name(uint32_t ip) const
 
 void NodeModel::DiscoveredNode(const QString &name, uint32_t ip, uint16_t port)
 {
+    qDebug() << "discovered node " << name;
     if(m_nodes.find(ip) == m_nodes.end())
-     {
-         m_nodes.insert(ip, new Node(name, ip, port));
-         emit dataChanged(index(0,0), index(m_nodes.size()-1,0), {Qt::DisplayRole, Qt::EditRole});
-//         appendRow(new QStandardItem(QIcon(":/resources/laptop-icon-19517.png"), name));
-     }
+    {
+//        QVariant var;
+//        var.setValue(new Node(name, ip, port));
+//        setData(index(m_nodes.size()-1, 0), var);
+
+        Node *node = new Node(name, ip, port);
+        m_nodes.insert(node->m_ip, node);
+
+        insertRow(m_nodes.size());
+        int f = rowCount();
+        emit dataChanged(index(m_nodes.size()-1, 0),
+                         index(m_nodes.size()-1, 0),
+                    QVector<int>() << Qt::DisplayRole << Qt::EditRole);
+    }
     else if(m_nodes[ip]->m_name != name)
     {
         m_nodes[ip]->m_name = name;
-        emit dataChanged(index(0,0), index(m_nodes.size()-1,0), {Qt::DisplayRole, Qt::EditRole});
-//        removeRows(0, rowCount());//todo get the correct item and update it only
-//        appendRow(new QStandardItem(QIcon(":/resources/laptop-icon-19517.png"), name));
-//               qDebug() << "update ist view with new name " << data->m_name;
+        emit dataChanged(index(m_nodes.size()-1,0),
+                         index(m_nodes.size()-1,0),
+        {Qt::DisplayRole, Qt::EditRole});
     }
     else
     {
@@ -97,8 +142,9 @@ void NodeModel::RemoveStaleNodes()
         auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(end - (*it)->m_updated_at).count();
         if(elapsed > 10)
         {
-            m_nodes.erase(it);
-            delete (*it);
+            Node *node = *it;
+            it = m_nodes.erase(it);
+            delete node;
             emit dataChanged(index(0,0), index(m_nodes.size()-1,0), {Qt::DisplayRole, Qt::EditRole});
         }
         else
