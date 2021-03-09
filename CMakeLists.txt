@@ -113,14 +113,12 @@ SET(PROJECT_SOURCES
     ../License/NetworkRequest.h
     ../Updater/UpdaterWidget.cpp
     ../Updater/UpdaterWidget.h
-    Command.h
     Command.cpp
+    Command.h
     CommandMessage.cpp
     CommandMessage.h
-    EventHandler.h
     EventHandler.cpp
-    NodeListView.h
-    NodeListView.cpp
+    EventHandler.h
     ImageConverterInterface.h
     JpegConverter.cpp
     JpegConverter.h
@@ -130,6 +128,10 @@ SET(PROJECT_SOURCES
     MainWindow.h
     MouseInterface.cpp
     MouseInterface.h
+    NodeListView.cpp
+    NodeListView.h
+    NodeModel.cpp
+    NodeModel.h
     NodeNameDialog.cpp
     NodeNameDialog.h
     ScreenStreamer.cpp

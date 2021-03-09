@@ -1,32 +1,17 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#pragma once
 
 #include <QMainWindow>
+#include <QModelIndex>
 
 #include "EventHandler.h"
 #include "SocketReader.h"
 #include "ScreenStreamer.h"
 #include "NodeNameDialog.h"
+#include "NodeModel.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
-
-#include <QModelIndex>
-
-struct Node
-{
-    std::string m_name;
-    uint32_t m_ip;
-    uint16_t m_port;
-    Node(const std::string &name,
-         uint32_t ip,
-         uint16_t port)
-        : m_name(name)
-        , m_ip(ip)
-        , m_port(port)
-    {}
-};
 
 struct Command;
 struct ImageConverterInterface;
@@ -44,6 +29,7 @@ public:
 signals:
     void StartPlayback(const QImage&img, uint32_t from_ip);
     void StoppedStreaming(uint32_t ip);
+    void DiscoveredNode(const QString &name, uint32_t ip, uint16_t port);
 
 protected:
     void StartDiscoveryService();
@@ -66,10 +52,8 @@ private:
     SocketReader m_streamer_socket;
     ScreenStreamer m_streamer;
     std::future<void> m_discovery_thread;
-    QStandardItemModel *m_node_model;
-    QMap<uint32_t /*ip*/, Node*> m_nodes;
+    NodeModel *m_node_model;
     EventHandler m_event_handler;
     bool m_node_name_changed = false;
     bool m_stop = false;
 };
-#endif // MAINWINDOW_H

@@ -24,11 +24,11 @@ MainWindow::MainWindow(QWidget *parent)
     , m_streamer_socket(9000)
     , m_streamer(m_streamer_socket, this)
     , m_event_handler(this)
+    , m_node_model(new NodeModel(ui->listView))
 {
     ui->setupUi(this);
     setWindowTitle("Kingfisher Screen Controller");
 
-    m_node_model = new QStandardItemModel(ui->listView);
     connect(ui->listView, &QListView::doubleClicked,this,&MainWindow::NodeDoubleClicked);
     connect(&m_node_name, &NodeNameDialog::NameChanged, [this](){ m_node_name_changed = true; });
     connect(this, &MainWindow::StartPlayback,
@@ -85,18 +85,7 @@ void MainWindow::StartDiscoveryService()
                                [this](DiscoveryData *data, std::string ip, uint16_t port){
 //            qDebug() << "Discovered node " << QString(data->m_name) << " at " << QString(ip.c_str()) << ":" << port;
             uint32_t ip_ = SocketReader::IpFromString(ip.c_str());
-           if(m_nodes.find(ip_) == m_nodes.end())
-            {
-                m_nodes.insert(ip_, new Node(data->m_name, ip_, port));
-                m_node_model->appendRow(new QStandardItem(QIcon(":/resources/laptop-icon-19517.png"), data->m_name));
-            }
-           else if(m_nodes[ip_]->m_name != data->m_name)
-           {
-               m_nodes[ip_]->m_name = data->m_name;
-               m_node_model->removeRows(0, m_node_model->rowCount());//todo get the correct item and update it onl
-               m_node_model->appendRow(new QStandardItem(QIcon(":/resources/laptop-icon-19517.png"), data->m_name));
-//               qDebug() << "update ist view with new name " << data->m_name;
-           }
+            emit DiscoveredNode(QString(data->m_name), ip_, port);
         });
         while(!m_stop)
         {
@@ -121,19 +110,11 @@ void MainWindow::on_connectButtton_clicked()
     if(ui->listView->selectedIndexes().size() == 0)
     { return; }
 
-    int idx = ui->listView->selectedIndexes().first().row();
-    if(idx < 0)
+    int row = ui->listView->selectedIndexes().first().row();
+    if(row < 0)
     { return; }
 
-    int i = 0;
-    for(const auto &node : m_nodes)
-    {
-        if(i == idx)
-        {
-            SendStartStreamingCommand(node->m_ip);
-        }
-        ++i;
-    }
+    NodeDoubleClicked(m_node_model->index(row, 0));
 }
 
 void MainWindow::SendStartStreamingCommand(uint32_t ip)
@@ -149,16 +130,7 @@ void MainWindow::SendStartStreamingCommand(uint32_t ip)
 
 void MainWindow::NodeDoubleClicked(QModelIndex index)
 {
-    int idx = 0;
-    for(const auto &node     : m_nodes)
-    {
-        if(idx == index.row())
-        {
-            SendStartStreamingCommand(node->m_ip);
-            break;
-        }
-        idx ++;
-    }
+    SendStartStreamingCommand(m_node_model->Ip(index));
 }
 
 void MainWindow::PrepareToReceiveStream()
@@ -196,11 +168,11 @@ void MainWindow::ShowTransparentWindowOverlay(const QImage &img, uint32_t ip)
         return;
     }
 
-    if(m_nodes.find(ip) == m_nodes.end())
+    if(m_node_model->rowCount() == 0)
     {return;}
 
     m_transparent_window[ip] = new TransparentMaximizedWindow(
-                m_nodes[ip]->m_name.c_str(), this);
+                m_node_model->Name(ip), this);
     connect(m_transparent_window[ip], &TransparentMaximizedWindow::Close,
             [this, ip](){
         m_streamer.SendCommand(ip, Command::EventType::StopStreaming);
