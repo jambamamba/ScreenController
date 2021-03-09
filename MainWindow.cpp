@@ -36,7 +36,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->listView, &QListView::doubleClicked,this,&MainWindow::NodeActivated);
     connect(ui->listView, &NodeListView::NodeActivated,this,&MainWindow::NodeActivated);
-    connect(this, &MainWindow::DiscoveredNode, m_node_model, &NodeModel::DiscoveredNode);
+    connect(this, &MainWindow::DiscoveredNode, m_node_model, &NodeModel::DiscoveredNode,
+            Qt::ConnectionType::QueuedConnection);
     connect(&m_node_name, &NodeNameDialog::NameChanged, [this](){ m_node_name_changed = true; });
     connect(this, &MainWindow::StartPlayback,
             this, &MainWindow::ShowTransparentWindowOverlay,
