@@ -40,7 +40,7 @@ protected:
 
 private slots:
     void ShowTransparentWindowOverlay(const QImage&img, uint32_t from_ip);
-    void NodeDoubleClicked(QModelIndex);
+    void NodeActivated(QModelIndex);
 
     void on_connectButtton_clicked();
 

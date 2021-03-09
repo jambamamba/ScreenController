@@ -28,7 +28,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     setWindowTitle("Kingfisher Screen Controller");
 
-    connect(ui->listView, &QListView::doubleClicked,this,&MainWindow::NodeDoubleClicked);
+    connect(ui->listView, &QListView::doubleClicked,this,&MainWindow::NodeActivated);
+//    connect(ui->listView, &NodeListView::NodeActivated,this,&MainWindow::NodeActivated);
     connect(&m_node_name, &NodeNameDialog::NameChanged, [this](){ m_node_name_changed = true; });
     connect(this, &MainWindow::StartPlayback,
             this, &MainWindow::ShowTransparentWindowOverlay,
@@ -109,10 +110,9 @@ void MainWindow::on_connectButtton_clicked()
     { return; }
 
     int row = ui->listView->selectedIndexes().first().row();
-    if(row < 0)
-    { return; }
+    if(row < 0) { return; }
 
-    NodeDoubleClicked(m_node_model->index(row, 0));
+    NodeActivated(m_node_model->index(row, 0));
 }
 
 void MainWindow::SendStartStreamingCommand(uint32_t ip)
@@ -126,7 +126,7 @@ void MainWindow::SendStartStreamingCommand(uint32_t ip)
     }
 }
 
-void MainWindow::NodeDoubleClicked(QModelIndex index)
+void MainWindow::NodeActivated(QModelIndex index)
 {
     SendStartStreamingCommand(m_node_model->Ip(index));
 }
@@ -185,3 +185,4 @@ void MainWindow::ShowTransparentWindowOverlay(const QImage &img, uint32_t ip)
     QImage screen_shot = m_streamer.ScreenShot();
     m_transparent_window[ip]->Show(screen_shot.width(), screen_shot.height(), m_streamer.ActiveScreen());
 }
+
