@@ -14,9 +14,7 @@ NodeModel::NodeModel(QObject *parent)
 
 int NodeModel::rowCount(const QModelIndex &parent) const
 {
-    qDebug() << "rowCount" << m_nodes.size();
     return m_nodes.size();
-//    return m_nodes.size() > 0 ? m_nodes.size() : 10;//without initial value, it never draws anything!
 }
 
 int NodeModel::columnCount(const QModelIndex &) const
@@ -118,13 +116,9 @@ void NodeModel::DiscoveredNode(const QString &name, uint32_t ip, uint16_t port)
         Node *node = new Node(name, ip, port);
         m_nodes.insert(node->m_ip, node);
         endInsertRows();
-//        emit dataChanged(index(m_nodes.size()-1, 0),
-//                         index(m_nodes.size()-1, 0),
-//                    QVector<int>() << Qt::DisplayRole << Qt::EditRole);
     }
     else if(m_nodes[ip]->m_name != name)
     {
-        qDebug() << "update node " << name;
         m_nodes[ip]->m_name = name;
         emit dataChanged(index(m_nodes.size()-1,0),
                          index(m_nodes.size()-1,0),
@@ -153,7 +147,6 @@ void NodeModel::RemoveStaleNodes()
             it = m_nodes.erase(it);
             delete node;
             endRemoveRows();
-//            emit dataChanged(index(0,0), index(m_nodes.size()-1,0), {Qt::DisplayRole, Qt::EditRole});
         }
         else
         {
