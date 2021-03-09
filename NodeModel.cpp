@@ -145,7 +145,7 @@ void NodeModel::RemoveStaleNodes()
     {
         std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(end - (*it)->m_updated_at).count();
-        if(elapsed > 10)
+        if(elapsed > 6)
         {
             Node *node = *it;
             qDebug() << "removing stale node " << node->m_name;
