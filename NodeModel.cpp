@@ -4,6 +4,8 @@
 #include <QIcon>
 #include <QString>
 
+#include "SocketReader.h"
+
 NodeModel::NodeModel(QObject *parent)
     : QAbstractItemModel(parent)
 {
@@ -11,8 +13,8 @@ NodeModel::NodeModel(QObject *parent)
 
 int NodeModel::rowCount(const QModelIndex &parent) const
 {
-    qDebug() << "rowCount " << m_nodes.size();
-    return m_nodes.size() > 0 ? m_nodes.size() : 1;//without initial 1, it never draws anything!
+//    return m_nodes.size();
+    return m_nodes.size() > 0 ? m_nodes.size() : 10;//without initial value, it never draws anything!
 }
 
 int NodeModel::columnCount(const QModelIndex &) const
@@ -22,7 +24,6 @@ int NodeModel::columnCount(const QModelIndex &) const
 
 QVariant NodeModel::data(const QModelIndex &index, int role) const
 {
-    qDebug() << "data " << index.row() << m_nodes.size() ;
     if (!index.isValid() ||
             index.row() >= m_nodes.size())
     {
@@ -49,7 +50,6 @@ QVariant NodeModel::data(const QModelIndex &index, int role) const
 
 bool NodeModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
-    qDebug() << "setData";
     Node *node = qvariant_cast<Node *>(value);
     m_nodes.insert(node->m_ip, node);
     emit dataChanged(index, index,
@@ -102,7 +102,7 @@ QString NodeModel::Name(uint32_t ip) const
 
 void NodeModel::DiscoveredNode(const QString &name, uint32_t ip, uint16_t port)
 {
-    qDebug() << "discovered node " << name;
+//    qDebug() << "discovered node " << name << SocketReader::IpToString(ip);
     if(m_nodes.find(ip) == m_nodes.end())
     {
 //        QVariant var;
@@ -112,14 +112,14 @@ void NodeModel::DiscoveredNode(const QString &name, uint32_t ip, uint16_t port)
         Node *node = new Node(name, ip, port);
         m_nodes.insert(node->m_ip, node);
 
-        insertRow(m_nodes.size());
-        int f = rowCount();
+//        insertRow(m_nodes.size());
         emit dataChanged(index(m_nodes.size()-1, 0),
                          index(m_nodes.size()-1, 0),
                     QVector<int>() << Qt::DisplayRole << Qt::EditRole);
     }
     else if(m_nodes[ip]->m_name != name)
     {
+        qDebug() << "update node " << name;
         m_nodes[ip]->m_name = name;
         emit dataChanged(index(m_nodes.size()-1,0),
                          index(m_nodes.size()-1,0),
@@ -143,6 +143,7 @@ void NodeModel::RemoveStaleNodes()
         if(elapsed > 10)
         {
             Node *node = *it;
+            qDebug() << "removing stale node " << node->m_name;
             it = m_nodes.erase(it);
             delete node;
             emit dataChanged(index(0,0), index(m_nodes.size()-1,0), {Qt::DisplayRole, Qt::EditRole});

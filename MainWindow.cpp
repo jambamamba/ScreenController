@@ -86,10 +86,9 @@ void MainWindow::StartDiscoveryService()
         pthread_setname_np(pthread_self(), "discover");
         DiscoveryService service(m_node_name.GetFileAbsolutePathName().toUtf8().data());
         DiscoveryClient client(m_node_name.GetFileAbsolutePathName().toUtf8().data(),
-                               [this](DiscoveryData *data, std::string ip, uint16_t port){
-//            qDebug() << "Discovered node " << QString(data->m_name) << " at " << QString(ip.c_str()) << ":" << port;
-            uint32_t ip_ = SocketReader::IpFromString(ip.c_str());
-            emit DiscoveredNode(QString(data->m_name), ip_, port);
+                               [this](DiscoveryData *data, uint32_t ip, uint16_t port){
+//            qDebug() << "Discovered node " << QString(data->m_name) << " at " << ip << SocketReader::IpToString(ip) << ":" << port;
+            emit DiscoveredNode(QString(data->m_name), ip, port);
         });
         while(!m_stop)
         {
