@@ -54,6 +54,6 @@ private:
     std::future<void> m_discovery_thread;
     NodeModel *m_node_model;
     EventHandler m_event_handler;
-    bool m_node_name_changed = false;
+    std::atomic<bool>m_node_name_changed = false;
     bool m_stop = false;
 };

@@ -24,7 +24,6 @@ MainWindow::MainWindow(QWidget *parent)
     , m_streamer_socket(9000)
     , m_streamer(m_streamer_socket, this)
     , m_event_handler(this)
-    , m_node_model(new NodeModel(ui->listView))
 {
     ui->setupUi(this);
     setWindowTitle("Kingfisher Screen Controller");
@@ -44,12 +43,12 @@ MainWindow::MainWindow(QWidget *parent)
             this, &MainWindow::DeleteTransparentWindowOverlay,
             Qt::ConnectionType::QueuedConnection);
 
+    m_node_model = new NodeModel(ui->listView);
     ui->listView->setModel(m_node_model);
     ui->listView->show();
 
     StartDiscoveryService();
     PrepareToReceiveStream();
-//    grabKeyboard();
 }
 
 MainWindow::~MainWindow()
@@ -60,6 +59,7 @@ MainWindow::~MainWindow()
     {
         delete window;
     }
+    m_node_model->deleteLater();
     delete ui;
 }
 
@@ -90,7 +90,6 @@ void MainWindow::StartDiscoveryService()
         while(!m_stop)
         {
             client.Discover();
-            QApplication::processEvents();
             usleep(2 * 1000 * 1000);
 
             if(m_node_name_changed)
@@ -101,7 +100,6 @@ void MainWindow::StartDiscoveryService()
             }
         }
     });
-
 }
 
 

@@ -18,13 +18,13 @@ QVariant NodeModel::data(const QModelIndex &index, int role) const
     switch(role)
     {
     case Qt::DisplayRole:
-        return GetNode(index.row())->m_name;
+        return GetNodeAtPosition(index.row())->m_name;
     case Qt::DecorationRole:
         return QIcon(":/resources/laptop-icon-19517.png");
     case Qt::UserRole:
     {
         QVariant var;
-        var.setValue(GetNode(index.row()));
+        var.setValue(GetNodeAtPosition(index.row()));
         return var;
     }
     default:
@@ -32,12 +32,12 @@ QVariant NodeModel::data(const QModelIndex &index, int role) const
     }
 }
 
-const NodeModel::Node *NodeModel::GetNode(size_t idx) const
+const NodeModel::Node *NodeModel::GetNodeAtPosition(size_t pos) const
 {
-    size_t pos = 0;
+    size_t idx = 0;
     for(const auto &node : m_nodes)
     {
-        if(pos == idx)
+        if(idx == pos)
         {
             return node;
         }
@@ -45,15 +45,15 @@ const NodeModel::Node *NodeModel::GetNode(size_t idx) const
     return nullptr;
 }
 
+
 uint32_t NodeModel::Ip(const QModelIndex &index) const
 {
     return (index.row() < m_nodes.size()) ?
-                GetNode(index.row())->m_ip : 0;
+                GetNodeAtPosition(index.row())->m_ip : 0;
 }
 
 QString NodeModel::Name(uint32_t ip) const
 {
-    size_t idx = 0;
     for(const auto &node : m_nodes)
     {
         if(node->m_ip == ip)
@@ -80,5 +80,31 @@ void NodeModel::DiscoveredNode(const QString &name, uint32_t ip, uint16_t port)
 //        appendRow(new QStandardItem(QIcon(":/resources/laptop-icon-19517.png"), name));
 //               qDebug() << "update ist view with new name " << data->m_name;
     }
+    else
+    {
+        m_nodes[ip]->m_updated_at = std::chrono::steady_clock::now();
+    }
 
+    RemoveStaleNodes();
+}
+
+void NodeModel::RemoveStaleNodes()
+{
+    size_t idx = 0;
+    for(auto it = m_nodes.begin(); it != m_nodes.end();)
+    {
+        std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(end - (*it)->m_updated_at).count();
+        if(elapsed > 10)
+        {
+            m_nodes.erase(it);
+            delete (*it);
+            emit dataChanged(index(0,0), index(m_nodes.size()-1,0), {Qt::DisplayRole, Qt::EditRole});
+        }
+        else
+        {
+            ++it;
+            ++idx;
+        }
+    }
 }

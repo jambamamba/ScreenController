@@ -13,6 +13,7 @@ public:
         QString m_name;
         uint32_t m_ip;
         uint16_t m_port;
+        std::chrono::steady_clock::time_point m_updated_at;
         Node(const QString &name,
              uint32_t ip,
              uint16_t port)
@@ -37,7 +38,9 @@ public slots:
     void DiscoveredNode(const QString &name, uint32_t ip, uint16_t port);
 
 protected:
-    const NodeModel::Node *GetNode(size_t idx) const;
+    const NodeModel::Node *GetNodeAtPosition(size_t pos) const;
+    void RemoveStaleNodes();
+
     QMap<uint32_t /*ip*/, Node*> m_nodes;
 };
 Q_DECLARE_METATYPE(const NodeModel::Node*);

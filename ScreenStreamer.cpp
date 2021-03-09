@@ -161,8 +161,8 @@ void ScreenStreamer::StartStreaming(uint32_t ip, int decoder_type)
                 screen_shot = screen_shot.scaled(screen_shot.width()*m_scale_factor, screen_shot.height()*m_scale_factor);
             }
             EncodedImage enc = img_converter->Encode(screen_shot.bits(), screen_shot.width(), screen_shot.height(), m_jpeg_quality_percent);
-            std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
             m_socket.SendData(enc.m_enc_data, enc.m_enc_sz, ip, m_socket.GetPort());
+            std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
             auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
 //            qDebug() << "elapsed " << elapsed;
             QApplication::processEvents();
