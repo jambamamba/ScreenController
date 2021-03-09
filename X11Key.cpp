@@ -74,27 +74,27 @@ bool X11Key::testKeyEvent(int window, uint32_t &key, uint32_t &modifier, uint32_
                  window,
                  KeyPressMask|KeyReleaseMask);
     XMapWindow(m_display, window);
-//    if(XPending(m_display))
+    bool owner_events = true;//whether the keyboard events are to be reported as usual.
+    XGrabKey(m_display, AnyKey, AnyModifier, window, owner_events, GrabModeAsync, GrabModeAsync);
+
+    XEvent event;
+    XNextEvent(m_display, &event);//blocking call
+    switch(event.type)
     {
-        XEvent event;
-        XNextEvent(m_display, &event);//blocking call
-        switch(event.type)
-        {
-        case KeyPress:
-        case KeyRelease:
-            key = event.xkey.keycode;
-            modifier = event.xkey.state;
-            type = event.type;
-            qDebug() << "x11 key" << key
-                     << "modifer" << modifier
-                     << "type"
-                     << type << (type==KeyPress ? "press" : "release")
-                     << "symbol"
-                     << (char)XKeycodeToKeysym(m_display, key, 0);
-            return true;
-        default:
-            break;
-        }
+    case KeyPress:
+    case KeyRelease:
+        key = event.xkey.keycode;
+        modifier = event.xkey.state;
+        type = event.type;
+        qDebug() << "x11 key" << key
+                 << "modifer" << modifier
+                 << "type"
+                 << type << (type==KeyPress ? "press" : "release")
+                 << "symbol"
+                 << (char)XKeycodeToKeysym(m_display, key, 0);
+        return true;
+    default:
+        break;
     }
     return false;
 }
@@ -109,7 +109,7 @@ bool X11Key::testKeyPress(uint32_t type)
 }
 bool X11Key::testKeyRelease(uint32_t type)
 {
-    return type = KeyRelease;
+    return type == KeyRelease;
 }
 bool X11Key::testAltModifier(uint32_t modifier)
 {
