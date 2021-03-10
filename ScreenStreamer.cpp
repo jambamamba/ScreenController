@@ -154,7 +154,6 @@ void ScreenStreamer::SendCommand(uint32_t ip, uint16_t event)
 
 void ScreenStreamer::SendCommand(uint32_t ip, const Command &pkt)
 {
-    qDebug() << "SendCommand" << pkt.m_event;
     m_socket.SendData((uint8_t*)&pkt, pkt.m_size, ip, m_socket.GetPort());
 
     Command noop;
@@ -187,7 +186,11 @@ void ScreenStreamer::StartStreaming(uint32_t ip, uint32_t decoder_type)
             {//todo for testing
 //                screen_shot = screen_shot.scaled(screen_shot.width()/2, screen_shot.height()/2);
             }
-            EncodedImage enc = img_converter->Encode(screen_shot.bits(), screen_shot.width(), screen_shot.height(), m_img_quality_percent);
+            EncodedImage enc = img_converter->Encode(screen_shot.bits(),
+                                                     screen_shot.width(),
+                                                     screen_shot.height(),
+                                                     m_img_quality_percent);
+            qDebug() << "#### send frame cmd " << screen_shot.width();
             Command *pkt = CreateFrameCommandPacket(
                         0, 0,
                         screen_shot.width(),
