@@ -12,6 +12,7 @@ WebPConverter::~WebPConverter()
 
 ssize_t WebPConverter::FindHeader(uint8_t *buffer, ssize_t buffer_tail)
 {
+    return -1;//osm todo
     ssize_t idx = 0;
     for(; idx < buffer_tail - HeaderSize(); ++idx)
     {
