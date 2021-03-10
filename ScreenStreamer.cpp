@@ -188,7 +188,7 @@ void ScreenStreamer::StartStreaming(uint32_t ip, uint32_t decoder_type)
             }
             EncodedImage enc = img_converter->Encode(screen_shot.bits(), screen_shot.width(), screen_shot.height(), m_img_quality_percent);
             Command *pkt = CreateFrameCommandPacket(
-                        0, 0,
+                        100, 100,
                         screen_shot.width(),
                         screen_shot.height(),
                         decoder_type,
