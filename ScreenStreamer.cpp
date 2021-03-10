@@ -188,6 +188,11 @@ void ScreenStreamer::StartStreaming(uint32_t ip, uint32_t decoder_type)
                         convertToFormat(QImage::Format::Format_RGB888);
             }
             EncodedImage enc = img_converter->Encode(screen_shot.bits(), screen_shot.width(), screen_shot.height(), m_img_quality_percent);
+            QImage img;
+             img_converter->Decode(enc, img);
+             img.save("/home/dev/oosman/foo2.jpg");
+             exit(0);
+
             Command *pkt = CreateFrameCommandPacket(
                         0, 0,
                         screen_shot.width(),
