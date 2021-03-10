@@ -28,12 +28,12 @@ public:
     uint16_t GetPort() const;
     static char *IpToString(uint32_t ip);
     static uint32_t IpFromString(const char* ip);
-    void ExtractImage(uint8_t *buffer,
+    bool ParseBuffer(uint8_t *buffer,
                       ssize_t idx,
                       ImageConverterInterface::Types decoder_type,
                       uint32_t ip,
-                      Stats &stats,
-                      std::function<void(const Command &pkt, uint32_t ip)> handleCommand);
+                      Stats &stats);
+    void ExtractFrame(uint8_t *buffer, ssize_t idx, ImageConverterInterface::Types decoder_type, uint32_t ip, Stats &stats);
     void Stop(uint32_t ip);
     void Start(uint32_t ip);
 

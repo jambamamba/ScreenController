@@ -10,7 +10,7 @@ struct Command
     uint8_t m_sync_bytes[4] = { 0xca, 0xfe, 0xba, 0xbe };
     uint8_t m_version = 1;
     uint8_t m_padding = 0;
-    enum EventType : int {
+    enum EventType : uint16_t {
         None,
         StartStreaming,
         StopStreaming,
@@ -20,6 +20,7 @@ struct Command
         MouseDoubleClicked,
         MouseMove,
         KeyEvent,
+        FrameInfo,
     };
     uint16_t m_event = None;
     uint32_t m_size = sizeof (Command);
@@ -29,13 +30,22 @@ struct Command
         uint32_t m_type = 0;
     };
     struct Mouse {
-        int m_button = 0;
-        int m_x = -1;
-        int m_y = -1;
+        uint32_t m_button = 0;
+        uint32_t m_x = -1;
+        uint32_t m_y = -1;
     };
+    struct Frame {
+        uint32_t m_x = 0;
+        uint32_t m_y = 0;
+        uint32_t m_width = 0;
+        uint32_t m_height = 0;
+        uint32_t m_size = 0;
+    };
+
     union U {
         Key m_key;
         Mouse m_mouse;
+        Frame m_frame;
         U(){}
     } u;
     uint8_t m_tail_bytes[4] = { 0xca, 0xfe, 0xd0, 0x0d };

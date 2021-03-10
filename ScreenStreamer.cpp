@@ -32,6 +32,25 @@ static QImage &bltCursorOnImage(QImage &img, const QImage &cursor, const QPoint 
     painter.end();
     return img;
 }
+
+Command *CreateFrameCommandPacket(uint32_t x, uint32_t y, uint32_t width, uint32_t height, const uint8_t *data, uint32_t data_size)
+{
+    Command *pkt = (Command *)malloc(sizeof (Command) + data_size);
+    pkt->m_event = Command::EventType::FrameInfo;
+    pkt->u.m_frame.m_x = 0;
+    pkt->u.m_frame.m_y = 0;
+    pkt->u.m_frame.m_width = 0;
+    pkt->u.m_frame.m_height = 0;
+    pkt->u.m_frame.m_size = data_size;
+    pkt->m_size = sizeof (Command) + data_size;
+
+    uint8_t tail_bytes[4];
+    memcpy(tail_bytes, pkt->m_tail_bytes, 4);
+    memcpy(pkt->m_tail_bytes, data, data_size);
+    memcpy(pkt->m_tail_bytes + data_size, tail_bytes, 4);
+
+    return pkt;
+}
 }//namespace
 ScreenStreamer::ScreenStreamer(SocketReader &socket, QObject *parent)
     : QObject(parent)
@@ -126,7 +145,7 @@ void ScreenStreamer::SendCommand(uint32_t ip, uint16_t event)
 
 void ScreenStreamer::SendCommand(uint32_t ip, const Command &pkt)
 {
-    m_socket.SendData((uint8_t*)&pkt, sizeof(Command), ip, m_socket.GetPort());
+    m_socket.SendData((uint8_t*)&pkt, pkt.m_size, ip, m_socket.GetPort());
 
     Command noop;
     noop.m_event = Command::EventType::None;
@@ -161,7 +180,20 @@ void ScreenStreamer::StartStreaming(uint32_t ip, int decoder_type)
                 screen_shot = screen_shot.scaled(screen_shot.width()*m_scale_factor, screen_shot.height()*m_scale_factor);
             }
             EncodedImage enc = img_converter->Encode(screen_shot.bits(), screen_shot.width(), screen_shot.height(), m_jpeg_quality_percent);
-            m_socket.SendData(enc.m_enc_data, enc.m_enc_sz, ip, m_socket.GetPort());
+            Command *pkt = CreateFrameCommandPacket(
+                        0, 0,
+                        screen_shot.width(),
+                        screen_shot.height(),
+                        enc.m_enc_data,
+                        enc.m_enc_sz
+                        );
+            SendCommand(ip, *pkt);
+            free(pkt);
+            m_socket.SendData(
+                        enc.m_enc_data,
+                        enc.m_enc_sz,
+                        ip,
+                        m_socket.GetPort());
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
             auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
 //            qDebug() << "elapsed " << elapsed;

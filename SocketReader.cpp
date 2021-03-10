@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "Command.h"
 #include "CommandMessage.h"
 #include "JpegConverter.h"
 #include "WebPConverter.h"
@@ -195,43 +196,56 @@ int SocketReader::SendData(uint8_t *buf, int buf_size, uint32_t ip, size_t port)
     }
     return total_sent;
 }
+void SocketReader::ExtractFrame(uint8_t *buffer, ssize_t idx, ImageConverterInterface::Types decoder_type, uint32_t ip, Stats &stats)
+{
+    bool loaded = false;
+    {
+        std::lock_guard<std::mutex> lk(m_mutex);
+        EncodedImage enc(buffer, idx);
 
-void SocketReader::ExtractImage(uint8_t *buffer,
+        auto &decoder = m_decoders[decoder_type];
+        m_display_img[ip] = decoder->Decode(enc, m_display_img[ip]);
+        loaded = !m_display_img[ip].isNull();
+    }
+    if(loaded)
+    {
+        m_cv.notify_one();
+        stats.Update(idx);
+    }
+
+}
+bool SocketReader::ParseBuffer(uint8_t *buffer,
                                 ssize_t idx,
                                 ImageConverterInterface::Types decoder_type,
                                 uint32_t ip,
-                                Stats &stats,
-                                std::function<void(const Command &pkt, uint32_t ip)> handleCommand)
+                                Stats &stats)
 {
     switch(decoder_type)
     {
-    case ImageConverterInterface::Types::Jpeg:
-    case ImageConverterInterface::Types::Webp:
-    {
-        bool loaded = false;
-        {
-            std::lock_guard<std::mutex> lk(m_mutex);
-            EncodedImage enc(buffer, idx);
-
-            auto &decoder = m_decoders[decoder_type];
-            m_display_img[ip] = decoder->Decode(enc, m_display_img[ip]);
-            loaded = !m_display_img[ip].isNull();
-        }
-        if(loaded)
-        {
-            m_cv.notify_one();
-            stats.Update(idx);
-        }
-        break;
-    }
     case ImageConverterInterface::Types::Command:
     {
         Command *pkt = (Command*)buffer;
-        handleCommand(*pkt, ip);
-        break;
+        if(pkt->m_event == Command::EventType::FrameInfo)
+        {
+            qDebug() << "Next frame attributes:"
+                     << pkt->u.m_frame.m_x
+                     << pkt->u.m_frame.m_y
+                     << pkt->u.m_frame.m_width
+                     << pkt->u.m_frame.m_height
+                     << pkt->u.m_frame.m_size;
+            ExtractFrame(pkt->m_tail_bytes, pkt->u.m_frame.m_size, decoder_type, ip, stats);
+            return true;
+        }
+        return false;
+    }
+    case ImageConverterInterface::Types::Jpeg:
+    case ImageConverterInterface::Types::Webp:
+    {
+        ExtractFrame(buffer, idx, decoder_type, ip, stats);
+        return true;
     }
     default:
-        break;
+        return false;
     }
 }
 
@@ -326,12 +340,11 @@ void SocketReader::StartRecieveDataThread(std::function<void(const Command &pkt,
                     next_header.m_pos += decoder->HeaderSize();
                     if(decoder->IsValid(buffer, next_header.m_pos))
                     {
-                        ExtractImage(buffer,
-                                     next_header.m_pos,
-                                     header.m_type,
-                                     sa_client.sin_addr.s_addr,
-                                     stats,
-                                     handleCommand);
+                        if(!ParseBuffer(buffer, next_header.m_pos, header.m_type, sa_client.sin_addr.s_addr, stats) &&
+                                (header.m_type == ImageConverterInterface::Types::Command))
+                        {
+                            handleCommand(*(Command*)buffer, sa_client.sin_addr.s_addr);
+                        }
                     }
                     memmove(buffer, &buffer[next_header.m_pos], buffer_tail - next_header.m_pos);
                     buffer_tail -= (next_header.m_pos);
