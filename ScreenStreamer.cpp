@@ -180,11 +180,14 @@ void ScreenStreamer::StartStreaming(uint32_t ip, int decoder_type)
 
             QImage screen_shot = ScreenShot();
             screen_shot = ApplyMouseCursor(screen_shot);
-            if(m_scale_factor*100 != 100)
+
+            static QImage *kingf = nullptr;
+            if(!kingf)
             {
-                screen_shot = screen_shot.scaled(screen_shot.width()*m_scale_factor, screen_shot.height()*m_scale_factor);
+                kingf = new QImage(":/resources/♂_Common_Kingfisher_(Alcedo_atthis)_Photograph_By_Shantanu_Kuveskar,_Mangaon,_Maharashtra,_India.jpg");
+                screen_shot = *kingf;
             }
-            EncodedImage enc = img_converter->Encode(screen_shot.bits(), screen_shot.width(), screen_shot.height(), m_jpeg_quality_percent);
+            EncodedImage enc = img_converter->Encode(screen_shot.bits(), screen_shot.width(), screen_shot.height(), m_img_quality_percent);
             Command *pkt = CreateFrameCommandPacket(
                         0, 0,
                         screen_shot.width(),
