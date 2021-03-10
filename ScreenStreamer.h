@@ -39,7 +39,7 @@ protected:
     std::future<void> thread_;
     QList<QScreen *> m_screens;
     SocketReader &m_socket;
-    int m_img_quality_percent = 10;
+    int m_img_quality_percent = 80;
     MouseInterface *m_mouse;
     bool m_streaming = false;
     bool m_die = false;
