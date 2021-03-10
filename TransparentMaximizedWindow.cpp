@@ -243,7 +243,7 @@ void TransparentMaximizedWindow::paintEvent(QPaintEvent *)
 //    r.setWidth(rect.width() + BORDER_WIDTH*2);
 //    r.setHeight(rect.height() + BORDER_WIDTH*2);
 //    painter.drawRect(r);
-    painter.drawImage(rect(), m_image, m_image.rect());
+    painter.drawImage(m_image.rect(), m_image, m_image.rect());
     painter.end();
 }
 

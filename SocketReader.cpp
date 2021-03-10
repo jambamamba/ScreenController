@@ -198,21 +198,16 @@ int SocketReader::SendData(uint8_t *buf, int buf_size, uint32_t ip, size_t port)
 }
 void SocketReader::ExtractFrame(uint8_t *buffer, ssize_t idx, ImageConverterInterface::Types decoder_type, uint32_t ip, Stats &stats)
 {
-    bool loaded = false;
-    {
-        std::lock_guard<std::mutex> lk(m_mutex);
-        EncodedImage enc(buffer, idx);
+    std::lock_guard<std::mutex> lk(m_mutex);
+    EncodedImage enc(buffer, idx);
 
-        auto &decoder = m_decoders[decoder_type];
-        m_display_img[ip] = decoder->Decode(enc, m_display_img[ip]);
-        loaded = !m_display_img[ip].isNull();
-    }
-    if(loaded)
+    auto &decoder = m_decoders[decoder_type];
+    m_display_img[ip] = decoder->Decode(enc, m_display_img[ip]);
+    if(!m_display_img[ip].isNull())
     {
         m_cv.notify_one();
         stats.Update(idx);
     }
-
 }
 bool SocketReader::ParseBuffer(uint8_t *buffer,
                                 ssize_t idx,
