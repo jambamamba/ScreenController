@@ -154,6 +154,7 @@ void ScreenStreamer::SendCommand(uint32_t ip, uint16_t event)
 
 void ScreenStreamer::SendCommand(uint32_t ip, const Command &pkt)
 {
+    qDebug() << "SendCommand" << pkt.m_event;
     m_socket.SendData((uint8_t*)&pkt, pkt.m_size, ip, m_socket.GetPort());
 
     Command noop;
