@@ -107,7 +107,9 @@ int ScreenStreamer::ActiveScreenIdx() const
 
 QImage ScreenStreamer::ScreenShot()
 {
-    return ActiveScreen()->grabWindow(0).toImage().convertToFormat(QImage::Format::Format_RGB888);
+    QImage screen_shot = ActiveScreen()->grabWindow(0).toImage().convertToFormat(QImage::Format::Format_RGB888);
+    screen_shot = ApplyMouseCursor(screen_shot);
+    return screen_shot;
 }
 
 QScreen *ScreenStreamer::ActiveScreen()
@@ -181,18 +183,10 @@ void ScreenStreamer::StartStreaming(uint32_t ip, uint32_t decoder_type)
             std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
             QImage screen_shot = ScreenShot();
-            screen_shot = ApplyMouseCursor(screen_shot);
-
-            {
-                screen_shot = QImage(":/resources/♂_Common_Kingfisher_(Alcedo_atthis)_Photograph_By_Shantanu_Kuveskar,_Mangaon,_Maharashtra,_India.jpg").
-                        convertToFormat(QImage::Format::Format_RGB888);
+            {//todo for testing
+                screen_shot = screen_shot.scaled(screen_shot.width()/2, screen_shot.height()/2);
             }
             EncodedImage enc = img_converter->Encode(screen_shot.bits(), screen_shot.width(), screen_shot.height(), m_img_quality_percent);
-            QImage img;
-             img_converter->Decode(enc, img);
-             img.save("/home/dev/oosman/foo2.jpg");
-             exit(0);
-
             Command *pkt = CreateFrameCommandPacket(
                         0, 0,
                         screen_shot.width(),
