@@ -6,6 +6,7 @@
 #include <memory>
 
 #include "Command.h"
+#include "Frame.h"
 
 namespace Ui {
 class TransparentMaximizedWindow;
@@ -26,7 +27,7 @@ public:
     void StartCapture(const QPoint &point_start,
                       const QPoint &point_stop);
     void MoveToScreen(const QScreen *screen);
-    void SetImage(const QImage&img);
+    void SetImage(const Frame &frame);
     bool IsClosed() const;
     
     virtual void mousePressEvent(QMouseEvent *event) override;
@@ -44,7 +45,7 @@ private:
     bool m_capturing;
     QScreen *m_screen;
     std::mutex m_mutex;
-    QImage m_image;
+    Frame m_frame;
     QTimer *m_timer;
     QPoint m_mouse_pos;
     enum DebounceEvents : int {

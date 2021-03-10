@@ -13,6 +13,8 @@
 #include <vector>
 #include <libavutil/avutil.h>
 
+#include "Command.h"
+#include "Frame.h"
 #include "ImageConverterInterface.h"
 
 struct Command;
@@ -24,7 +26,7 @@ public:
     ~SocketReader();
     void StartRecieveDataThread(std::function<void(const Command &pkt, uint32_t ip)> handleCommand);
     int SendData(uint8_t *buf, int buf_size, uint32_t ip, size_t port);
-    bool PlaybackImages(std::function<void(const QImage&img, uint32_t from_ip)> renderImageCb);
+    bool PlaybackImages(std::function<void(const Frame &frame, uint32_t from_ip)> renderImageCb);
     uint16_t GetPort() const;
     static char *IpToString(uint32_t ip);
     static uint32_t IpFromString(const char* ip);
@@ -33,7 +35,11 @@ public:
                       ImageConverterInterface::Types decoder_type,
                       uint32_t ip,
                       Stats &stats);
-    void ExtractFrame(uint8_t *buffer, ssize_t idx, ImageConverterInterface::Types decoder_type, uint32_t ip, Stats &stats);
+    void ExtractFrame(uint8_t *buffer,
+                      Command::Frame &frame,
+                      ImageConverterInterface::Types decoder_type,
+                      uint32_t ip,
+                      Stats &stats);
     void Stop(uint32_t ip);
     void Start(uint32_t ip);
 
@@ -55,7 +61,7 @@ protected:
     std::future<bool> m_playback_thread;
     std::mutex m_mutex;
     std::condition_variable m_cv;
-    QMap<uint32_t /*ip*/, QImage> m_display_img;
+    QMap<uint32_t /*ip*/, Frame> m_frame;
     std::map<ImageConverterInterface::Types, std::shared_ptr<ImageConverterInterface>> m_decoders;
     bool m_play = false;
     bool m_die = false;

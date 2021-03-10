@@ -27,7 +27,7 @@ public:
     ~MainWindow();
     virtual void keyPressEvent(QKeyEvent *event) override;
 signals:
-    void StartPlayback(const QImage&img, uint32_t from_ip);
+    void StartPlayback(const Frame &frame, uint32_t from_ip);
     void StoppedStreaming(uint32_t ip);
     void DiscoveredNode(const QString &name, uint32_t ip, uint16_t port);
 
@@ -37,9 +37,10 @@ protected:
     void HandleCommand(const Command &pkt, uint32_t from_ip);
     void DeleteTransparentWindowOverlay(uint32_t ip);
     void SendStartStreamingCommand(uint32_t ip);
+    void MakeNewTransparentWindowOverlay(uint32_t ip);
 
 private slots:
-    void ShowTransparentWindowOverlay(const QImage&img, uint32_t from_ip);
+    void ShowTransparentWindowOverlay(const Frame &frame, uint32_t from_ip);
     void NodeActivated(QModelIndex);
 
     void on_connectButtton_clicked();

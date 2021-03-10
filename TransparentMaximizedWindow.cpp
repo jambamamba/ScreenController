@@ -17,6 +17,7 @@
 #include <QTimer>
 #include <xkbcommon/xkbcommon-keysyms.h>
 
+#include "Frame.h"
 #if defined(Win32) || defined(Win64)
 #include "WindowsMouse.h"
 #elif defined(Linux)
@@ -126,11 +127,11 @@ void TransparentMaximizedWindow::MoveToScreen(const QScreen* screen)
     resize(screen_geometry.width(), screen_geometry.height());
 }
 
-void TransparentMaximizedWindow::SetImage(const QImage &img)
+void TransparentMaximizedWindow::SetImage(const Frame &frame)
 {
     {
         std::lock_guard<std::mutex> lk(m_mutex);
-        m_image = img;
+        m_frame = frame;
     }
 }
 
@@ -243,7 +244,13 @@ void TransparentMaximizedWindow::paintEvent(QPaintEvent *)
 //    r.setWidth(rect.width() + BORDER_WIDTH*2);
 //    r.setHeight(rect.height() + BORDER_WIDTH*2);
 //    painter.drawRect(r);
-    painter.drawImage(m_image.rect(), m_image, m_image.rect());
+    painter.drawImage(QRect(
+                          m_frame.m_x,
+                          m_frame.m_y,
+                          m_frame.m_width,
+                          m_frame.m_height),
+                      m_frame.m_img,
+                      m_frame.m_img.rect());
     painter.end();
 }
 

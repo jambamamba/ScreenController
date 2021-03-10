@@ -139,8 +139,8 @@ void MainWindow::PrepareToReceiveStream()
     m_streamer_socket.StartRecieveDataThread([this](const Command &pkt, uint32_t ip){
         m_event_handler.HandleCommand(pkt, ip);
     });
-    m_streamer_socket.PlaybackImages([this](const QImage&img, uint32_t ip) {
-        emit StartPlayback(img, ip);
+    m_streamer_socket.PlaybackImages([this](const Frame &frame, uint32_t ip) {
+        emit StartPlayback(frame, ip);
     });
 }
 
@@ -158,17 +158,21 @@ void MainWindow::DeleteTransparentWindowOverlay(uint32_t ip)
     m_transparent_window.remove(ip);
 }
 
-void MainWindow::ShowTransparentWindowOverlay(const QImage &img, uint32_t ip)
+void MainWindow::ShowTransparentWindowOverlay(const Frame &frame, uint32_t ip)
 {
     if(m_transparent_window.find(ip) !=  m_transparent_window.end())
     {
         if(!m_transparent_window[ip]->IsClosed())
         {
-            m_transparent_window[ip]->SetImage(img);
+            m_transparent_window[ip]->SetImage(frame);
         }
         return;
     }
+    MakeNewTransparentWindowOverlay(ip);
+}
 
+void MainWindow::MakeNewTransparentWindowOverlay(uint32_t ip)
+{
     if(m_node_model->rowCount() == 0)
     {return;}
 
@@ -187,5 +191,5 @@ void MainWindow::ShowTransparentWindowOverlay(const QImage &img, uint32_t ip)
     });
     QImage screen_shot = m_streamer.ScreenShot();
     m_transparent_window[ip]->Show(screen_shot.width(), screen_shot.height(), m_streamer.ActiveScreen());
-}
 
+}

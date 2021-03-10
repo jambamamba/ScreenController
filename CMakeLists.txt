@@ -113,6 +113,7 @@ SET(PROJECT_SOURCES
     ../License/NetworkRequest.h
     ../Updater/UpdaterWidget.cpp
     ../Updater/UpdaterWidget.h
+    Frame.h
     Command.cpp
     Command.h
     CommandMessage.cpp

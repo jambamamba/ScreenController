@@ -13,7 +13,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "Command.h"
 #include "CommandMessage.h"
 #include "JpegConverter.h"
 #include "WebPConverter.h"
@@ -196,17 +195,27 @@ int SocketReader::SendData(uint8_t *buf, int buf_size, uint32_t ip, size_t port)
     }
     return total_sent;
 }
-void SocketReader::ExtractFrame(uint8_t *buffer, ssize_t idx, ImageConverterInterface::Types decoder_type, uint32_t ip, Stats &stats)
+void SocketReader::ExtractFrame(uint8_t *buffer,
+                                Command::Frame &frame,
+                                ImageConverterInterface::Types decoder_type,
+                                uint32_t ip,
+                                Stats &stats)
 {
     std::lock_guard<std::mutex> lk(m_mutex);
-    EncodedImage enc(buffer, idx);
+    EncodedImage enc(buffer, frame.m_size);
+
+    if(m_frame.find(ip) == m_frame.end())
+    {
+        m_frame[ip] = Frame(frame.m_x, frame.m_y, frame.m_width, frame.m_height);
+    }
+    QImage &img = m_frame[ip].m_img;
 
     auto &decoder = m_decoders[decoder_type];
-    m_display_img[ip] = decoder->Decode(enc, m_display_img[ip]);
-    if(!m_display_img[ip].isNull())
+    img = decoder->Decode(enc, img);
+    if(!img.isNull())
     {
         m_cv.notify_one();
-        stats.Update(idx);
+        stats.Update(frame.m_size);
     }
 }
 bool SocketReader::ParseBuffer(uint8_t *buffer,
@@ -228,19 +237,20 @@ bool SocketReader::ParseBuffer(uint8_t *buffer,
 //                     << pkt->u.m_frame.m_width
 //                     << pkt->u.m_frame.m_height
 //                     << pkt->u.m_frame.m_size;
-            ExtractFrame(pkt->m_tail_bytes, pkt->u.m_frame.m_size,
+            ExtractFrame(pkt->m_tail_bytes,
+                         pkt->u.m_frame,
                          static_cast<ImageConverterInterface::Types>(pkt->u.m_frame.m_decoder_type),
                          ip, stats);
             return true;
         }
         return false;
     }
-    case ImageConverterInterface::Types::Jpeg:
-    case ImageConverterInterface::Types::Webp:
-    {
-        ExtractFrame(buffer, idx, decoder_type, ip, stats);
-        return true;
-    }
+//    case ImageConverterInterface::Types::Jpeg:
+//    case ImageConverterInterface::Types::Webp:
+//    {
+//        ExtractFrame(buffer, idx, decoder_type, ip, stats);
+//        return true;
+//    }
     default:
         return false;
     }
@@ -249,9 +259,9 @@ bool SocketReader::ParseBuffer(uint8_t *buffer,
 void SocketReader::Stop(uint32_t ip)
 {
     m_play = false;
-    if(m_display_img.find(ip) != m_display_img.end())
+    if(m_frame.find(ip) != m_frame.end())
     {
-        m_display_img[ip] = QImage();
+        m_frame[ip].m_img = QImage();
     }
 }
 
@@ -359,7 +369,7 @@ void SocketReader::StartRecieveDataThread(std::function<void(const Command &pkt,
     });
 }
 
-bool SocketReader::PlaybackImages(std::function<void(const QImage&img, uint32_t from_ip)> renderImageCb)
+bool SocketReader::PlaybackImages(std::function<void (const Frame &, uint32_t)> renderImageCb)
 {
     m_playback_thread = std::async(std::launch::async, [this,renderImageCb](){
         pthread_setname_np(pthread_self(), "playbk");
@@ -369,20 +379,20 @@ bool SocketReader::PlaybackImages(std::function<void(const QImage&img, uint32_t 
             auto sec = std::chrono::seconds(1);
             m_cv.wait_for(lk, 2*sec, [this]{
                 if (m_die) {return true;}
-                for(const auto &display_image: m_display_img)
+                for(const auto &frame_: m_frame)
                 {
-                    if(!display_image.isNull()) { return true; }
+                    if(!frame_.m_img.isNull()) { return true; }
                 }
                 return false;
             });
             if(m_die) { return false; }
             if(!m_play) { continue; }
 
-            for(uint32_t ip: m_display_img.keys())
+            for(uint32_t ip: m_frame.keys())
             {
-                if(!m_display_img[ip].isNull())
+                if(!m_frame[ip].m_img.isNull())
                 {
-                    renderImageCb(m_display_img[ip], ip);
+                    renderImageCb(m_frame[ip], ip);
                 }
             }
         }
