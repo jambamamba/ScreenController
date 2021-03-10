@@ -54,7 +54,9 @@ Command *CreateFrameCommandPacket(uint32_t x, uint32_t y, uint32_t width, uint32
     memcpy(pkt->m_tail_bytes, data, data_size);
     memcpy(pkt->m_tail_bytes + data_size, tail_bytes, sizeof tail_bytes);
 
-    qDebug() << "### create frame packet of size" << pkt->m_size << ", frame size" << pkt->u.m_frame.m_size;
+    qDebug() << "### create frame packet of size" << pkt->m_size
+             << ", frame size" << pkt->u.m_frame.m_size
+             << ", x,y,w,h" << x << y << width << height;
 
     return pkt;
 }
@@ -180,8 +182,6 @@ void ScreenStreamer::StartStreaming(uint32_t ip, uint32_t decoder_type)
 
         while(!m_die)
         {
-            std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-
             QImage screen_shot = ScreenShot();
             {//todo for testing
 //                screen_shot = screen_shot.scaled(screen_shot.width()/2, screen_shot.height()/2);

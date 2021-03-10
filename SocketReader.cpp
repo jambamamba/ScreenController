@@ -197,11 +197,13 @@ int SocketReader::SendData(uint8_t *buf, int buf_size, uint32_t ip, size_t port)
 }
 void SocketReader::ExtractFrame(uint8_t *buffer,
                                 ssize_t buffer_size,
-                                Command::Frame &frame,
-                                ImageConverterInterface::Types decoder_type,
+                                const Command::Frame &frame,
                                 uint32_t ip,
                                 Stats &stats)
 {
+    ImageConverterInterface::Types decoder_type = static_cast<ImageConverterInterface::Types>
+            (frame.m_decoder_type);
+
     std::lock_guard<std::mutex> lk(m_mutex);
     EncodedImage enc(buffer, buffer_size);
 
@@ -241,18 +243,26 @@ bool SocketReader::ParseBuffer(uint8_t *buffer,
             ExtractFrame(pkt->m_tail_bytes,
                          buffer_size,
                          pkt->u.m_frame,
-                         static_cast<ImageConverterInterface::Types>(pkt->u.m_frame.m_decoder_type),
-                         ip, stats);
+                         ip,
+                         stats);
             return true;
         }
         return false;
     }
-//    case ImageConverterInterface::Types::Jpeg:
-//    case ImageConverterInterface::Types::Webp:
-//    {
-//        ExtractFrame(buffer, idx, decoder_type, ip, stats);
-//        return true;
-//    }
+    case ImageConverterInterface::Types::Jpeg:
+    case ImageConverterInterface::Types::Webp:
+    {
+        Command::Frame frame;
+        frame.m_decoder_type = decoder_type;
+        frame.m_width = 1920;
+        frame.m_height = 1080;
+        ExtractFrame(buffer,
+                     buffer_size,
+                     frame,
+                     ip,
+                     stats);
+        return true;
+    }
     default:
         return false;
     }
