@@ -35,7 +35,10 @@ static QImage &bltCursorOnImage(QImage &img, const QImage &cursor, const QPoint 
 
 Command *CreateFrameCommandPacket(uint32_t x, uint32_t y, uint32_t width, uint32_t height, const uint8_t *data, uint32_t data_size)
 {
+    Command cmd;
     Command *pkt = (Command *)malloc(sizeof (Command) + data_size);
+    memcpy(pkt, &cmd, sizeof cmd);
+
     pkt->m_event = Command::EventType::FrameInfo;
     pkt->u.m_frame.m_x = 0;
     pkt->u.m_frame.m_y = 0;
@@ -44,8 +47,9 @@ Command *CreateFrameCommandPacket(uint32_t x, uint32_t y, uint32_t width, uint32
     pkt->u.m_frame.m_size = data_size;
     pkt->m_size = sizeof (Command) + data_size;
 
+    uint8_t tail_bytes[4];
+    memcpy(tail_bytes, cmd.m_tail_bytes, sizeof cmd.m_tail_bytes);
     memcpy(pkt->m_tail_bytes, data, data_size);
-    uint8_t tail_bytes[4] = { 0xca, 0xfe, 0xd0, 0x0d };
     memcpy(pkt->m_tail_bytes + data_size, tail_bytes, 4);
 
     return pkt;
