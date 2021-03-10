@@ -196,13 +196,14 @@ int SocketReader::SendData(uint8_t *buf, int buf_size, uint32_t ip, size_t port)
     return total_sent;
 }
 void SocketReader::ExtractFrame(uint8_t *buffer,
+                                ssize_t buffer_size,
                                 Command::Frame &frame,
                                 ImageConverterInterface::Types decoder_type,
                                 uint32_t ip,
                                 Stats &stats)
 {
     std::lock_guard<std::mutex> lk(m_mutex);
-    EncodedImage enc(buffer, frame.m_size);
+    EncodedImage enc(buffer, buffer_size);
 
     if(m_frame.find(ip) == m_frame.end())
     {
@@ -219,7 +220,7 @@ void SocketReader::ExtractFrame(uint8_t *buffer,
     }
 }
 bool SocketReader::ParseBuffer(uint8_t *buffer,
-                                ssize_t idx,
+                                ssize_t buffer_size,
                                 ImageConverterInterface::Types decoder_type,
                                 uint32_t ip,
                                 Stats &stats)
@@ -231,13 +232,14 @@ bool SocketReader::ParseBuffer(uint8_t *buffer,
         Command *pkt = (Command*)buffer;
         if(pkt->m_event == Command::EventType::FrameInfo)
         {
-            qDebug() << "Next frame attributes:"
+            qDebug() << "### next frame attributes:"
                      << pkt->u.m_frame.m_x
                      << pkt->u.m_frame.m_y
                      << pkt->u.m_frame.m_width
                      << pkt->u.m_frame.m_height
                      << pkt->u.m_frame.m_size;
             ExtractFrame(pkt->m_tail_bytes,
+                         buffer_size,
                          pkt->u.m_frame,
                          static_cast<ImageConverterInterface::Types>(pkt->u.m_frame.m_decoder_type),
                          ip, stats);

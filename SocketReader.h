@@ -31,11 +31,11 @@ public:
     static char *IpToString(uint32_t ip);
     static uint32_t IpFromString(const char* ip);
     bool ParseBuffer(uint8_t *buffer,
-                      ssize_t idx,
+                      ssize_t buffer_size,
                       ImageConverterInterface::Types decoder_type,
                       uint32_t ip,
                       Stats &stats);
-    void ExtractFrame(uint8_t *buffer,
+    void ExtractFrame(uint8_t *buffer, ssize_t buffer_size,
                       Command::Frame &frame,
                       ImageConverterInterface::Types decoder_type,
                       uint32_t ip,
