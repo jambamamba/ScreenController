@@ -40,6 +40,7 @@ struct Command
         uint32_t m_width = 0;
         uint32_t m_height = 0;
         uint32_t m_size = 0;
+        uint32_t m_decoder_type = 0;
     };
 
     union U {

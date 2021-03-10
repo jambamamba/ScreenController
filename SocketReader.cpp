@@ -228,7 +228,9 @@ bool SocketReader::ParseBuffer(uint8_t *buffer,
                      << pkt->u.m_frame.m_width
                      << pkt->u.m_frame.m_height
                      << pkt->u.m_frame.m_size;
-            ExtractFrame(pkt->m_tail_bytes, pkt->u.m_frame.m_size, decoder_type, ip, stats);
+            ExtractFrame(pkt->m_tail_bytes, pkt->u.m_frame.m_size,
+                         static_cast<ImageConverterInterface::Types>(pkt->u.m_frame.m_decoder_type),
+                         ip, stats);
             return true;
         }
         return false;

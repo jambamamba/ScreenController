@@ -33,7 +33,8 @@ static QImage &bltCursorOnImage(QImage &img, const QImage &cursor, const QPoint 
     return img;
 }
 
-Command *CreateFrameCommandPacket(uint32_t x, uint32_t y, uint32_t width, uint32_t height, const uint8_t *data, uint32_t data_size)
+Command *CreateFrameCommandPacket(uint32_t x, uint32_t y, uint32_t width, uint32_t height,
+                                  uint32_t decoder_type, const uint8_t *data, uint32_t data_size)
 {
     Command cmd;
     Command *pkt = (Command *)malloc(sizeof (Command) + data_size);
@@ -45,6 +46,7 @@ Command *CreateFrameCommandPacket(uint32_t x, uint32_t y, uint32_t width, uint32
     pkt->u.m_frame.m_width = width;
     pkt->u.m_frame.m_height = height;
     pkt->u.m_frame.m_size = data_size;
+    pkt->u.m_frame.m_decoder_type = decoder_type;
     pkt->m_size = sizeof (Command) + data_size;
 
     uint8_t tail_bytes[4];
@@ -157,7 +159,7 @@ void ScreenStreamer::SendCommand(uint32_t ip, const Command &pkt)
     m_socket.SendData((uint8_t*)&noop, sizeof(Command), ip, m_socket.GetPort());
 }
 
-void ScreenStreamer::StartStreaming(uint32_t ip, int decoder_type)
+void ScreenStreamer::StartStreaming(uint32_t ip, uint32_t decoder_type)
 {
     if(m_streaming)
     {
@@ -190,6 +192,7 @@ void ScreenStreamer::StartStreaming(uint32_t ip, int decoder_type)
                         0, 0,
                         screen_shot.width(),
                         screen_shot.height(),
+                        decoder_type,
                         enc.m_enc_data,
                         enc.m_enc_sz
                         );

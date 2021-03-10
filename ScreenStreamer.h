@@ -28,7 +28,7 @@ public:
     QImage ScreenShot();
     QScreen *ActiveScreen();
 public slots:
-    void StartStreaming(uint32_t ip, int decoder_type);
+    void StartStreaming(uint32_t ip, uint32_t decoder_type);
     void StopStreaming(uint32_t ip);
 
 protected:
