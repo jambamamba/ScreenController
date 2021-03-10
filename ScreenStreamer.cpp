@@ -184,7 +184,7 @@ void ScreenStreamer::StartStreaming(uint32_t ip, uint32_t decoder_type)
         {
             QImage screen_shot = ScreenShot();
             {//todo for testing
-                screen_shot = screen_shot.scaled(screen_shot.width()/2, screen_shot.height()/2);
+                screen_shot = screen_shot.scaled(screen_shot.width()/4, screen_shot.height()/4);
             }
             EncodedImage enc = img_converter->Encode(screen_shot.bits(),
                                                      screen_shot.width(),
