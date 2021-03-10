@@ -41,8 +41,8 @@ Command *CreateFrameCommandPacket(uint32_t x, uint32_t y, uint32_t width, uint32
     memcpy(pkt, &cmd, sizeof cmd);
 
     pkt->m_event = Command::EventType::FrameInfo;
-    pkt->u.m_frame.m_x = 0;
-    pkt->u.m_frame.m_y = 0;
+    pkt->u.m_frame.m_x = x;
+    pkt->u.m_frame.m_y = y;
     pkt->u.m_frame.m_width = width;
     pkt->u.m_frame.m_height = height;
     pkt->u.m_frame.m_size = data_size;
