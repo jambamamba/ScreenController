@@ -189,11 +189,11 @@ void ScreenStreamer::StartStreaming(uint32_t ip, int decoder_type)
                         );
             SendCommand(ip, *pkt);
             free(pkt);
-            m_socket.SendData(
-                        enc.m_enc_data,
-                        enc.m_enc_sz,
-                        ip,
-                        m_socket.GetPort());
+//            m_socket.SendData(
+//                        enc.m_enc_data,
+//                        enc.m_enc_sz,
+//                        ip,
+//                        m_socket.GetPort());
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
             auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
 //            qDebug() << "elapsed " << elapsed;

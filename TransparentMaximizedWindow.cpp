@@ -105,7 +105,7 @@ void TransparentMaximizedWindow::StartKeyCapture()
                 emit SendCommandToNode(CreateKeyCommandPacket(key, modifier, type));
 
                 if((m_key->testKey('q', key) &&
-                    m_key->testKeyRelease(type) &&
+                    m_key->testKeyPress(type) &&
                     m_key->testAltModifier(modifier)))
                 {
                     qDebug() << "Close window";
@@ -188,6 +188,7 @@ void TransparentMaximizedWindow::mouseDoubleClickEvent(QMouseEvent *event)
 
 void TransparentMaximizedWindow::Show(int width, int height, QScreen* screen)
 {
+    return;//osm
     m_screen = screen;
     MoveToScreen(screen);
     m_capturing = false;
