@@ -52,7 +52,7 @@ Command *CreateFrameCommandPacket(uint32_t x, uint32_t y, uint32_t width, uint32
     memcpy(pkt->m_tail_bytes, data, data_size);
     memcpy(pkt->m_tail_bytes + data_size, tail_bytes, sizeof tail_bytes);
 
-//    qDebug() << "create frame packet of size" << pkt->m_size << ", frame size" << pkt->u.m_frame.m_size;
+    qDebug() << "create frame packet of size" << pkt->m_size << ", frame size" << pkt->u.m_frame.m_size;
 
     return pkt;
 }
