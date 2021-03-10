@@ -185,6 +185,9 @@ void ScreenStreamer::StartStreaming(uint32_t ip, int decoder_type)
             if(kingf.isNull())
             {
                 kingf = QImage(":/resources/♂_Common_Kingfisher_(Alcedo_atthis)_Photograph_By_Shantanu_Kuveskar,_Mangaon,_Maharashtra,_India.jpg");
+            }
+            else
+            {
                 screen_shot = kingf;
             }
             EncodedImage enc = img_converter->Encode(screen_shot.bits(), screen_shot.width(), screen_shot.height(), m_img_quality_percent);
