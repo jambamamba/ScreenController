@@ -217,8 +217,10 @@ void SocketReader::ExtractFrame(uint8_t *buffer,
     img = decoder->Decode(enc, img);
     if(!img.isNull())
     {
-        m_cv.notify_one();
-        stats.Update(frame.m_size);
+        qDebug() << "extracted frame";
+        //todo
+//        m_cv.notify_one();
+//        stats.Update(frame.m_size);
     }
 }
 bool SocketReader::ParseBuffer(uint8_t *buffer,
@@ -252,6 +254,7 @@ bool SocketReader::ParseBuffer(uint8_t *buffer,
     case ImageConverterInterface::Types::Jpeg:
     case ImageConverterInterface::Types::Webp:
     {
+        qDebug() << "### got image";
         Command::Frame frame;
         frame.m_decoder_type = decoder_type;
         frame.m_width = 1920;
