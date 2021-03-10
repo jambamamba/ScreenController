@@ -135,13 +135,15 @@ SocketReader::~SocketReader()
 SocketReader::HeaderMetaData SocketReader::FindHeader(uint8_t *buffer, ssize_t sz)
 {
     SocketReader::HeaderMetaData meta;
-    for(const auto &decoder : m_decoders)
+    ImageConverterInterface::Types decoder_type = ImageConverterInterface::Types::Command;
+    const auto decoder = m_decoders[decoder_type];
+//    for(const auto &decoder : m_decoders)
     {
-        ssize_t pos = decoder.second->FindHeader(buffer, sz);
+        ssize_t pos = decoder->FindHeader(buffer, sz);
         if(pos != -1)
         {
             meta.m_pos = pos;
-            meta.m_type = decoder.first;
+            meta.m_type = decoder_type;//decoder.first;
             return meta;
         }
     }
@@ -250,21 +252,21 @@ bool SocketReader::ParseBuffer(uint8_t *buffer,
         }
         return false;
     }
-    case ImageConverterInterface::Types::Jpeg:
-    case ImageConverterInterface::Types::Webp:
-    {
-        qDebug() << "### got image";
-        Command::Frame frame;
-        frame.m_decoder_type = decoder_type;
-        frame.m_width = 1920;
-        frame.m_height = 1080;
-        ExtractFrame(buffer,
-                     buffer_size,
-                     frame,
-                     ip,
-                     stats);
-        return true;
-    }
+//    case ImageConverterInterface::Types::Jpeg:
+//    case ImageConverterInterface::Types::Webp:
+//    {
+//        qDebug() << "### got image";
+//        Command::Frame frame;
+//        frame.m_decoder_type = decoder_type;
+//        frame.m_width = 1920;
+//        frame.m_height = 1080;
+//        ExtractFrame(buffer,
+//                     buffer_size,
+//                     frame,
+//                     ip,
+//                     stats);
+//        return true;
+//    }
     default:
         return false;
     }
