@@ -222,12 +222,12 @@ bool SocketReader::ParseBuffer(uint8_t *buffer,
         Command *pkt = (Command*)buffer;
         if(pkt->m_event == Command::EventType::FrameInfo)
         {
-            qDebug() << "Next frame attributes:"
-                     << pkt->u.m_frame.m_x
-                     << pkt->u.m_frame.m_y
-                     << pkt->u.m_frame.m_width
-                     << pkt->u.m_frame.m_height
-                     << pkt->u.m_frame.m_size;
+//            qDebug() << "Next frame attributes:"
+//                     << pkt->u.m_frame.m_x
+//                     << pkt->u.m_frame.m_y
+//                     << pkt->u.m_frame.m_width
+//                     << pkt->u.m_frame.m_height
+//                     << pkt->u.m_frame.m_size;
             ExtractFrame(pkt->m_tail_bytes, pkt->u.m_frame.m_size,
                          static_cast<ImageConverterInterface::Types>(pkt->u.m_frame.m_decoder_type),
                          ip, stats);

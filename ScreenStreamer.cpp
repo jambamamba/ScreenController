@@ -54,7 +54,7 @@ Command *CreateFrameCommandPacket(uint32_t x, uint32_t y, uint32_t width, uint32
     memcpy(pkt->m_tail_bytes, data, data_size);
     memcpy(pkt->m_tail_bytes + data_size, tail_bytes, sizeof tail_bytes);
 
-    qDebug() << "create frame packet of size" << pkt->m_size << ", frame size" << pkt->u.m_frame.m_size;
+//    qDebug() << "create frame packet of size" << pkt->m_size << ", frame size" << pkt->u.m_frame.m_size;
 
     return pkt;
 }
@@ -184,7 +184,7 @@ void ScreenStreamer::StartStreaming(uint32_t ip, uint32_t decoder_type)
 
             QImage screen_shot = ScreenShot();
             {//todo for testing
-                screen_shot = screen_shot.scaled(screen_shot.width()/2, screen_shot.height()/2);
+//                screen_shot = screen_shot.scaled(screen_shot.width()/2, screen_shot.height()/2);
             }
             EncodedImage enc = img_converter->Encode(screen_shot.bits(), screen_shot.width(), screen_shot.height(), m_img_quality_percent);
             Command *pkt = CreateFrameCommandPacket(
@@ -197,15 +197,6 @@ void ScreenStreamer::StartStreaming(uint32_t ip, uint32_t decoder_type)
                         );
             SendCommand(ip, *pkt);
             free(pkt);
-//            m_socket.SendData(
-//                        enc.m_enc_data,
-//                        enc.m_enc_sz,
-//                        ip,
-//                        m_socket.GetPort());
-            std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
-//            qDebug() << "elapsed " << elapsed;
-            QApplication::processEvents();
         }
 
         delete img_converter;
