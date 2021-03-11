@@ -34,7 +34,20 @@ static QImage &bltCursorOnImage(QImage &img, const QImage &cursor, const QPoint 
     return img;
 }
 
-Command *CreateFrameCommandPacket(uint32_t x,
+struct CommandAutoDestruct
+{
+    CommandAutoDestruct(size_t size)
+    {
+        m_pkt = (Command *)malloc(size);
+    }
+    ~CommandAutoDestruct()
+    {
+        free(m_pkt);
+    }
+    Command *m_pkt;
+};
+
+CommandAutoDestruct CreateFrameCommandPacket(uint32_t x,
                                   uint32_t y,
                                   uint32_t width,
                                   uint32_t height,
@@ -45,7 +58,8 @@ Command *CreateFrameCommandPacket(uint32_t x,
                                   uint32_t data_size)
 {
     Command cmd;
-    Command *pkt = (Command *)malloc(sizeof (Command) + data_size);
+    CommandAutoDestruct cmd_auto(sizeof (Command) + data_size);
+    Command *pkt = cmd_auto.m_pkt;
     memcpy(pkt, &cmd, sizeof cmd);
 
     pkt->m_event = Command::EventType::FrameInfo;
@@ -68,7 +82,7 @@ Command *CreateFrameCommandPacket(uint32_t x,
 //             << ", frame size" << pkt->u.m_frame.m_size
 //             << ", x,y,w,h" << x << y << width << height;
 
-    return pkt;
+    return cmd_auto;
 }
 }//namespace
 ScreenStreamer::ScreenStreamer(SocketReader &socket, QObject *parent)
@@ -196,25 +210,26 @@ void ScreenStreamer::StartStreaming(uint32_t ip, uint32_t decoder_type)
             QImage screen_shot = ScreenShot();
             uint32_t screen_width = screen_shot.width();
             uint32_t screen_height = screen_shot.height();
-            {//todo for testing
-                screen_shot = screen_shot.scaled(screen_shot.width()/4, screen_shot.height()/4);
+
+            for(const auto &region : m_region_mapper->GetRegions(screen_shot))
+            {
+                EncodedImage enc = img_converter->Encode(region.m_img.bits(),
+                                                         region.m_img.width(),
+                                                         region.m_img.height(),
+                                                         m_img_quality_percent);
+                auto cmd = CreateFrameCommandPacket(
+                            region.m_x,
+                            region.m_y,
+                            region.m_img.width(),
+                            region.m_img.height(),
+                            screen_width,
+                            screen_height,
+                            decoder_type,
+                            enc.m_enc_data,
+                            enc.m_enc_sz
+                            );
+                SendCommand(ip, *cmd.m_pkt);
             }
-            EncodedImage enc = img_converter->Encode(screen_shot.bits(),
-                                                     screen_shot.width(),
-                                                     screen_shot.height(),
-                                                     m_img_quality_percent);
-            Command *pkt = CreateFrameCommandPacket(
-                        100, 100,
-                        screen_shot.width(),
-                        screen_shot.height(),
-                        screen_width,
-                        screen_height,
-                        decoder_type,
-                        enc.m_enc_data,
-                        enc.m_enc_sz
-                        );
-            SendCommand(ip, *pkt);
-            free(pkt);
         }
 
         delete img_converter;
