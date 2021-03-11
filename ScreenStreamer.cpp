@@ -33,8 +33,15 @@ static QImage &bltCursorOnImage(QImage &img, const QImage &cursor, const QPoint 
     return img;
 }
 
-Command *CreateFrameCommandPacket(uint32_t x, uint32_t y, uint32_t width, uint32_t height,
-                                  uint32_t decoder_type, const uint8_t *data, uint32_t data_size)
+Command *CreateFrameCommandPacket(uint32_t x,
+                                  uint32_t y,
+                                  uint32_t width,
+                                  uint32_t height,
+                                  uint32_t screen_width,
+                                  uint32_t screen_height,
+                                  uint32_t decoder_type,
+                                  const uint8_t *data,
+                                  uint32_t data_size)
 {
     Command cmd;
     Command *pkt = (Command *)malloc(sizeof (Command) + data_size);
@@ -45,6 +52,8 @@ Command *CreateFrameCommandPacket(uint32_t x, uint32_t y, uint32_t width, uint32
     pkt->u.m_frame.m_y = y;
     pkt->u.m_frame.m_width = width;
     pkt->u.m_frame.m_height = height;
+    pkt->u.m_frame.m_screen_width = screen_width;
+    pkt->u.m_frame.m_screen_height = screen_height;
     pkt->u.m_frame.m_size = data_size;
     pkt->u.m_frame.m_decoder_type = decoder_type;
     pkt->m_size = sizeof (Command) + data_size;
@@ -183,6 +192,8 @@ void ScreenStreamer::StartStreaming(uint32_t ip, uint32_t decoder_type)
         while(!m_die)
         {
             QImage screen_shot = ScreenShot();
+            uint32_t screen_width = screen_shot.width();
+            uint32_t screen_height = screen_shot.height();
             {//todo for testing
 //                screen_shot = screen_shot.scaled(screen_shot.width()/4, screen_shot.height()/4);
             }
@@ -194,6 +205,8 @@ void ScreenStreamer::StartStreaming(uint32_t ip, uint32_t decoder_type)
                         0, 0,
                         screen_shot.width(),
                         screen_shot.height(),
+                        screen_width,
+                        screen_height,
                         decoder_type,
                         enc.m_enc_data,
                         enc.m_enc_sz

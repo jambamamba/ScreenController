@@ -211,7 +211,13 @@ void SocketReader::ExtractFrame(uint8_t *buffer,
 
     if(m_frame.find(ip) == m_frame.end())
     {
-        m_frame[ip] = Frame(frame.m_x, frame.m_y, frame.m_width, frame.m_height);
+        m_frame[ip] = Frame(frame.m_x,
+                            frame.m_y,
+                            frame.m_width,
+                            frame.m_height,
+                            frame.m_screen_width,
+                            frame.m_screen_height
+                            );
     }
     QImage &img = m_frame[ip].m_img;
 
