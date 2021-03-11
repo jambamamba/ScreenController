@@ -12,7 +12,7 @@ struct Distance
         : m_dx(dx), m_dy(dy) {}
     bool operator<(const Distance& rhs)
     {
-        return (m_dx*m_dx + m_dy*m_dy) - (rhs.m_dx*rhs.m_dx + rhs.m_dy*rhs.m_dy);
+        return ( (m_dx*m_dx + m_dy*m_dy) < (rhs.m_dx*rhs.m_dx + rhs.m_dy*rhs.m_dy) );
     }
 };
 
@@ -95,7 +95,7 @@ std::vector<RegionMapper::Region> &UpdateRegions(std::vector<RegionMapper::Regio
                 continue;
             }
 
-            if(distance_to_closest_region < 100)
+            if(distance_to_closest_region < (1920/10)*(1920/10))
             {
                 GrowRegionToIncludePoint(*closest_region, i, j);
             }
