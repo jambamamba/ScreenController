@@ -1,6 +1,7 @@
 #include "RegionMapper.h"
 
 #include <cstdlib>
+#include <QDebug>
 
 namespace  {
 
@@ -16,30 +17,23 @@ struct Distance
     }
 };
 
-QImage DiffImages(const QImage &img1, const QImage &img2)
+uint8_t *DiffImages(const uint8_t * b0,
+                    const uint8_t * b1,
+                    size_t width,
+                    size_t height)
 {
-    if(img1.isNull() ||
-            img2.isNull() ||
-            img1.width() != img2.width() ||
-            img1.height() != img2.height() ||
-            img1.format() != img2.format() ||
-            img1.format() != QImage::Format::Format_RGB888)
+    uint8_t * mask =  (uint8_t *) malloc(width * 3 * height);
+    memset(mask, 0, width * height * 3);
+    for(size_t i = 0; i < width * 3 * height; ++i)
     {
-        return QImage();
-    }
-    QImage diff(img1.width(), img1.height(), img1.format());
-    for(ssize_t i = 0; i < img1.width() * 3; ++i)
-    {
-        for(ssize_t j = 0; j < img1.height(); ++j)
+        uint8_t diff = std::abs(b0[i] - b1[i]);
+        diff = diff >> 1;
+        if(diff > 0)
         {
-            ssize_t pos = i * img1.width() * 3 + j;
-            if(std::abs( (ssize_t)img1.bits()[pos] - (ssize_t)img2.bits()[pos] ) >> 1 > 0)
-            {
-                diff.bits()[pos] = ( (ssize_t)img1.bits()[pos] - (ssize_t)img2.bits()[pos] ) >> 1;
-            }
+            mask[i] = diff;
         }
     }
-    return diff;
+    return mask;
 }
 
 void GrowRegionToIncludePoint(RegionMapper::Region &region, ssize_t x, ssize_t y)
@@ -51,27 +45,41 @@ void GrowRegionToIncludePoint(RegionMapper::Region &region, ssize_t x, ssize_t y
     else if(y >= region.m_y + region.m_height) { region.m_height = y - region.m_y; }
 }
 
-std::vector<RegionMapper::Region> &UpdateRegions(std::vector<RegionMapper::Region> &regions, const QImage &mask)
+std::vector<RegionMapper::Region> &UpdateRegions(
+        std::vector<RegionMapper::Region> &regions,
+        const uint8_t *mask,
+        size_t cols,
+        size_t rows)
 {
-    for(ssize_t i = 0; i < mask.width(); ++i)
+    size_t pos = 0;
+    for(size_t i = 0; i < rows; ++i)
     {
-        for(ssize_t j = 0; j < mask.height(); ++j)
+        for(size_t j = 0; j < cols; ++j)
         {
+            pos = i + j * 3;
+            uint8_t x = (mask[pos]);
+            uint8_t y = (mask[pos + 1]);
+            uint8_t z = (mask[pos + 2]);
+            if( x == 0 && y == 0 && z == 0)
+            {
+                continue;
+            }
+
             RegionMapper::Region *closest_region = nullptr;
             Distance distance_to_closest_region;
             bool already_in_region = false;
             for(auto &region : regions)
             {
-                size_t dx = (i < region.m_x) ?
+                ssize_t dx = (i < region.m_x) ?
                             (region.m_x - i) :
                             (i >= region.m_x + region.m_width) ?
-                                (region.m_x + region.m_width - i) : -1;
-                size_t dy = (j < region.m_y) ?
+                                (i - (region.m_x + region.m_width)) : 0;
+                ssize_t dy = (j < region.m_y) ?
                             (region.m_y - j) :
                             (j >= region.m_y + region.m_height) ?
-                                (region.m_y + region.m_height - i) : -1;
+                                (j - (region.m_y + region.m_height)) : 0;
 
-                if(dx == (size_t)-1 && dy == (size_t)-1)
+                if(dx == 0 && dy == 0)
                 {
                     already_in_region = true;
                     break;
@@ -101,6 +109,8 @@ std::vector<RegionMapper::Region> &UpdateRegions(std::vector<RegionMapper::Regio
             }
         }
     }
+    qDebug() << "pos " << pos;
+    exit(0);
     return regions;
 }
 }//namespace
@@ -117,18 +127,29 @@ std::vector<RegionMapper::Region> RegionMapper::GetRegionsOfInterest(const QImag
     if(m_prev_screen_shot.isNull())
     {
         regions.push_back(Region(0, 0, screen_shot.width(), screen_shot.height(), screen_shot));
-        m_prev_screen_shot = screen_shot;
+        m_prev_screen_shot = QImage(screen_shot.width(), screen_shot.height(), screen_shot.format());
+        memcpy(m_prev_screen_shot.bits(), screen_shot.bits(), screen_shot.width() * screen_shot.height() * 3);
         return regions;
     }
 
-    auto mask = DiffImages(screen_shot, m_prev_screen_shot);
-    regions = UpdateRegions(regions, mask);
+    int cmp = memcmp(screen_shot.bits(), m_prev_screen_shot.bits(),
+                     screen_shot.width() * screen_shot.height() * 3);
+    uint8_t *mask = DiffImages(screen_shot.bits(),
+                           m_prev_screen_shot.bits(),
+                           screen_shot.width(),
+                           screen_shot.height());
+    regions = UpdateRegions(regions, mask, screen_shot.width(), screen_shot.height());
+    free(mask);
 
+    int idx = 0;
     for(auto &region : regions)
     {
+        qDebug() << "region " << idx++ << region.m_x << region.m_y << region.m_width << region.m_height;
         region.CopyImage(screen_shot);
     }
 
+    m_prev_screen_shot = QImage(screen_shot.width(), screen_shot.height(), screen_shot.format());
+    memcpy(m_prev_screen_shot.bits(), screen_shot.bits(), screen_shot.width() * screen_shot.height() * 3);
     return regions;
 }
 
