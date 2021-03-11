@@ -211,17 +211,17 @@ void ScreenStreamer::StartStreaming(uint32_t ip, uint32_t decoder_type)
             uint32_t screen_width = screen_shot.width();
             uint32_t screen_height = screen_shot.height();
 
-            for(const auto &region : m_region_mapper->GetRegions(screen_shot))
+            for(const auto &region : m_region_mapper->GetRegionsOfInterest(screen_shot))
             {
                 EncodedImage enc = img_converter->Encode(region.m_img.bits(),
-                                                         region.m_img.width(),
-                                                         region.m_img.height(),
+                                                         region.m_width,
+                                                         region.m_height,
                                                          m_img_quality_percent);
                 auto cmd = CreateFrameCommandPacket(
                             region.m_x,
                             region.m_y,
-                            region.m_img.width(),
-                            region.m_img.height(),
+                            region.m_width,
+                            region.m_height,
                             screen_width,
                             screen_height,
                             decoder_type,
