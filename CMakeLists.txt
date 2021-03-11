@@ -113,13 +113,13 @@ SET(PROJECT_SOURCES
     ../License/NetworkRequest.h
     ../Updater/UpdaterWidget.cpp
     ../Updater/UpdaterWidget.h
-    Frame.h
     Command.cpp
     Command.h
     CommandMessage.cpp
     CommandMessage.h
     EventHandler.cpp
     EventHandler.h
+    Frame.h
     ImageConverterInterface.h
     JpegConverter.cpp
     JpegConverter.h
@@ -135,6 +135,8 @@ SET(PROJECT_SOURCES
     NodeModel.h
     NodeNameDialog.cpp
     NodeNameDialog.h
+    RegionMapper.cpp
+    RegionMapper.h
     ScreenStreamer.cpp
     ScreenStreamer.h
     SocketReader.cpp

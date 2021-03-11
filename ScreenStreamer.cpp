@@ -11,6 +11,7 @@
 
 #include "ImageConverterInterface.h"
 #include "MouseInterface.h"
+#include "RegionMapper.h"
 #include "SocketReader.h"
 #if defined(Win32) || defined(Win64)
 #include "WindowsMouse.h"
@@ -80,6 +81,7 @@ ScreenStreamer::ScreenStreamer(SocketReader &socket, QObject *parent)
 #else
     ,m_mouse(new NullMouse(parent))
 #endif
+    ,m_region_mapper(std::make_unique<RegionMapper>())
 {
     InitAvailableScreens();
 }
@@ -195,14 +197,14 @@ void ScreenStreamer::StartStreaming(uint32_t ip, uint32_t decoder_type)
             uint32_t screen_width = screen_shot.width();
             uint32_t screen_height = screen_shot.height();
             {//todo for testing
-//                screen_shot = screen_shot.scaled(screen_shot.width()/4, screen_shot.height()/4);
+                screen_shot = screen_shot.scaled(screen_shot.width()/4, screen_shot.height()/4);
             }
             EncodedImage enc = img_converter->Encode(screen_shot.bits(),
                                                      screen_shot.width(),
                                                      screen_shot.height(),
                                                      m_img_quality_percent);
             Command *pkt = CreateFrameCommandPacket(
-                        0, 0,
+                        100, 100,
                         screen_shot.width(),
                         screen_shot.height(),
                         screen_width,

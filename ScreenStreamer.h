@@ -14,6 +14,7 @@
 struct Command;
 class MouseInterface;
 class QScreen;
+class RegionMapper;
 class SocketReader;
 struct ImageConverterInterface;
 class ScreenStreamer : public QObject
@@ -41,6 +42,7 @@ protected:
     SocketReader &m_socket;
     int m_img_quality_percent = 10;
     MouseInterface *m_mouse;
+    std::unique_ptr<RegionMapper> m_region_mapper;
     bool m_streaming = false;
     bool m_die = false;
 };
