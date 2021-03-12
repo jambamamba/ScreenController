@@ -235,6 +235,9 @@ void TransparentMaximizedWindow::Show(int width, int height, QScreen* screen)
 void TransparentMaximizedWindow::paintEvent(QPaintEvent *)
 {
     std::lock_guard<std::mutex> lk(m_mutex);
+//    qDebug() << "paint (x,y,w,h,iw,ih)" << m_frame.m_x << m_frame.m_y << m_frame.m_width << m_frame.m_height << m_frame.m_img.width() << m_frame.m_img.height();
+//    return;//osm
+
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
 //    painter.setPen(QPen(Qt::green, BORDER_WIDTH, Qt::DashDotLine, Qt::FlatCap, Qt::MiterJoin));
@@ -247,8 +250,8 @@ void TransparentMaximizedWindow::paintEvent(QPaintEvent *)
     painter.drawImage(QRect(
                           m_frame.m_x,
                           m_frame.m_y,
-                          m_frame.m_width,
-                          m_frame.m_height),
+                          m_frame.m_img.width(),
+                          m_frame.m_img.height()),
                       m_frame.m_img,
                       m_frame.m_img.rect());
     painter.end();
