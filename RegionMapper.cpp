@@ -7,13 +7,25 @@ namespace  {
 
 struct Distance
 {
-    size_t m_dx = -1;
-    size_t m_dy = -1;
-    Distance(size_t dx = -1, size_t dy = -1)
-        : m_dx(dx), m_dy(dy) {}
+    ssize_t m_dx = 0;
+    ssize_t m_dy = 0;
+    bool m_initialized = false;
+    Distance(ssize_t dx = -1, ssize_t dy = -1)
+        : m_dx(dx), m_dy(dy)
+    {
+        if(dx != 0 && dy != 0)
+        { m_initialized = true; }
+    }
     bool operator<(const Distance& rhs)
     {
-        return ( (m_dx*m_dx + m_dy*m_dy) < (rhs.m_dx*rhs.m_dx + rhs.m_dy*rhs.m_dy) );
+        if(!m_initialized) { return true; }
+        else if(!rhs.m_initialized) { return false; }
+        else return ( (m_dx*m_dx + m_dy*m_dy) < (rhs.m_dx*rhs.m_dx + rhs.m_dy*rhs.m_dy) );
+    }
+    bool operator<(const ssize_t& distance)
+    {
+        if(!m_initialized) { return true; }
+        else return ( (m_dx*m_dx + m_dy*m_dy) < (distance * distance) );
     }
 };
 
@@ -36,7 +48,7 @@ uint8_t *DiffImages(const uint8_t * b0,
     return mask;
 }
 
-void GrowRegionToIncludePoint(RegionMapper::Region &region, ssize_t x, ssize_t y)
+void GrowRegionToIncludePoint(RegionMapper::Region &region, size_t x, size_t y)
 {
     if(x < region.m_x) { region.m_x = x; }
     else if(x >= region.m_x + region.m_width) { region.m_width = x - region.m_x; }
@@ -107,7 +119,7 @@ std::vector<RegionMapper::Region> &UpdateRegions(
             continue;
         }
 
-        if(distance_to_closest_region < (1920/10)*(1920/10))
+        if(distance_to_closest_region < (cols/10)*(rows/10))
         {
             GrowRegionToIncludePoint(*closest_region, x, y);
         }
@@ -145,8 +157,8 @@ std::vector<RegionMapper::Region> RegionMapper::GetRegionsOfInterest(const QImag
     int idx = 0;
     for(auto &region : regions)
     {
-        qDebug() << "region (x,y,w,h)" << region.m_x << region.m_y << region.m_width << region.m_height;
         region.CopyImage(screen_shot);
+        idx++;
     }
     qDebug() << "regions" << idx;
 
