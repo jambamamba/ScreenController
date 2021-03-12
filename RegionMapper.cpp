@@ -53,10 +53,10 @@ uint8_t *DiffImages(const uint8_t * b0,
 
 void GrowRegionToIncludePoint(RegionMapper::Region &region, ssize_t x, ssize_t y)
 {
-    if(x < region.m_x) { region.m_x = x; region.m_width = region.m_x - x;}
+    if(x < region.m_x) { region.m_x = x; region.m_width = region.m_x - x + 1;}
     else if(x >= region.m_x + region.m_width) { region.m_width = x - region.m_x + 1; }
 
-    if(y < region.m_y) { region.m_y = y; region.m_height = region.m_y - y; }
+    if(y < region.m_y) { region.m_y = y; region.m_height = region.m_y - y + 1; }
     else if(y >= region.m_y + region.m_height) { region.m_height = y - region.m_y + 1; }
 }
 
