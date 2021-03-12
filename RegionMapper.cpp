@@ -141,7 +141,7 @@ std::vector<RegionMapper::Region> RegionMapper::GetRegionsOfInterest(const QImag
         regions.push_back(Region(0, 0, screen_shot.width(), screen_shot.height(), screen_shot));
         m_prev_screen_shot = QImage(screen_shot.width(), screen_shot.height(), screen_shot.format());
         memcpy(m_prev_screen_shot.bits(), screen_shot.bits(), screen_shot.width() * screen_shot.height() * 3);
-        qDebug() << "sending first screen shot " << screen_shot.width() << screen_shot.height();
+        qDebug() << "sending full screen shot " << screen_shot.width() << screen_shot.height();
         fnum++;
         return regions;
     }
@@ -177,6 +177,8 @@ std::vector<RegionMapper::Region> RegionMapper::GetRegionsOfInterest(const QImag
 
 void RegionMapper::Region::CopyImage(const QImage &src)
 {
+    m_img = src.copy(m_x, m_y, m_width, m_height);
+#if 0
     m_img = QImage(m_width, m_height, src.format());
 
 //             0,  1,  2,  3,  4,  5,  6,  7,  8,  9
@@ -192,6 +194,7 @@ void RegionMapper::Region::CopyImage(const QImage &src)
     {
         memcpy(&m_img.bits()[y * m_width * 3], &src.bits()[m_x * 3 + (m_y + y) * (src.width() * 3)], m_width * 3);
     }
+#endif//0
     {//osm todo, some image are skewed
         char filename[64];
         static int i = 0;
