@@ -164,9 +164,9 @@ std::vector<RegionMapper::Region> RegionMapper::GetRegionsOfInterest(const QImag
 //            char fname[100];
 //            sprintf(fname, "/home/dev/oosman/foo/region%i.jpg", idx);
 //            region.m_img.save(fname);
-            qDebug() << "region (x,y,w,h,iw,iy)" << region.m_x << region.m_y
-                     << region.m_width << region.m_height
-                        << region.m_img.width() << region.m_img.height();
+//            qDebug() << "region (x,y,w,h,iw,iy)" << region.m_x << region.m_y
+//                     << region.m_width << region.m_height
+//                        << region.m_img.width() << region.m_img.height();
 //        }
         idx++;
     }

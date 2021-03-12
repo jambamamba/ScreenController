@@ -242,12 +242,12 @@ bool SocketReader::ParseBuffer(uint8_t *buffer,
         if(pkt->m_event == Command::EventType::FrameInfo)
         {
 //osm
-//            qDebug() << "### next frame attributes (x,y,w,h,sz):"
-//                     << pkt->u.m_frame.m_x
-//                     << pkt->u.m_frame.m_y
-//                     << pkt->u.m_frame.m_width
-//                     << pkt->u.m_frame.m_height
-//                     << pkt->u.m_frame.m_size;
+            qDebug() << "### next frame attributes (x,y,w,h,sz):"
+                     << pkt->u.m_frame.m_x
+                     << pkt->u.m_frame.m_y
+                     << pkt->u.m_frame.m_width
+                     << pkt->u.m_frame.m_height
+                     << pkt->u.m_frame.m_size;
             ExtractFrame(pkt->m_tail_bytes,
                          buffer_size,
                          pkt->u.m_frame,
