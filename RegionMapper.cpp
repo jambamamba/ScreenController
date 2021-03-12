@@ -147,8 +147,8 @@ std::vector<RegionMapper::Region> RegionMapper::GetRegionsOfInterest(const QImag
     }
     fnum++;
 
-    int cmp = memcmp(screen_shot.bits(), m_prev_screen_shot.bits(),
-                     screen_shot.width() * screen_shot.height() * 3);
+//    int cmp = memcmp(screen_shot.bits(), m_prev_screen_shot.bits(),
+//                     screen_shot.width() * screen_shot.height() * 3);
     uint8_t *mask = DiffImages(screen_shot.bits(),
                            m_prev_screen_shot.bits(),
                            screen_shot.width(),
@@ -160,12 +160,14 @@ std::vector<RegionMapper::Region> RegionMapper::GetRegionsOfInterest(const QImag
     for(auto &region : regions)
     {
         region.CopyImage(screen_shot);
-        {
-            char fname[100];
-            sprintf(fname, "/home/dev/oosman/foo/region%i.jpg", idx);
-            region.m_img.save(fname);
-            qDebug() << "region (x,y,w,h)" << region.m_x << region.m_y << region.m_width << region.m_height;
-        }
+//        {
+//            char fname[100];
+//            sprintf(fname, "/home/dev/oosman/foo/region%i.jpg", idx);
+//            region.m_img.save(fname);
+            qDebug() << "region (x,y,w,h,iw,iy)" << region.m_x << region.m_y
+                     << region.m_width << region.m_height
+                        << region.m_img.width() << region.m_img.height();
+//        }
         idx++;
     }
     qDebug() << "regions" << idx;

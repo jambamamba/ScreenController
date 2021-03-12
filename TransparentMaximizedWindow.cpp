@@ -260,7 +260,7 @@ void TransparentMaximizedWindow::paintEvent(QPaintEvent *)
         {
             memcpy(&fullres.bits()[m_frame.m_x*3 + (m_frame.m_y+y)*fullres.width()*3],
                    &m_frame.m_img.bits()[y*m_frame.m_img.width()*3],
-                   m_frame.m_img.width() * 3);
+                   m_frame.m_img.width()*3);
         }
         painter.drawImage(fullres.rect(),
                           fullres,
