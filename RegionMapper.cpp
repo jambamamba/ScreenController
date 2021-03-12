@@ -192,7 +192,7 @@ void RegionMapper::Region::CopyImage(const QImage &src)
     {
         memcpy(&m_img.bits()[y * m_width * 3], &src.bits()[m_x * 3 + (m_y + y) * (src.width() * 3)], m_width * 3);
     }
-    {
+    {//osm todo, some image are skewed
         char filename[64];
         static int i = 0;
         sprintf(filename, "/home/dev/osaeed/basic_data/oosman/foo/frame%i.jpg", i++);

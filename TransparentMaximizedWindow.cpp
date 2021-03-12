@@ -252,7 +252,7 @@ void TransparentMaximizedWindow::paintEvent(QPaintEvent *)
     {
         old_img = QImage(m_frame.m_screen_width, m_frame.m_screen_height, QImage::Format::Format_RGB888);
     }
-    {
+    {//osm todo not getting mapped in the correct place
         qDebug() << "#### old_img (w,h)" << old_img.width() << old_img.height()
                  << " frame (x,y,w,h)"
                  << m_frame.m_x << m_frame.m_y << m_frame.m_width << m_frame.m_height;
@@ -265,12 +265,6 @@ void TransparentMaximizedWindow::paintEvent(QPaintEvent *)
         painter.drawImage(old_img.rect(),
                           old_img,
                           old_img.rect());
-        {
-            char filename[64];
-            static int i = 0;
-            sprintf(filename, "/home/dev/oosman/foo/frame%i.jpg", i++);
-            m_frame.m_img.save(filename);
-        }
     }
     painter.end();
 }
