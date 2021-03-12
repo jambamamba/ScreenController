@@ -42,7 +42,7 @@ struct Command
         ssize_t m_screen_width = 0;
         ssize_t m_screen_height = 0;
         ssize_t m_size = 0;
-        ssize_t m_decoder_type = 0;
+        size_t m_decoder_type = 0;
     };
 
     union U {
