@@ -51,66 +51,67 @@ std::vector<RegionMapper::Region> &UpdateRegions(
         size_t cols,
         size_t rows)
 {
-    size_t pos = 0;
-    for(size_t i = 0; i < rows; ++i)
+    for(size_t pos = 0; pos < rows * cols * 3; pos += 3)
     {
-        for(size_t j = 0; j < cols; ++j)
+        uint8_t r = (mask[pos]);
+        uint8_t g = (mask[pos + 1]);
+        uint8_t b = (mask[pos + 2]);
+        if( r == 0 && g == 0 && b == 0)
         {
-            pos = i + j * 3;
-            uint8_t x = (mask[pos]);
-            uint8_t y = (mask[pos + 1]);
-            uint8_t z = (mask[pos + 2]);
-            if( x == 0 && y == 0 && z == 0)
+            continue;
+        }
+
+//             0,  1,  2,  3,  4,  5,  6,  7,  8,  9
+//            10, 11, 12, 13, 14, 15, 16, 17, 18, 19
+//            20, 21, 22, 23, 24, 25, 26, 27, 28, 29
+//            30, 31, 32, 33, 34, 35, 36, 37, 38, 39
+
+        size_t x = pos/cols;
+        size_t y = pos - cols*x;
+
+        RegionMapper::Region *closest_region = nullptr;
+        Distance distance_to_closest_region;
+        bool already_in_region = false;
+        for(auto &region : regions)
+        {
+            ssize_t dx = (x < region.m_x) ?
+                        (region.m_x - x) :
+                        (x >= region.m_x + region.m_width) ?
+                            (x - (region.m_x + region.m_width)) : 0;
+            ssize_t dy = (y < region.m_y) ?
+                        (region.m_y - y) :
+                        (y >= region.m_y + region.m_height) ?
+                            (y - (region.m_y + region.m_height)) : 0;
+
+            if(dx == 0 && dy == 0)
             {
-                continue;
+                already_in_region = true;
+                break;
             }
 
-            RegionMapper::Region *closest_region = nullptr;
-            Distance distance_to_closest_region;
-            bool already_in_region = false;
-            for(auto &region : regions)
+            Distance distance(dx, dy);
+            if(distance < distance_to_closest_region)
             {
-                ssize_t dx = (i < region.m_x) ?
-                            (region.m_x - i) :
-                            (i >= region.m_x + region.m_width) ?
-                                (i - (region.m_x + region.m_width)) : 0;
-                ssize_t dy = (j < region.m_y) ?
-                            (region.m_y - j) :
-                            (j >= region.m_y + region.m_height) ?
-                                (j - (region.m_y + region.m_height)) : 0;
-
-                if(dx == 0 && dy == 0)
-                {
-                    already_in_region = true;
-                    break;
-                }
-
-                Distance distance(dx, dy);
-                if(distance < distance_to_closest_region)
-                {
-                    distance_to_closest_region = distance;
-                    closest_region = &region;
-                }
-            }
-
-            if(already_in_region)
-            {continue;}
-
-            if(!closest_region)
-            {
-                RegionMapper::Region region(i, j, 1, 1);
-                regions.push_back(region);
-                continue;
-            }
-
-            if(distance_to_closest_region < (1920/10)*(1920/10))
-            {
-                GrowRegionToIncludePoint(*closest_region, i, j);
+                distance_to_closest_region = distance;
+                closest_region = &region;
             }
         }
+
+        if(already_in_region)
+        {continue;}
+
+        if(!closest_region)
+        {
+            RegionMapper::Region region(x, y, 1, 1);
+            regions.push_back(region);
+            continue;
+        }
+
+        if(distance_to_closest_region < (1920/10)*(1920/10))
+        {
+            GrowRegionToIncludePoint(*closest_region, x, y);
+        }
     }
-    qDebug() << "pos " << pos;
-    exit(0);
     return regions;
 }
 }//namespace
