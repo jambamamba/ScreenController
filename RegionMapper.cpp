@@ -135,14 +135,17 @@ std::vector<RegionMapper::Region> RegionMapper::GetRegionsOfInterest(const QImag
 {
     std::vector<RegionMapper::Region> regions;
 
-    if(m_prev_screen_shot.isNull())
+    static int fnum = 0;
+    if(m_prev_screen_shot.isNull() || fnum%10 == 0)
     {
         regions.push_back(Region(0, 0, screen_shot.width(), screen_shot.height(), screen_shot));
         m_prev_screen_shot = QImage(screen_shot.width(), screen_shot.height(), screen_shot.format());
         memcpy(m_prev_screen_shot.bits(), screen_shot.bits(), screen_shot.width() * screen_shot.height() * 3);
         qDebug() << "sending first screen shot " << screen_shot.width() << screen_shot.height();
+        fnum++;
         return regions;
     }
+    fnum++;
 
     int cmp = memcmp(screen_shot.bits(), m_prev_screen_shot.bits(),
                      screen_shot.width() * screen_shot.height() * 3);

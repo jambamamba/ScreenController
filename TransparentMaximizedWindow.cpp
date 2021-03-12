@@ -249,10 +249,10 @@ void TransparentMaximizedWindow::paintEvent(QPaintEvent *)
 //    painter.drawRect(r);
     static QImage old_img;
     if(old_img.isNull()) { old_img = m_frame.m_img; old_img = m_frame.m_img.copy(QRect(0,0,m_frame.m_img.width(),m_frame.m_img.height())); }
-//    for(ssize_t y = 0; y < m_frame.m_height; ++y)
-//    {
-//        memcpy(&old_img.bits()[y * m_frame.m_width * 3], &m_frame.m_img.bits()[m_frame.m_x * 3 + (m_frame.m_y + y) * (m_frame.m_img.width() * 3)], m_frame.m_width * 3);
-//    }
+    for(ssize_t y = 0; y < m_frame.m_height; ++y)
+    {
+        memcpy(&old_img.bits()[y * m_frame.m_width * 3], &m_frame.m_img.bits()[m_frame.m_x * 3 + (m_frame.m_y + y) * (m_frame.m_img.width() * 3)], m_frame.m_width * 3);
+    }
     painter.drawImage(QRect(
                           0,
                           0,
