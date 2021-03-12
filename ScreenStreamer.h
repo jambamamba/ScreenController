@@ -40,7 +40,7 @@ protected:
     std::future<void> thread_;
     QList<QScreen *> m_screens;
     SocketReader &m_socket;
-    int m_img_quality_percent = 5;
+    int m_img_quality_percent = 10;
     MouseInterface *m_mouse;
     std::unique_ptr<RegionMapper> m_region_mapper;
     bool m_streaming = false;
