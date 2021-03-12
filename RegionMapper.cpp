@@ -9,22 +9,25 @@ struct Distance
 {
     ssize_t m_dx = 0;
     ssize_t m_dy = 0;
-    bool m_initialized = false;
     Distance(ssize_t dx = -1, ssize_t dy = -1)
         : m_dx(dx), m_dy(dy)
     {
-        if(dx != 0 && dy != 0)
-        { m_initialized = true; }
     }
     bool operator<(const Distance& rhs)
     {
-        if(!m_initialized) { return true; }
-        else if(!rhs.m_initialized) { return false; }
+        bool initialized = (m_dx != -1 && m_dy != -1);
+        bool rhs_initialized = (rhs.m_dx != -1 && rhs.m_dy != -1);
+        if(!initialized) {
+            return true; }
+        else if(!rhs_initialized) {
+            return true; }
         else return ( (m_dx*m_dx + m_dy*m_dy) < (rhs.m_dx*rhs.m_dx + rhs.m_dy*rhs.m_dy) );
     }
     bool operator<(const ssize_t& distance)
     {
-        if(!m_initialized) { return true; }
+        bool initialized = (m_dx != -1 && m_dy != -1);
+        if(!initialized) {
+            return false; }
         else return ( (m_dx*m_dx + m_dy*m_dy) < (distance * distance) );
     }
 };
@@ -48,7 +51,7 @@ uint8_t *DiffImages(const uint8_t * b0,
     return mask;
 }
 
-void GrowRegionToIncludePoint(RegionMapper::Region &region, size_t x, size_t y)
+void GrowRegionToIncludePoint(RegionMapper::Region &region, ssize_t x, ssize_t y)
 {
     if(x < region.m_x) { region.m_x = x; }
     else if(x >= region.m_x + region.m_width) { region.m_width = x - region.m_x; }
@@ -73,8 +76,8 @@ std::vector<RegionMapper::Region> &UpdateRegions(
             continue;
         }
 
-        size_t x = pos/cols;
-        size_t y = pos - cols*x;
+        ssize_t y = pos/cols/3;
+        ssize_t x = (pos - cols*3*y)/3;
 
         RegionMapper::Region *closest_region = nullptr;
         Distance distance_to_closest_region;
@@ -153,6 +156,12 @@ std::vector<RegionMapper::Region> RegionMapper::GetRegionsOfInterest(const QImag
     for(auto &region : regions)
     {
         region.CopyImage(screen_shot);
+        {
+            char fname[100];
+            sprintf(fname, "/home/dev/oosman/foo/region%i.jpg", idx);
+            region.m_img.save(fname);
+            qDebug() << "region (x,y,w,h)" << region.m_x << region.m_y << region.m_width << region.m_height;
+        }
         idx++;
     }
     qDebug() << "regions" << idx;
@@ -175,8 +184,8 @@ void RegionMapper::Region::CopyImage(const QImage &src)
         m_x = 3, m_y = 1, m_width = 4, m_height = 2
 
 */
-    for(ssize_t j = 0; j < m_height; ++j)
+    for(ssize_t y = 0; y < m_height; ++y)
     {
-        memcpy(&m_img.bits()[j * m_width * 3], &src.bits()[m_x + (m_y + j) * src.width() * 3], m_width * 3);
+        memcpy(&m_img.bits()[y * m_width * 3], &src.bits()[m_x * 3 + (m_y + y -1) * (src.width() * 3)], m_width * 3);
     }
 }
