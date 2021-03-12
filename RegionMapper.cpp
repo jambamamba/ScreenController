@@ -73,11 +73,6 @@ std::vector<RegionMapper::Region> &UpdateRegions(
             continue;
         }
 
-//             0,  1,  2,  3,  4,  5,  6,  7,  8,  9
-//            10, 11, 12, 13, 14, 15, 16, 17, 18, 19
-//            20, 21, 22, 23, 24, 25, 26, 27, 28, 29
-//            30, 31, 32, 33, 34, 35, 36, 37, 38, 39
-
         size_t x = pos/cols;
         size_t y = pos - cols*x;
 
@@ -171,8 +166,17 @@ void RegionMapper::Region::CopyImage(const QImage &src)
 {
     m_img = QImage(m_width, m_height, src.format());
 
+//             0,  1,  2,  3,  4,  5,  6,  7,  8,  9
+//            10, 11, 12, xx, xx, xx, xx, 17, 18, 19
+//            20, 21, 22, xx, xx, xx, xx, 27, 28, 29
+//            30, 31, 32, 33, 34, 35, 36, 37, 38, 39
+/*
+ * Region:
+        m_x = 3, m_y = 1, m_width = 4, m_height = 2
+
+*/
     for(ssize_t j = 0; j < m_height; ++j)
     {
-        memcpy(&m_img.bits()[j * m_width * 3], &src.bits()[m_x + m_y * src.width() * 3], m_width * 3);
+        memcpy(&m_img.bits()[j * m_width * 3], &src.bits()[m_x + (m_y + j) * src.width() * 3], m_width * 3);
     }
 }
