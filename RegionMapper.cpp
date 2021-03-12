@@ -188,8 +188,14 @@ void RegionMapper::Region::CopyImage(const QImage &src)
         m_x = 3, m_y = 1, m_width = 4, m_height = 2
 
 */
+    {
+        char filename[64];
+        static int i = 0;
+        sprintf(filename, "/home/dev/oosman/foo/frame%i.jpg", i++);
+        src.save(filename);
+    }
     for(ssize_t y = 0; y < m_height; ++y)
     {
-        memcpy(&m_img.bits()[y * m_width * 3], &src.bits()[m_x * 3 + (m_y + y - 1) * (src.width() * 3)], m_width * 3);
+        memcpy(&m_img.bits()[y * m_width * 3], &src.bits()[m_x * 3 + (m_y + y) * (src.width() * 3)], m_width * 3);
     }
 }
