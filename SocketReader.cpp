@@ -72,13 +72,13 @@ struct Stats
         m_total_bytes += frame_sz;
 
 //osm
-//        qDebug() << "frame# " << (m_frame_counter++) << ","
-//                 << frame_sz/1024
-//                 << "KBytes, "
-//                 << (m_frame_counter*1000/elapsed)
-//                 << "fps, "
-//                 << (m_total_bytes*8/elapsed)
-//                 << "kbps.";
+        qDebug() << "frame# " << (m_frame_counter++) << ","
+                 << frame_sz/1024
+                 << "KBytes, "
+                 << (m_frame_counter*1000/elapsed)
+                 << "fps, "
+                 << (m_total_bytes*8/elapsed)
+                 << "kbps.";
         if(elapsed > 1000 * 60)
         {
             m_begin = end;
@@ -251,11 +251,11 @@ bool SocketReader::ParseBuffer(uint8_t *buffer,
         if(pkt->m_event == Command::EventType::FrameInfo)
         {
 //osm
-            qDebug() << "### next frame attributes (x,y,w,h,sz):"
-                     << pkt->u.m_frame.m_x
-                     << pkt->u.m_frame.m_y
-                     << pkt->u.m_frame.m_width
-                     << pkt->u.m_frame.m_height;
+//            qDebug() << "### next frame attributes (x,y,w,h,sz):"
+//                     << pkt->u.m_frame.m_x
+//                     << pkt->u.m_frame.m_y
+//                     << pkt->u.m_frame.m_width
+//                     << pkt->u.m_frame.m_height;
             ExtractFrame(pkt->m_tail_bytes,
                          buffer_size,
                          pkt->u.m_frame,
