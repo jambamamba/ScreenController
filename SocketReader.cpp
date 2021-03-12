@@ -71,13 +71,14 @@ struct Stats
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - m_begin).count();
         m_total_bytes += frame_sz;
 
-        qDebug() << "frame# " << (m_frame_counter++) << ","
-                 << frame_sz/1024
-                 << "KBytes, "
-                 << (m_frame_counter*1000/elapsed)
-                 << "fps, "
-                 << (m_total_bytes*8/elapsed)
-                 << "kbps.";
+//osm
+//        qDebug() << "frame# " << (m_frame_counter++) << ","
+//                 << frame_sz/1024
+//                 << "KBytes, "
+//                 << (m_frame_counter*1000/elapsed)
+//                 << "fps, "
+//                 << (m_total_bytes*8/elapsed)
+//                 << "kbps.";
         if(elapsed > 1000 * 60)
         {
             m_begin = end;
@@ -223,7 +224,6 @@ void SocketReader::ExtractFrame(uint8_t *buffer,
     img = decoder->Decode(enc, img);
     if(!img.isNull())
     {
-        qDebug() << "#### extracted frame";
         m_cv.notify_one();
         stats.Update(frame.m_size);
     }
@@ -241,12 +241,13 @@ bool SocketReader::ParseBuffer(uint8_t *buffer,
         Command *pkt = (Command*)buffer;
         if(pkt->m_event == Command::EventType::FrameInfo)
         {
-            qDebug() << "### next frame attributes (x,y,w,h,sz):"
-                     << pkt->u.m_frame.m_x
-                     << pkt->u.m_frame.m_y
-                     << pkt->u.m_frame.m_width
-                     << pkt->u.m_frame.m_height
-                     << pkt->u.m_frame.m_size;
+//osm
+//            qDebug() << "### next frame attributes (x,y,w,h,sz):"
+//                     << pkt->u.m_frame.m_x
+//                     << pkt->u.m_frame.m_y
+//                     << pkt->u.m_frame.m_width
+//                     << pkt->u.m_frame.m_height
+//                     << pkt->u.m_frame.m_size;
             ExtractFrame(pkt->m_tail_bytes,
                          buffer_size,
                          pkt->u.m_frame,
