@@ -178,27 +178,4 @@ std::vector<RegionMapper::Region> RegionMapper::GetRegionsOfInterest(const QImag
 void RegionMapper::Region::CopyImage(const QImage &src)
 {
     m_img = src.copy(m_x, m_y, m_width, m_height);
-#if 0
-    m_img = QImage(m_width, m_height, src.format());
-
-//             0,  1,  2,  3,  4,  5,  6,  7,  8,  9
-//            10, 11, 12, xx, xx, xx, xx, 17, 18, 19
-//            20, 21, 22, xx, xx, xx, xx, 27, 28, 29
-//            30, 31, 32, 33, 34, 35, 36, 37, 38, 39
-/*
- * Region:
-        m_x = 3, m_y = 1, m_width = 4, m_height = 2
-
-*/
-    for(ssize_t y = 0; y < m_height; ++y)
-    {
-        memcpy(&m_img.bits()[y * m_width * 3], &src.bits()[m_x * 3 + (m_y + y) * (src.width() * 3)], m_width * 3);
-    }
-    {//osm todo, some image are skewed
-        char filename[64];
-        static int i = 0;
-        sprintf(filename, "/home/dev/osaeed/basic_data/oosman/foo/frame%i.jpg", i++);
-        m_img.save(filename);
-    }
-#endif//0
 }
