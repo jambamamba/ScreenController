@@ -241,7 +241,7 @@ bool SocketReader::ParseBuffer(uint8_t *buffer,
         Command *pkt = (Command*)buffer;
         if(pkt->m_event == Command::EventType::FrameInfo)
         {
-            qDebug() << "### next frame attributes:"
+            qDebug() << "### next frame attributes (x,y,w,h,sz):"
                      << pkt->u.m_frame.m_x
                      << pkt->u.m_frame.m_y
                      << pkt->u.m_frame.m_width
