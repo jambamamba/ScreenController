@@ -53,11 +53,11 @@ uint8_t *DiffImages(const uint8_t * b0,
 
 void GrowRegionToIncludePoint(RegionMapper::Region &region, ssize_t x, ssize_t y)
 {
-    if(x < region.m_x) { region.m_x = x; region.m_width = x - region.m_x;}
-    else if(x >= region.m_x + region.m_width) { region.m_width = x - region.m_x; }
+    if(x < region.m_x) { region.m_x = x; region.m_width = region.m_x - x;}
+    else if(x >= region.m_x + region.m_width) { region.m_width = x - region.m_x + 1; }
 
-    if(y < region.m_y) { region.m_y = y; region.m_height = y - region.m_y; }
-    else if(y >= region.m_y + region.m_height) { region.m_height = y - region.m_y; }
+    if(y < region.m_y) { region.m_y = y; region.m_height = region.m_y - y; }
+    else if(y >= region.m_y + region.m_height) { region.m_height = y - region.m_y + 1; }
 }
 
 std::vector<RegionMapper::Region> &UpdateRegions(
@@ -138,7 +138,7 @@ std::vector<RegionMapper::Region> RegionMapper::GetRegionsOfInterest(const QImag
     static int fnum = 0;
     if(m_prev_screen_shot.isNull() ||
             (fnum % 10) == 0
-            || true//osm
+//            || true//osm
             )
     {
         regions.push_back(Region(0, 0, screen_shot.width(), screen_shot.height(), screen_shot));
