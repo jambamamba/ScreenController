@@ -218,6 +218,16 @@ void SocketReader::ExtractFrame(uint8_t *buffer,
                             frame.m_screen_height
                             );
     }
+    else
+    {
+        m_frame[ip].Update(frame.m_x,
+                           frame.m_y,
+                           frame.m_width,
+                           frame.m_height,
+                           frame.m_screen_width,
+                           frame.m_screen_height
+                           );
+    }
     QImage &img = m_frame[ip].m_img;
 
     auto &decoder = m_decoders[decoder_type];
@@ -246,8 +256,7 @@ bool SocketReader::ParseBuffer(uint8_t *buffer,
                      << pkt->u.m_frame.m_x
                      << pkt->u.m_frame.m_y
                      << pkt->u.m_frame.m_width
-                     << pkt->u.m_frame.m_height
-                     << pkt->u.m_frame.m_size;
+                     << pkt->u.m_frame.m_height;
             ExtractFrame(pkt->m_tail_bytes,
                          buffer_size,
                          pkt->u.m_frame,
