@@ -191,7 +191,7 @@ void RegionMapper::Region::CopyImage(const QImage &src)
     {
         char filename[64];
         static int i = 0;
-        sprintf(filename, "/home/dev/oosman/foo/frame%i.jpg", i++);
+        sprintf(filename, "/home/dev/osaeed/basic_data/oosman/foo/frame%i.jpg", i++);
         src.save(filename);
     }
     for(ssize_t y = 0; y < m_height; ++y)
