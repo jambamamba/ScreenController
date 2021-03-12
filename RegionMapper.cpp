@@ -53,10 +53,10 @@ uint8_t *DiffImages(const uint8_t * b0,
 
 void GrowRegionToIncludePoint(RegionMapper::Region &region, ssize_t x, ssize_t y)
 {
-    if(x < region.m_x) { region.m_x = x; }
+    if(x < region.m_x) { region.m_x = x; region.m_width = x - region.m_x;}
     else if(x >= region.m_x + region.m_width) { region.m_width = x - region.m_x; }
 
-    if(y < region.m_y) { region.m_y = y; }
+    if(y < region.m_y) { region.m_y = y; region.m_height = y - region.m_y; }
     else if(y >= region.m_y + region.m_height) { region.m_height = y - region.m_y; }
 }
 
@@ -194,11 +194,11 @@ void RegionMapper::Region::CopyImage(const QImage &src)
     {
         memcpy(&m_img.bits()[y * m_width * 3], &src.bits()[m_x * 3 + (m_y + y) * (src.width() * 3)], m_width * 3);
     }
-#endif//0
     {//osm todo, some image are skewed
         char filename[64];
         static int i = 0;
         sprintf(filename, "/home/dev/osaeed/basic_data/oosman/foo/frame%i.jpg", i++);
         m_img.save(filename);
     }
+#endif//0
 }
