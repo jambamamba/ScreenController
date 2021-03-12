@@ -202,9 +202,6 @@ void SocketReader::ExtractFrame(uint8_t *buffer,
                                 uint32_t ip,
                                 Stats &stats)
 {
-    ImageConverterInterface::Types decoder_type = static_cast<ImageConverterInterface::Types>
-            (frame.m_decoder_type);
-
     std::lock_guard<std::mutex> lk(m_mutex);
     EncodedImage enc(buffer, buffer_size);
 
@@ -230,6 +227,8 @@ void SocketReader::ExtractFrame(uint8_t *buffer,
     }
     QImage &img = m_frame[ip].m_img;
 
+    ImageConverterInterface::Types decoder_type = static_cast<ImageConverterInterface::Types>
+            (frame.m_decoder_type);
     auto &decoder = m_decoders[decoder_type];
     img = decoder->Decode(enc, img);
     if(!img.isNull())
