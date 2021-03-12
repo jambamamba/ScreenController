@@ -235,7 +235,7 @@ void TransparentMaximizedWindow::Show(int width, int height, QScreen* screen)
 void TransparentMaximizedWindow::paintEvent(QPaintEvent *)
 {
     std::lock_guard<std::mutex> lk(m_mutex);
-    qDebug() << "paint (x,y,w,h,iw,ih)" << m_frame.m_x << m_frame.m_y << m_frame.m_width << m_frame.m_height << m_frame.m_img.width() << m_frame.m_img.height();
+//    qDebug() << "paint (x,y,w,h,iw,ih)" << m_frame.m_x << m_frame.m_y << m_frame.m_width << m_frame.m_height << m_frame.m_img.width() << m_frame.m_img.height();
 //    return;//osm
 
     QPainter painter(this);
@@ -248,18 +248,22 @@ void TransparentMaximizedWindow::paintEvent(QPaintEvent *)
 //    r.setHeight(rect.height() + BORDER_WIDTH*2);
 //    painter.drawRect(r);
     static QImage old_img;
-    if(old_img.isNull()) { old_img = m_frame.m_img; old_img = m_frame.m_img.copy(QRect(0,0,m_frame.m_img.width(),m_frame.m_img.height())); }
-    for(ssize_t y = 0; y < m_frame.m_height; ++y)
+    if(old_img.isNull())
     {
-        memcpy(&old_img.bits()[y * m_frame.m_width * 3], &m_frame.m_img.bits()[m_frame.m_x * 3 + (m_frame.m_y + y) * (m_frame.m_img.width() * 3)], m_frame.m_width * 3);
+        old_img = QImage(m_frame.m_screen_width, m_frame.m_screen_height, QImage::Format::Format_RGB888);
     }
-    painter.drawImage(QRect(
-                          0,
-                          0,
-                          old_img.width(),
-                          old_img.height()),
-                      old_img,
-                      old_img.rect());
+    {
+        qDebug() << "#### old_img" << old_img.width() << old_img.height() << m_frame.m_x << m_frame.m_y << m_frame.m_width << m_frame.m_height;
+        for(ssize_t y = m_frame.m_y; y < m_frame.m_y + m_frame.m_height; ++y)
+        {
+            memcpy(&old_img.bits()[m_frame.m_x * 3 + y * old_img.width()* 3],
+                    &m_frame.m_img.bits()[(y - m_frame.m_y) * m_frame.m_width * 3],
+                    m_frame.m_width * 3);
+        }
+        painter.drawImage(old_img.rect(),
+                          old_img,
+                          old_img.rect());
+    }
     painter.end();
 }
 
