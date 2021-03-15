@@ -234,30 +234,39 @@ void TransparentMaximizedWindow::Show(int width, int height, QScreen* screen)
 
 void TransparentMaximizedWindow::paintEvent(QPaintEvent *)
 {
+    static bool started = false;
     std::lock_guard<std::mutex> lk(m_mutex);
 //    qDebug() << "paint (x,y,w,h,iw,ih)" << m_frame.m_x << m_frame.m_y << m_frame.m_width << m_frame.m_height << m_frame.m_img.width() << m_frame.m_img.height();
-//    {
-//        char filename[64];
-//        static int i = 0;
-//        sprintf(filename, "/home/dev/oosman/foo/frame%i.jpg", i++);
-//        m_frame.m_img.save(filename);
-//    }
 
-//    return;//osm
-
-    QPainter painter(this);
-    painter.setRenderHint(QPainter::Antialiasing);
-    static QImage fullres(m_frame.m_screen_width, m_frame.m_screen_height, m_frame.m_img.format());
-    for(ssize_t y = 0; y < m_frame.m_img.height(); ++y)
+    if(!started &&
+            m_frame.m_screen_width != m_frame.m_width &&
+            m_frame.m_screen_height != m_frame.m_height)
     {
-        memcpy(&fullres.bits()[m_frame.m_x*3 + (m_frame.m_y+y)*fullres.width()*3],
-               &m_frame.m_img.bits()[y*m_frame.m_img.width()*3],
-               m_frame.m_img.width()*3);
+        started = true;
+        return;
     }
-    painter.drawImage(fullres.rect(),
-                      fullres,
-                      fullres.rect());
-    painter.end();
+
+    static QImage fullres(m_frame.m_screen_width, m_frame.m_screen_height, m_frame.m_img.format());
+    if(m_frame.m_screen_width == m_frame.m_width && m_frame.m_screen_height == m_frame.m_height)
+    {
+        fullres = m_frame.m_img.copy(m_frame.m_img.rect());
+    }
+    else
+    {
+        QPainter painter(&fullres);
+        painter.drawImage(QRect(m_frame.m_x, m_frame.m_y, m_frame.m_width, m_frame.m_height),
+                          m_frame.m_img,
+                          m_frame.m_img.rect());
+        painter.end();
+    }
+    {
+        QPainter painter(this);
+        painter.setRenderHint(QPainter::Antialiasing);
+        painter.drawImage(fullres.rect(),
+                          fullres,
+                          fullres.rect());
+        painter.end();
+    }
 }
 
 
