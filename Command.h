@@ -42,6 +42,8 @@ struct Command
         uint32_t m_screen_width = 0;
         uint32_t m_screen_height = 0;
         uint32_t m_size = 0;
+        uint32_t m_region_num = 0;
+        uint32_t m_max_regions = 0;
         uint32_t m_decoder_type = 0;
     };
 

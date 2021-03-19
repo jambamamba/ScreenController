@@ -205,33 +205,23 @@ void SocketReader::ExtractFrame(uint8_t *buffer,
     std::lock_guard<std::mutex> lk(m_mutex);
     EncodedImage enc(buffer, buffer_size);
 
-    if(m_frame.find(ip) == m_frame.end())
+    if(frame.m_region_num == 0)
     {
-        m_frame[ip] = Frame(frame.m_x,
-                            frame.m_y,
-                            frame.m_width,
-                            frame.m_height,
-                            frame.m_screen_width,
-                            frame.m_screen_height
-                            );
+        m_regions_of_frame[ip].clear();
     }
-    else
-    {
-        m_frame[ip].Update(frame.m_x,
-                           frame.m_y,
-                           frame.m_width,
-                           frame.m_height,
-                           frame.m_screen_width,
-                           frame.m_screen_height
-                           );
-    }
-    QImage &img = m_frame[ip].m_img;
-
+    m_regions_of_frame[ip].push_back(Frame(frame.m_x,
+                        frame.m_y,
+                        frame.m_width,
+                        frame.m_height,
+                        frame.m_screen_width,
+                        frame.m_screen_height
+                        ));
+    QImage &img = m_regions_of_frame[ip].back().m_img;
     ImageConverterInterface::Types decoder_type = static_cast<ImageConverterInterface::Types>
             (frame.m_decoder_type);
     auto &decoder = m_decoders[decoder_type];
     img = decoder->Decode(enc, img);
-    if(!img.isNull())
+    if(frame.m_max_regions == frame.m_region_num+1)
     {
         m_cv.notify_one();
         stats.Update(frame.m_size);
@@ -288,9 +278,9 @@ bool SocketReader::ParseBuffer(uint8_t *buffer,
 void SocketReader::Stop(uint32_t ip)
 {
     m_play = false;
-    if(m_frame.find(ip) != m_frame.end())
+    if(m_regions_of_frame.find(ip) != m_regions_of_frame.end())
     {
-        m_frame[ip].m_img = QImage();
+        m_regions_of_frame[ip].clear();
     }
 }
 
@@ -408,9 +398,12 @@ bool SocketReader::PlaybackImages(std::function<void (const Frame &, uint32_t)> 
             auto sec = std::chrono::seconds(1);
             m_cv.wait_for(lk, 2*sec, [this]{
                 if (m_die) {return true;}
-                for(const auto &frame_: m_frame)
+                for(const auto &regions: m_regions_of_frame)
                 {
-                    if(!frame_.m_img.isNull()) { return true; }
+                    for(const auto &region: regions)
+                    {
+                        if(!region.m_img.isNull()) { return true; }
+                    }
                 }
                 return false;
             });
@@ -418,11 +411,12 @@ bool SocketReader::PlaybackImages(std::function<void (const Frame &, uint32_t)> 
             if(m_die) { return false; }
             if(!m_play) { continue; }
 
-            for(uint32_t ip: m_frame.keys())
+            for(uint32_t ip: m_regions_of_frame.keys())
             {
-                if(!m_frame[ip].m_img.isNull())
+                for(const auto &region: m_regions_of_frame[ip])
+                if(!region.m_img.isNull())
                 {
-                    renderImageCb(m_frame[ip], ip);
+                    renderImageCb(region, ip);
                 }
             }
         }

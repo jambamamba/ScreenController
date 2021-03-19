@@ -60,7 +60,7 @@ protected:
     std::future<bool> m_playback_thread;
     std::mutex m_mutex;
     std::condition_variable m_cv;
-    QMap<uint32_t /*ip*/, Frame> m_frame;
+    QMap<uint32_t /*ip*/, std::vector<Frame>> m_regions_of_frame;
     std::map<ImageConverterInterface::Types, std::shared_ptr<ImageConverterInterface>> m_decoders;
     bool m_play = false;
     bool m_die = false;

@@ -47,15 +47,18 @@ struct CommandAutoDestruct
     Command *m_pkt;
 };
 
-CommandAutoDestruct CreateFrameCommandPacket(uint32_t x,
-                                  uint32_t y,
-                                  uint32_t width,
-                                  uint32_t height,
-                                  uint32_t screen_width,
-                                  uint32_t screen_height,
-                                  uint32_t decoder_type,
-                                  const uint8_t *data,
-                                  uint32_t data_size)
+CommandAutoDestruct CreateFrameCommandPacket(
+        uint32_t x,
+        uint32_t y,
+        uint32_t width,
+        uint32_t height,
+        uint32_t screen_width,
+        uint32_t screen_height,
+        uint32_t decoder_type,
+        const uint8_t *data,
+        uint32_t data_size,
+        uint32_t region_num,
+        uint32_t max_regions)
 {
     Command cmd;
     CommandAutoDestruct cmd_auto(sizeof (Command) + data_size);
@@ -70,6 +73,8 @@ CommandAutoDestruct CreateFrameCommandPacket(uint32_t x,
     pkt->u.m_frame.m_screen_width = screen_width;
     pkt->u.m_frame.m_screen_height = screen_height;
     pkt->u.m_frame.m_size = data_size;
+    pkt->u.m_frame.m_region_num = region_num;
+    pkt->u.m_frame.m_max_regions = max_regions;
     pkt->u.m_frame.m_decoder_type = decoder_type;
     pkt->m_size = sizeof (Command) + data_size;
 
@@ -212,6 +217,7 @@ void ScreenStreamer::StartStreaming(uint32_t ip, uint32_t decoder_type)
             uint32_t screen_height = screen_shot.height();
 
             auto regions = m_region_mapper->GetRegionsOfInterest(screen_shot);
+            uint32_t region_num = 0;
             for(const auto &region : regions)
             {
                 EncodedImage enc = img_converter->Encode(region.m_img.bits(),
@@ -227,7 +233,9 @@ void ScreenStreamer::StartStreaming(uint32_t ip, uint32_t decoder_type)
                             screen_height,
                             decoder_type,
                             enc.m_enc_data,
-                            enc.m_enc_sz
+                            enc.m_enc_sz,
+                            region_num++,
+                            regions.size()
                             );
                 SendCommand(ip, *cmd.m_pkt);
             }
