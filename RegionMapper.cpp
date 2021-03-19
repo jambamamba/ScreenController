@@ -138,7 +138,7 @@ std::vector<RegionMapper::Region> RegionMapper::GetRegionsOfInterest(const QImag
 
     static int fnum = 0;
     if(m_prev_screen_shot.isNull()
-//            || (fnum % 10) == 0
+            || (fnum % 10) == 0
 //            || true//osm
             )
     {
