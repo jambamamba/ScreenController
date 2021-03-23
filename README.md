@@ -1,6 +1,6 @@
 
   
-![screen-recorder.jpg](resources/web/screen-controller-1.png)
+![screen-controller-1.png](resources/screen-controller-1.png)
 
 # ScreenController
 When you just need a good, simple program to remotely work on another computer!
