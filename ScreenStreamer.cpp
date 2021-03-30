@@ -238,6 +238,20 @@ void ScreenStreamer::StartStreaming(uint32_t ip, uint32_t decoder_type)
                             regions.size()
                             );
                 SendCommand(ip, *cmd.m_pkt);
+
+                {
+                    char name[1024];
+                    static int i = 0;
+                    sprintf(name, "/home/dev/oosman/foo/frame%i.png", i);
+                    QImage img;
+                    img = img_converter->Decode(enc.m_enc_data, img);
+                    img.save(name);
+                    sprintf(name, "/home/dev/oosman/foo/frame%i.txt", i);
+                    FILE*fp = fopen(name, "wt");
+                    fprintf(fp, "region (x,y,w,h) (%i,%i,%i,%i)\n", region.m_x, region.m_y, region.m_width, region.m_height);
+                    fclose(fp);
+                    i++;
+                }
             }
         }
 

@@ -220,23 +220,22 @@ void SocketReader::ExtractFrame(uint8_t *buffer,
     ImageConverterInterface::Types decoder_type = static_cast<ImageConverterInterface::Types>
             (frame.m_decoder_type);
     auto &decoder = m_decoders[decoder_type];
-    QImage img2;
-    img = decoder->Decode(enc, img2);
+    img = decoder->Decode(enc, img);
     qDebug() << "recvd frame"
             << "region_num" << frame.m_region_num
             << ", max_regions" << frame.m_max_regions
             << ", region size" << frame.m_x << frame.m_y << frame.m_width << frame.m_height;
-    {
-        char name[1024];
-        static int i = 0;
-        sprintf(name, "/home/dev/oosman/foo/frame%i.png", i);
-        img.save(name);
-        sprintf(name, "/home/dev/oosman/foo/frame%i.txt", i);
-        FILE*fp = fopen(name, "wt");
-        fprintf(fp, "region (x,y,w,h) (%i,%i,%i,%i)\n", frame.m_x, frame.m_y, frame.m_width, frame.m_height);
-        fclose(fp);
-        i++;
-    }
+//    {
+//        char name[1024];
+//        static int i = 0;
+//        sprintf(name, "/home/dev/oosman/foo/frame%i.png", i);
+//        img.save(name);
+//        sprintf(name, "/home/dev/oosman/foo/frame%i.txt", i);
+//        FILE*fp = fopen(name, "wt");
+//        fprintf(fp, "region (x,y,w,h) (%i,%i,%i,%i)\n", frame.m_x, frame.m_y, frame.m_width, frame.m_height);
+//        fclose(fp);
+//        i++;
+//    }
     if(frame.m_max_regions == frame.m_region_num+1)
     {
         m_cv.notify_one();
