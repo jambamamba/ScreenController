@@ -225,6 +225,7 @@ void SocketReader::ExtractFrame(uint8_t *buffer,
             << "region_num" << frame.m_region_num
             << ", max_regions" << frame.m_max_regions
             << ", region size" << frame.m_x << frame.m_y << frame.m_width << frame.m_height;
+#if 0//osm
     {
         char name[1024];
         static int i = 0;
@@ -236,6 +237,7 @@ void SocketReader::ExtractFrame(uint8_t *buffer,
         fclose(fp);
         i++;
     }
+#endif
     if(frame.m_max_regions == frame.m_region_num+1)
     {
         m_cv.notify_one();

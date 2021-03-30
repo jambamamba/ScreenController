@@ -239,12 +239,14 @@ void ScreenStreamer::StartStreaming(uint32_t ip, uint32_t decoder_type)
                             );
                 SendCommand(ip, *cmd.m_pkt);
 
+#if 1//osm fix me: sometimes the encoded image is really bad quality
                 {
                     char name[1024];
                     static int i = 0;
                     sprintf(name, "/home/dev/oosman/foo/frame%i.png", i);
                     QImage img;
-                    img = img_converter->Decode(enc.m_enc_data, img);
+                    WebPConverter cnv;
+                    img = cnv.Decode(enc, img);
                     img.save(name);
                     sprintf(name, "/home/dev/oosman/foo/frame%i.txt", i);
                     FILE*fp = fopen(name, "wt");
@@ -252,6 +254,7 @@ void ScreenStreamer::StartStreaming(uint32_t ip, uint32_t decoder_type)
                     fclose(fp);
                     i++;
                 }
+#endif
             }
         }
 
