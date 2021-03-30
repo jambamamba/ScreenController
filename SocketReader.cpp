@@ -221,6 +221,7 @@ void SocketReader::ExtractFrame(uint8_t *buffer,
             (frame.m_decoder_type);
     auto &decoder = m_decoders[decoder_type];
     img = decoder->Decode(enc, img);
+    qDebug() << "recvd frame, region_num" << frame.m_region_num << ", max_regions" << frame.m_max_regions;
     if(frame.m_max_regions == frame.m_region_num+1)
     {
         m_cv.notify_one();
