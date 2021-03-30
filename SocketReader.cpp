@@ -220,7 +220,8 @@ void SocketReader::ExtractFrame(uint8_t *buffer,
     ImageConverterInterface::Types decoder_type = static_cast<ImageConverterInterface::Types>
             (frame.m_decoder_type);
     auto &decoder = m_decoders[decoder_type];
-    img = decoder->Decode(enc, img);
+    QImage img2;
+    img = decoder->Decode(enc, img2);
     qDebug() << "recvd frame"
             << "region_num" << frame.m_region_num
             << ", max_regions" << frame.m_max_regions
