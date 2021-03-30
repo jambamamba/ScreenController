@@ -248,7 +248,7 @@ void ScreenStreamer::StartStreaming(uint32_t ip, uint32_t decoder_type)
                     img.save(name);
                     sprintf(name, "/home/dev/oosman/foo/frame%i.txt", i);
                     FILE*fp = fopen(name, "wt");
-                    fprintf(fp, "region (x,y,w,h) (%i,%i,%i,%i)\n", region.m_x, region.m_y, region.m_width, region.m_height);
+                    fprintf(fp, "region (x,y,w,h) (%i,%i,%i,%i), enc.m_enc_sz %i\n", region.m_x, region.m_y, region.m_width, region.m_height, enc.m_enc_sz);
                     fclose(fp);
                     i++;
                 }
