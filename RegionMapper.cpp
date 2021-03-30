@@ -164,8 +164,17 @@ std::vector<RegionMapper::Region> RegionMapper::GetRegionsOfInterest(const QImag
         region.CopyImage(screen_shot);
 //        qDebug() << "region (x,y,w,h)" << region.m_x << region.m_y << region.m_width << region.m_height;
         idx++;
+
+        {
+            char name[1024];
+            static int i = 0;
+            sprintf(name, "/home/dev/oosman/foo/frame%i.png", i++);
+            region.m_img.save(name);
+        }
     }
 //    qDebug() << "sending" << idx << "regions";
+
+
 
     m_prev_screen_shot = QImage(screen_shot.width(), screen_shot.height(), screen_shot.format());
     memcpy(m_prev_screen_shot.bits(), screen_shot.bits(), screen_shot.width() * screen_shot.height() * 3);
