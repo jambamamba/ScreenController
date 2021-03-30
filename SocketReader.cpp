@@ -225,6 +225,17 @@ void SocketReader::ExtractFrame(uint8_t *buffer,
             << "region_num" << frame.m_region_num
             << ", max_regions" << frame.m_max_regions
             << ", region size" << frame.m_x << frame.m_y << frame.m_width << frame.m_height;
+    {
+        char name[1024];
+        static int i = 0;
+        sprintf(name, "/home/dev/oosman/foo/frame%i.png", i);
+        img.save(name);
+        sprintf(name, "/home/dev/oosman/foo/frame%i.txt", i);
+        FILE*fp = fopen(name, "wt");
+        fprintf(fp, "region (x,y,w,h) (%i,%i,%i,%i)\n", frame.m_x, frame.m_y, frame.m_width, frame.m_height);
+        fclose(fp);
+        i++;
+    }
     if(frame.m_max_regions == frame.m_region_num+1)
     {
         m_cv.notify_one();
