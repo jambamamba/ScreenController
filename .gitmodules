@@ -1,3 +1,6 @@
 [submodule "DiscoveryService"]
 	path = DiscoveryService
 	url = https://github.com/jambamamba/DiscoveryService
+[submodule "x265"]
+	path = x265
+	url = https://github.com/jambamamba/x265.git

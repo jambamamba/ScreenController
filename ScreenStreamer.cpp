@@ -90,9 +90,15 @@ CommandAutoDestruct CreateFrameCommandPacket(
     return cmd_auto;
 }
 }//namespace
+extern int x265main(int argc,
+                    char **argv,
+                    std::function<int(char **data, ssize_t *bytes, int width, int height)> readRgb888,
+                    std::function<int(const char *data, ssize_t bytes)> writeEncodedFrame,
+                    std::atomic<bool> &killed
+                    );
 ScreenStreamer::ScreenStreamer(SocketReader &socket, QObject *parent)
     : QObject(parent)
-    , m_socket(socket)
+    , _socket(socket)
 #if defined(Win32) || defined(Win64)
     ,m_mouse(new WindowsMouse(parent))
 #elif defined(Linux)
@@ -100,21 +106,22 @@ ScreenStreamer::ScreenStreamer(SocketReader &socket, QObject *parent)
 #else
     ,m_mouse(new NullMouse(parent))
 #endif
-    ,m_region_mapper(std::make_unique<RegionMapper>())
+    ,_region_mapper(std::make_unique<RegionMapper>())
 {
     InitAvailableScreens();
 }
 
 ScreenStreamer::~ScreenStreamer()
 {
-    m_die = true;
-    if(thread_.valid()){thread_.wait();}
+    _die = true;
+    if(_x265_thread.valid()){_x265_thread.wait();}
+    if(_webp_thread.valid()){_webp_thread.wait();}
 }
 
 void ScreenStreamer::InitAvailableScreens()
 {
-    m_screens = QGuiApplication::screens();
-    std::sort(m_screens.begin(), m_screens.end(),
+    _screens = QGuiApplication::screens();
+    std::sort(_screens.begin(), _screens.end(),
               [](QScreen *a, QScreen *b){
         return (a->geometry().x() != b->geometry().x()) ?
                     a->geometry().x() < b->geometry().x() :
@@ -125,7 +132,7 @@ void ScreenStreamer::InitAvailableScreens()
 int ScreenStreamer::ActiveScreenIdx() const
 {
     int screen_idx = 0;
-    for(auto screen : m_screens)
+    for(auto screen : _screens)
     {
         if(screen->geometry().contains(QCursor::pos()))
         {
@@ -146,7 +153,7 @@ QImage ScreenStreamer::ScreenShot()
 
 QScreen *ScreenStreamer::ActiveScreen()
 {
-    return m_screens[ActiveScreenIdx()];
+    return _screens[ActiveScreenIdx()];
 }
 
 QImage& ScreenStreamer::ApplyMouseCursor(QImage& img)
@@ -186,44 +193,33 @@ void ScreenStreamer::SendCommand(uint32_t ip, uint16_t event)
 
 void ScreenStreamer::SendCommand(uint32_t ip, const Command &pkt)
 {
-    m_socket.SendData((uint8_t*)&pkt, pkt.m_size, ip, m_socket.GetPort());
+    _socket.SendData((uint8_t*)&pkt, pkt.m_size, ip, _socket.GetPort());
 
     Command noop;
     noop.m_event = Command::EventType::None;
-    m_socket.SendData((uint8_t*)&noop, sizeof(Command), ip, m_socket.GetPort());
+    _socket.SendData((uint8_t*)&noop, sizeof(Command), ip, _socket.GetPort());
 }
 
-void ScreenStreamer::StartStreaming(uint32_t ip, uint32_t decoder_type)
+void ScreenStreamer::StreamWebpImages(uint32_t ip, uint32_t decoder_type, ImageConverterInterface *img_converter)
 {
-    if(m_streaming)
-    {
-        return;//todo - start streaming to ip if its different than the one we are streaming to.
-    }
-    thread_ = std::async(std::launch::async, [this, ip, decoder_type](){
-        m_streaming = true;
+    _webp_thread = std::async(std::launch::async, [this, ip, decoder_type, img_converter](){
+        _streaming = true;
         pthread_setname_np(pthread_self(), "scrncap");
-        ImageConverterInterface *img_converter = nullptr;
-        if(decoder_type == ImageConverterInterface::Types::Webp)
-        { img_converter = new WebPConverter; }
-        else if (decoder_type == ImageConverterInterface::Types::Jpeg)
-        { img_converter = new JpegConverter; }
-        else
-        { qDebug() << "Invalid image decoder"; exit(-1); }
 
-        while(!m_die)
+        while(!_die)
         {
             QImage screen_shot = ScreenShot();
             uint32_t screen_width = screen_shot.width();
             uint32_t screen_height = screen_shot.height();
 
-            auto regions = m_region_mapper->GetRegionsOfInterest(screen_shot);
+            auto regions = _region_mapper->GetRegionsOfInterest(screen_shot);
             uint32_t region_num = 0;
             for(const auto &region : regions)
             {
                 EncodedImage enc = img_converter->Encode(region.m_img.bits(),
                                                          region.m_width,
                                                          region.m_height,
-                                                         m_img_quality_percent);
+                                                         _img_quality_percent);
                 auto cmd = CreateFrameCommandPacket(
                             region.m_x,
                             region.m_y,
@@ -259,14 +255,81 @@ void ScreenStreamer::StartStreaming(uint32_t ip, uint32_t decoder_type)
         }
 
         delete img_converter;
-        m_streaming = false;
+        _streaming = false;
     });
+}
+
+void ScreenStreamer::StreamX265(uint32_t ip, uint32_t decoder_type, ImageConverterInterface *img_converter)
+{
+    QImage img = ScreenShot();
+    int width = img.width();
+    int height = img.height();
+
+    _x265_thread = std::async(std::launch::async, [this,ip,decoder_type,img_converter,width,height](){
+        _streaming = true;
+        pthread_setname_np(pthread_self(), "scrncap");
+        char argv[][64] = {"x265", "--input", "/dev/screen", "--input-res", "1920x1080", "--fps", "30", "--output", "buffer:"};
+        x265main(9, (char**)argv,
+                 [this](char **data, ssize_t *bytes, int width_, int height_){
+            QImage img = ScreenShot();
+            //osm assert width_ == img.width() and height_ == img.height()
+            //osm todo allocate data
+            memcpy(*data, img.bits(), *bytes);
+            return *bytes;
+        },
+        [this,ip,decoder_type,img_converter,width,height](const char *data, ssize_t bytes){
+            EncodedImage enc = img_converter->Encode((const uint8_t*)data,
+                                                     width,
+                                                     height,
+                                                     _img_quality_percent);
+            auto cmd = CreateFrameCommandPacket(
+                        0,0,
+                        width,height,
+                        width,height,
+                        decoder_type,
+                        enc.m_enc_data,
+                        enc.m_enc_sz,
+                        1,1
+                        );
+            SendCommand(ip, *cmd.m_pkt);
+            return bytes;
+        },
+        _die);
+        delete img_converter;
+        _streaming = false;
+    });
+}
+void ScreenStreamer::StartStreaming(uint32_t ip, uint32_t decoder_type)
+{
+    if(_streaming)
+    {
+        return;//todo - start streaming to ip if its different than the one we are streaming to.
+    }
+    ImageConverterInterface *img_converter = nullptr;
+    switch(decoder_type)
+    {
+    case ImageConverterInterface::Types::Webp:
+        img_converter = new WebPConverter;
+        StreamWebpImages(ip, decoder_type, img_converter);
+        break;
+    case ImageConverterInterface::Types::Jpeg:
+        img_converter = new JpegConverter;
+        StreamWebpImages(ip, decoder_type, img_converter);
+        break;
+    case ImageConverterInterface::Types::X265:
+//        img_converter = new X265Converter;//osm todo creaet X265Converter class!
+        StreamX265(ip, decoder_type, img_converter);
+        break;
+    default:
+        qDebug() << "Invalid image decoder"; exit(-1);
+        break;
+    }
 }
 
 void ScreenStreamer::StopStreaming(uint32_t ip)
 {
-    m_die = true;
-    if(thread_.valid()) {thread_.wait();}
-    m_die = false;
+    _die = true;
+    if(_webp_thread.valid()) {_webp_thread.wait();}
+    _die = false;
     SendCommand(ip, Command::EventType::StoppedStreaming);
 }

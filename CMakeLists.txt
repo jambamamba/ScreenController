@@ -30,6 +30,8 @@ ELSEIF(WIN32)
 FIND_PACKAGE(Qt5WinExtras REQUIRED)
 ENDIF(UNIX)
 
+ADD_SUBDIRECTORY(x265)
+
 INCLUDE_DIRECTORIES(
     ${QT_DIR}/Src/qtvirtualkeyboard/tests/manual/
     ${LIBS_DIR}/turbojpeg/build
@@ -40,9 +42,6 @@ INCLUDE_DIRECTORIES(
     ../Updater
     DiscoveryService
     .
-)
-
-ADD_DEFINITIONS(
 )
 
 # this will run uic on .ui files:
@@ -69,6 +68,7 @@ IF(UNIX)
     LINK_DIRECTORIES(
 	${LIBS_DIR}/libturbojpeg/build/
 	${LIBS_DIR}/libwebp/build/
+	${CMAKE_BUILD_DIR}/x265/source/
 #        ${LIBS_DIR}/libxdo/
     )
     SET(SSLLibs
@@ -179,6 +179,7 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME}
     webpdecoder
     exampleutil
     webpdemux
+    x265
 )
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")

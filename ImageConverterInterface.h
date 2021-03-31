@@ -38,7 +38,8 @@ struct ImageConverterInterface
         None,
         Command,
         Jpeg,
-        Webp
+        Webp,
+        X265
     };
 
     ImageConverterInterface() {}

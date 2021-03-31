@@ -37,7 +37,7 @@ void EventHandler::HandleCommand(const Command &pkt, uint32_t ip)
     switch(pkt.m_event)
     {
     case Command::EventType::StartStreaming:
-        emit StartStreaming(ip, (int)ImageConverterInterface::Types::Webp);
+        emit StartStreaming(ip, (int)ImageConverterInterface::Types::X265);//osm format should be read from commanding peer
         break;
     case Command::EventType::StopStreaming:
         emit StopStreaming(ip);
