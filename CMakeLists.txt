@@ -179,7 +179,7 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME}
     webpdecoder
     exampleutil
     webpdemux
-    x265
+    x265encoder
 )
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
