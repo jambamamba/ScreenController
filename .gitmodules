@@ -4,3 +4,6 @@
 [submodule "x265"]
 	path = x265
 	url = https://github.com/jambamamba/x265.git
+[submodule "libde265"]
+	path = libde265
+	url = https://github.com/jambamamba/libde265.git
