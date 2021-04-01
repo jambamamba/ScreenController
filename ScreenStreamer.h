@@ -37,7 +37,7 @@ protected:
     int ActiveScreenIdx() const;
     QImage& ApplyMouseCursor(QImage& img);
     void StreamWebpImages(uint32_t ip, uint32_t decoder_type, ImageConverterInterface *img_converter);
-    void StreamX265(uint32_t ip, uint32_t decoder_type, ImageConverterInterface *img_converter);
+    void StreamX265(uint32_t ip, uint32_t decoder_type);
 
     std::future<void> _webp_thread;
     QList<QScreen *> _screens;
@@ -47,5 +47,6 @@ protected:
     std::unique_ptr<RegionMapper> _region_mapper;
     bool _streaming = false;
     std::future<void> _x265_thread;
+    char *_rgb_buffer = nullptr;
     std::atomic<bool> _die;
 };

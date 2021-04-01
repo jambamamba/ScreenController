@@ -93,7 +93,7 @@ CommandAutoDestruct CreateFrameCommandPacket(
 extern int x265main(int argc,
                     char **argv,
                     std::function<int(char **data, ssize_t *bytes, int width, int height)> readRgb888,
-                    std::function<int(const char *data, ssize_t bytes)> writeEncodedFrame,
+                    std::function<int(const unsigned char *data, ssize_t bytes)> writeEncodedFrame,
                     std::atomic<bool> &killed
                     );
 ScreenStreamer::ScreenStreamer(SocketReader &socket, QObject *parent)
@@ -116,6 +116,7 @@ ScreenStreamer::~ScreenStreamer()
     _die = true;
     if(_x265_thread.valid()){_x265_thread.wait();}
     if(_webp_thread.valid()){_webp_thread.wait();}
+    if(_rgb_buffer) { free(_rgb_buffer); }
 }
 
 void ScreenStreamer::InitAvailableScreens()
@@ -259,43 +260,57 @@ void ScreenStreamer::StreamWebpImages(uint32_t ip, uint32_t decoder_type, ImageC
     });
 }
 
-void ScreenStreamer::StreamX265(uint32_t ip, uint32_t decoder_type, ImageConverterInterface *img_converter)
+void ScreenStreamer::StreamX265(uint32_t ip, uint32_t decoder_type)
 {
     QImage img = ScreenShot();
     int width = img.width();
     int height = img.height();
+    if(_rgb_buffer) { free(_rgb_buffer); }
+    _rgb_buffer = (char*) malloc(width * 3 * height);
 
-    _x265_thread = std::async(std::launch::async, [this,ip,decoder_type,img_converter,width,height](){
+    _x265_thread = std::async(std::launch::async, [this,ip,decoder_type,width,height](){
         _streaming = true;
         pthread_setname_np(pthread_self(), "scrncap");
-        char argv[][64] = {"x265", "--input", "/dev/screen", "--input-res", "1920x1080", "--fps", "30", "--output", "buffer:"};
-        x265main(9, (char**)argv,
-                 [this](char **data, ssize_t *bytes, int width_, int height_){
+        constexpr int NUM_PARAMS = 19;
+        char argv[NUM_PARAMS][64] = {"x265",
+                                     "--input", "/dev/screen",
+                                     "--input-res", "WIDTHxHEIGHT",
+                                     "--fps", "5",
+                                     "--preset", "ultrafast",
+                                     "--tune", "psnr",
+                                     "--tune", "ssim",
+                                     "--tune", "fastdecode",
+                                     "--tune", "zerolatency",
+                                     "--output", "buffer:"
+                                    };
+        constexpr int RES = 4;
+        char resolution[64] = {0};
+        sprintf(resolution, "%ix%i", width, height);
+        strcpy(argv[RES], resolution);
+        //_img_quality_percent
+        x265main(NUM_PARAMS, (char**)argv,
+                 [this,width,height](char **data, ssize_t *bytes, int width_, int height_){
             QImage img = ScreenShot();
-            //osm assert width_ == img.width() and height_ == img.height()
-            //osm todo allocate data
-            memcpy(*data, img.bits(), *bytes);
+            //osm assert width_ == width and height_ == height
+            memcpy(_rgb_buffer, img.bits(), width * 3 * height);
+            *bytes = width * 3 * height;
+            *data = _rgb_buffer;
             return *bytes;
         },
-        [this,ip,decoder_type,img_converter,width,height](const char *data, ssize_t bytes){
-            EncodedImage enc = img_converter->Encode((const uint8_t*)data,
-                                                     width,
-                                                     height,
-                                                     _img_quality_percent);
+        [this,ip,decoder_type,width,height](const unsigned char *enc_data, ssize_t enc_sz){
             auto cmd = CreateFrameCommandPacket(
                         0,0,
                         width,height,
                         width,height,
                         decoder_type,
-                        enc.m_enc_data,
-                        enc.m_enc_sz,
+                        enc_data,
+                        enc_sz,
                         1,1
                         );
             SendCommand(ip, *cmd.m_pkt);
-            return bytes;
+            return enc_sz;
         },
         _die);
-        delete img_converter;
         _streaming = false;
     });
 }
@@ -317,8 +332,7 @@ void ScreenStreamer::StartStreaming(uint32_t ip, uint32_t decoder_type)
         StreamWebpImages(ip, decoder_type, img_converter);
         break;
     case ImageConverterInterface::Types::X265:
-//        img_converter = new X265Converter;//osm todo creaet X265Converter class!
-        StreamX265(ip, decoder_type, img_converter);
+        StreamX265(ip, decoder_type);
         break;
     default:
         qDebug() << "Invalid image decoder"; exit(-1);
