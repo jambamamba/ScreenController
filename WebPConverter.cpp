@@ -55,10 +55,6 @@ QImage &WebPConverter::Decode(const EncodedImage &enc, QImage &out_image)
     {
         return out_image;
     }
-    if(out_image.isNull() || out_image.width() != width || out_image.height() != height)
-    {
-        out_image = QImage(width, height, QImage::Format::Format_RGB888);
-    }
     size_t data_size = width * height * 3;
     uint8_t* rgb888 = WebPDecodeRGBInto(enc.m_enc_data, enc.m_enc_sz,
                                         out_image.bits(),

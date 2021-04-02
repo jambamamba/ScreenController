@@ -31,7 +31,7 @@ EncodedImage CommandMessage::Encode(const uint8_t *, int , int , float )
     return enc;
 }
 
-QImage &CommandMessage::Decode(const EncodedImage &enc, QImage &out_image)
+QImage &CommandMessage::Decode(const EncodedImage &, QImage &out_image)
 {
     return out_image;
 }

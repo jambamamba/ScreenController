@@ -90,10 +90,6 @@ QImage &JpegConverter::Decode(const EncodedImage &enc, QImage &out_image)
     jpeg_finish_decompress(&cinfo);
     jpeg_destroy_decompress(&cinfo);
 
-    if(out_image.isNull() || out_image.width() != width || out_image.height() != height)
-    {
-        out_image = QImage(width, height, QImage::Format::Format_RGB888);
-    }
     memcpy(out_image.bits(), bmp_buffer, bmp_size);
     free(bmp_buffer);
 

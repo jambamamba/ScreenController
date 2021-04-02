@@ -30,8 +30,6 @@ ELSEIF(WIN32)
 FIND_PACKAGE(Qt5WinExtras REQUIRED)
 ENDIF(UNIX)
 
-ADD_SUBDIRECTORY(x265)
-
 INCLUDE_DIRECTORIES(
     ${QT_DIR}/Src/qtvirtualkeyboard/tests/manual/
     ${LIBS_DIR}/turbojpeg/build
@@ -147,6 +145,8 @@ SET(PROJECT_SOURCES
     WebPConverter.h
     WindowEnumeratorInterface.h
     main.cpp
+    X265Converter.h
+    X265Converter.cpp
 )
 
 IF(UNIX)
@@ -154,6 +154,9 @@ IF(UNIX)
 ENDIF(UNIX)
 
 ADD_SUBDIRECTORY(DiscoveryService)
+ADD_SUBDIRECTORY(x265)
+ADD_SUBDIRECTORY(libde265)
+
 ADD_EXECUTABLE(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
     ${App_ICON}
     ${PROJECT_SOURCES}
@@ -179,7 +182,8 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME}
     webpdecoder
     exampleutil
     webpdemux
-    x265encoder
+    x265
+    dec265
 )
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")

@@ -16,6 +16,7 @@
 #include "CommandMessage.h"
 #include "JpegConverter.h"
 #include "WebPConverter.h"
+#include "X265Converter.h"
 
 extern "C" void mylog(const char *fmt, ...);
 
@@ -96,7 +97,8 @@ SocketReader::SocketReader(uint16_t port)
     , m_decoders{
         {ImageConverterInterface::Types::Command, std::make_shared<CommandMessage>()},
         {ImageConverterInterface::Types::Jpeg, std::make_shared<JpegConverter>()},
-        {ImageConverterInterface::Types::Webp, std::make_shared<WebPConverter>()}
+        {ImageConverterInterface::Types::Webp, std::make_shared<WebPConverter>()},
+        {ImageConverterInterface::Types::X265, std::make_shared<X265Converter>([this](QImage &){m_cv.notify_one();})}
     }
 {
     struct sockaddr_in sa;
@@ -217,31 +219,38 @@ void SocketReader::ExtractFrame(uint8_t *buffer,
                         frame.m_screen_height
                         ));
     QImage &img = m_regions_of_frame[ip].back().m_img;
+    if(img.isNull())
+    {
+        img = QImage(frame.m_width, frame.m_height, QImage::Format::Format_RGB888);
+    }
     ImageConverterInterface::Types decoder_type = static_cast<ImageConverterInterface::Types>
             (frame.m_decoder_type);
     auto &decoder = m_decoders[decoder_type];
     img = decoder->Decode(enc, img);
-    qDebug() << "recvd frame"
-            << "region_num" << frame.m_region_num
-            << ", max_regions" << frame.m_max_regions
-            << ", region size" << frame.m_x << frame.m_y << frame.m_width << frame.m_height;
+    if(!img.isNull())
+    {
+        qDebug() << "recvd frame"
+                 << "region_num" << frame.m_region_num
+                 << ", max_regions" << frame.m_max_regions
+                 << ", region size" << frame.m_x << frame.m_y << frame.m_width << frame.m_height;
 #if 0//osm
-    {
-        char name[1024];
-        static int i = 0;
-        sprintf(name, "/home/dev/oosman/foo/frame%i.png", i);
-        img.save(name);
-        sprintf(name, "/home/dev/oosman/foo/frame%i.txt", i);
-        FILE*fp = fopen(name, "wt");
-        fprintf(fp, "region (x,y,w,h) (%i,%i,%i,%i), frame.m_size %i\n", frame.m_x, frame.m_y, frame.m_width, frame.m_height, frame.m_size);
-        fclose(fp);
-        i++;
-    }
+        {
+            char name[1024];
+            static int i = 0;
+            sprintf(name, "/home/dev/oosman/foo/frame%i.png", i);
+            img.save(name);
+            sprintf(name, "/home/dev/oosman/foo/frame%i.txt", i);
+            FILE*fp = fopen(name, "wt");
+            fprintf(fp, "region (x,y,w,h) (%i,%i,%i,%i), frame.m_size %i\n", frame.m_x, frame.m_y, frame.m_width, frame.m_height, frame.m_size);
+            fclose(fp);
+            i++;
+        }
 #endif
-    if(frame.m_max_regions == frame.m_region_num+1)
-    {
-        m_cv.notify_one();
-        stats.Update(frame.m_size);
+        if(frame.m_max_regions == frame.m_region_num+1)
+        {
+            m_cv.notify_one();
+            stats.Update(frame.m_size);
+        }
     }
 }
 bool SocketReader::ParseBuffer(uint8_t *buffer,
