@@ -18,11 +18,9 @@ extern int dec265main(int argc,
                       );
 
 namespace  {
-QImage &FromYuvImage(const uint8_t *yuv, size_t sz, QImage &img)
+QImage FromYuvImage(const uint8_t *yuv, size_t sz, int width, int height)
 {
-   int width = img.width();
-   int height = img.height();
-
+   QImage img(width, height, QImage::Format::Format_RGB888);
    int frameSize = width * height;
    int chromasize = frameSize;
    {
@@ -51,45 +49,27 @@ QImage &FromYuvImage(const uint8_t *yuv, size_t sz, QImage &img)
            }
        }
    }
-
    return img;
 }
 }//namespace
 
-X265Converter::X265Converter(
+X265Encoder::X265Encoder(
         int width,
         int height,
         std::function<int(char **data, ssize_t *bytes, int width, int height, float quality_factor)> encoderInputFn,
         std::function<void(EncodedImage enc)> encoderOutputFn
         )
-    : _hevc([](){})
-    , _yuv([](const uint8_t* , size_t ){})
 {
     StartEncoderThread(width,height,encoderInputFn,encoderOutputFn);
 }
 
-X265Converter::X265Converter(
-        std::function<void(QImage &out_image)> decoderOutputFn
-    )
-    : _hevc([](){
-        QApplication::processEvents();
-    })
-    , _yuv([this,decoderOutputFn](const uint8_t* data, size_t size){
-        *_decoded_image = FromYuvImage(data, size, *_decoded_image);
-        decoderOutputFn(*_decoded_image);
-    })
-{
-    StartDecoderThread();
-}
-
-X265Converter::~X265Converter()
+X265Encoder::~X265Encoder()
 {
     _die = true;
-    if(_decoder_thread.valid()){_decoder_thread.wait();}
     if(_encoder_thread.valid()){_encoder_thread.wait();}
 }
 
-void X265Converter::StartEncoderThread(
+void X265Encoder::StartEncoderThread(
         int width,
         int height,
         std::function<int(char **data, ssize_t *bytes, int width, int height, float quality_factor)> encoderInputFn,
@@ -122,14 +102,16 @@ void X265Converter::StartEncoderThread(
         //_img_quality_percent
 
         x265main(NUM_PARAMS, (char**)argv,
-                 [encoderInputFn](char **data, ssize_t *bytes, int width, int height){
+        [encoderInputFn](char **data, ssize_t *bytes, int width, int height){
             return encoderInputFn ? encoderInputFn(data, bytes, width, height, -1) : 0;
         },
-        [encoderOutputFn](const unsigned char *data, ssize_t bytes){
+        [encoderOutputFn,width,height](const unsigned char *data, ssize_t bytes){
             if(encoderOutputFn)
             {
                 EncodedImage enc((uint8_t*)data,
                                  bytes,
+                                 width,
+                                 height,
                                  nullptr);
                 encoderOutputFn(enc);
             }
@@ -139,7 +121,27 @@ void X265Converter::StartEncoderThread(
     });
 }
 
-void X265Converter::StartDecoderThread()
+X265Decoder::X265Decoder( ssize_t img_width, ssize_t img_height, std::function<void(const QImage &img)> onDecode )
+    : _hevc([](){
+        QApplication::processEvents();
+    })
+    , _yuv([img_width, img_height, onDecode](const uint8_t* data, size_t size){
+    onDecode(FromYuvImage(
+                data,
+                size,
+                img_width,
+                img_height));
+    })
+{
+    StartDecoderThread();
+}
+
+X265Decoder::~X265Decoder()
+{
+    _die = true;
+    if(_decoder_thread.valid()){_decoder_thread.wait();}
+}
+void X265Decoder::StartDecoderThread()
 {
     _decoder_thread = std::async(std::launch::async, [this](){
         char *argv[4] = {
@@ -152,27 +154,12 @@ void X265Converter::StartDecoderThread()
      });
 }
 
-QImage &X265Converter::Decode(const EncodedImage &enc, QImage &out_image)
-{
-    _decoded_image = &out_image;
+void X265Decoder::Decode(uint32_t ip,
+                         ssize_t width,
+                         ssize_t height,
+                           const EncodedImage &enc)
+{//TODO: use _map to get frame and ip for decoder callback used in constructor
+    _img_to_decode = enc;
     _hevc.receivedData((char*)enc.m_enc_data, enc.m_enc_sz);
-
-    return out_image;
 }
 
-
-ssize_t X265Converter::FindHeader(uint8_t *buffer, ssize_t buffer_tail)
-{
-
-    return -1;
-}
-
-bool X265Converter::IsValid(uint8_t *buffer, ssize_t buffer_tail)
-{
-    return true;
-}
-
-ssize_t X265Converter::HeaderSize() const
-{
-    return 0;
-}

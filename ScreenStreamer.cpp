@@ -113,6 +113,7 @@ void ScreenStreamer::StopThreads()
     if(_webp_thread.valid()) {_webp_thread.wait();}
     if(_rgb_buffer) { free(_rgb_buffer); _rgb_buffer = nullptr; }
     if(_img_converter) { delete _img_converter; _img_converter = nullptr; }
+    if(_x265enc) { delete _x265enc; }
 }
 
 ScreenStreamer::~ScreenStreamer()
@@ -241,7 +242,7 @@ void ScreenStreamer::StreamWebpImages(uint32_t ip, uint32_t decoder_type, ImageC
                 {
                     QImage img = QImage(region.m_width, region.m_height, QImage::Format::Format_RGB888);;
                     WebPConverter cnv;
-                    img = cnv.Decode(enc, img);
+                    img = cnv.Decode(enc);
                     if(!img.isNull())
                     {
                         char name[1024];
@@ -268,7 +269,21 @@ void ScreenStreamer::StreamX265(uint32_t ip, uint32_t decoder_type, int width, i
     if(_rgb_buffer) { free(_rgb_buffer); }
     _rgb_buffer = (char*) malloc(width * 3 * height);
 
-    _img_converter = new X265Converter(
+#if 0//osm
+//    static X265Converter decoder([width,height](QImage &img){
+//        if(!img.isNull())
+//        {
+//            char name[1024];
+//            static int i = 0;
+//            sprintf(name, "/tmp/foo/frame%i.png", i);
+//            img.save(name);
+//            i++;
+//        }
+//    });
+#endif//osm
+
+    if(_x265enc) { delete _x265enc; }
+    _x265enc = new X265Encoder(
                 width,
                 height,
                 [this,width,height](char **data, ssize_t *bytes, int width_, int height_, float quality_factor){
@@ -290,9 +305,15 @@ void ScreenStreamer::StreamX265(uint32_t ip, uint32_t decoder_type, int width, i
                        1,1
                        );
            SendCommand(ip, *cmd.m_pkt);
+#if 0//osm
+            {
+                QImage img = QImage(width, height, QImage::Format::Format_RGB888);
+                decoder.Decode(enc, img);
+            }
+#endif//osm
            return enc.m_enc_sz;
        }
-                );
+    );
 }
 void ScreenStreamer::StartStreaming(uint32_t ip, uint32_t decoder_type)
 {

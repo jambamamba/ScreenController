@@ -19,6 +19,7 @@
 
 struct Command;
 struct Stats;
+class X265Decoder;
 class SocketReader
 {
 public:
@@ -43,6 +44,15 @@ public:
     void Start(uint32_t ip);
 
 protected:
+    void ExtractX265Frame(const Command::Frame &frame,
+                          uint32_t ip,
+                          const EncodedImage &enc,
+                          Stats &stats);
+    void ExtractWebpFrame(const Command::Frame &frame,
+                          uint32_t ip,
+                          const EncodedImage &enc,
+                          std::shared_ptr<ImageConverterInterface> decoder,
+                          Stats &stats);
     struct HeaderMetaData
     {
         ImageConverterInterface::Types m_type = ImageConverterInterface::Types::None;
@@ -62,6 +72,7 @@ protected:
     std::condition_variable m_cv;
     QMap<uint32_t /*ip*/, std::vector<Frame>> m_regions_of_frame;
     std::map<ImageConverterInterface::Types, std::shared_ptr<ImageConverterInterface>> m_decoders;
+    X265Decoder *_x265dec = nullptr;
     bool m_play = false;
     bool m_die = false;
 };

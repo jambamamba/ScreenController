@@ -139,6 +139,8 @@ SET(PROJECT_SOURCES
     ScreenStreamer.h
     SocketReader.cpp
     SocketReader.h
+    Stats.cpp
+    Stats.h
     TransparentMaximizedWindow.cpp
     TransparentMaximizedWindow.h
     WebPConverter.cpp

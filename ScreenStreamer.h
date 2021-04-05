@@ -17,6 +17,7 @@ class QScreen;
 class RegionMapper;
 class SocketReader;
 struct ImageConverterInterface;
+struct X265Encoder;
 class ScreenStreamer : public QObject
 {
     Q_OBJECT
@@ -48,6 +49,7 @@ protected:
     bool _streaming = false;
     char *_rgb_buffer = nullptr;
     ImageConverterInterface *_img_converter = nullptr;
+    X265Encoder *_x265enc = nullptr;
     std::atomic<bool> _die;
     void StopThreads();
 };

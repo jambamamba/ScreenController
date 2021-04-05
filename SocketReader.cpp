@@ -15,6 +15,7 @@
 
 #include "CommandMessage.h"
 #include "JpegConverter.h"
+#include "Stats.h"
 #include "WebPConverter.h"
 #include "X265Converter.h"
 
@@ -64,41 +65,12 @@ bool WaitForSocketIO(int socket, fd_set *readset, fd_set *writeset)
 }
 }//namespace
 
-struct Stats
-{
-    void Update(ssize_t frame_sz)
-    {
-        std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - m_begin).count();
-        m_total_bytes += frame_sz;
-
-//osm
-        qDebug() << "frame# " << (m_frame_counter++) << ","
-                 << frame_sz/1024
-                 << "KBytes, "
-                 << (m_frame_counter*1000/elapsed)
-                 << "fps, "
-                 << (m_total_bytes*8/elapsed)
-                 << "kbps.";
-        if(elapsed > 1000 * 60)
-        {
-            m_begin = end;
-            m_frame_counter = 0;
-            m_total_bytes = 0;
-        }
-    }
-    std::chrono::steady_clock::time_point m_begin = std::chrono::steady_clock::now();
-    int m_frame_counter = 0;
-    size_t m_total_bytes = 0;
-};
-
 SocketReader::SocketReader(uint16_t port)
     : m_port(port)
     , m_decoders{
-        {ImageConverterInterface::Types::Command, std::make_shared<CommandMessage>()},
-        {ImageConverterInterface::Types::Jpeg, std::make_shared<JpegConverter>()},
-        {ImageConverterInterface::Types::Webp, std::make_shared<WebPConverter>()},
-        {ImageConverterInterface::Types::X265, std::make_shared<X265Converter>([this](QImage &){m_cv.notify_one();})}
+        {ImageConverterInterface::Types::Command, std::make_shared<CommandMessage>()}
+        ,{ImageConverterInterface::Types::Jpeg, std::make_shared<JpegConverter>()}
+        ,{ImageConverterInterface::Types::Webp, std::make_shared<WebPConverter>()}
     }
 {
     struct sockaddr_in sa;
@@ -131,6 +103,7 @@ SocketReader::~SocketReader()
     m_die = true;
     m_reader_thread.wait();
     m_playback_thread.wait();
+    if(_x265dec) { delete _x265dec; }
 }
 
 SocketReader::HeaderMetaData SocketReader::FindHeader(uint8_t *buffer, ssize_t sz)
@@ -204,8 +177,60 @@ void SocketReader::ExtractFrame(uint8_t *buffer,
                                 uint32_t ip,
                                 Stats &stats)
 {
+    ImageConverterInterface::Types decoder_type = static_cast<ImageConverterInterface::Types>
+            (frame.m_decoder_type);
+    EncodedImage enc(buffer, buffer_size, frame.m_width, frame.m_height);
+
+    switch(decoder_type)
+    {
+    case ImageConverterInterface::Types::X265:
+        ExtractX265Frame(frame, ip, enc, stats);
+        break;
+    default:
+        ExtractWebpFrame(frame, ip, enc, m_decoders[decoder_type], stats);
+        break;
+    }
+}
+
+void SocketReader::ExtractX265Frame(
+        const Command::Frame &frame,
+        uint32_t ip,
+        const EncodedImage &enc,
+        Stats &stats)
+{
+    if(!_x265dec)
+    {
+        _x265dec = new X265Decoder(frame.m_width, frame.m_height, [ip,frame,&stats,this](const QImage &img){
+            m_regions_of_frame[ip].push_back(Frame(frame.m_x,
+                                frame.m_y,
+                                frame.m_width,
+                                frame.m_height,
+                                frame.m_screen_width,
+                                frame.m_screen_height
+                                ));
+            if(img.isNull())
+            { return; }
+            m_regions_of_frame[ip].back().m_img = img;
+            qDebug() << "recvd frame"
+                     << "region_num" << frame.m_region_num
+                     << ", max_regions" << frame.m_max_regions
+                     << ", region size" << frame.m_x << frame.m_y << frame.m_width << frame.m_height;
+            m_cv.notify_one();
+            stats.Update(frame.m_size);
+        });
+    }
+    _x265dec->Decode(ip, frame.m_width, frame.m_height, enc);
+}
+
+void SocketReader::ExtractWebpFrame(
+        const Command::Frame &frame,
+        uint32_t ip,
+        const EncodedImage &enc,
+        std::shared_ptr<ImageConverterInterface> decoder,
+        Stats &stats
+        )
+{
     std::lock_guard<std::mutex> lk(m_mutex);
-    EncodedImage enc(buffer, buffer_size);
 
     if(frame.m_region_num == 0)
     {
@@ -223,10 +248,7 @@ void SocketReader::ExtractFrame(uint8_t *buffer,
     {
         img = QImage(frame.m_width, frame.m_height, QImage::Format::Format_RGB888);
     }
-    ImageConverterInterface::Types decoder_type = static_cast<ImageConverterInterface::Types>
-            (frame.m_decoder_type);
-    auto &decoder = m_decoders[decoder_type];
-    img = decoder->Decode(enc, img);
+    img = decoder->Decode(enc);
     if(!img.isNull())
     {
         qDebug() << "recvd frame"
@@ -253,6 +275,7 @@ void SocketReader::ExtractFrame(uint8_t *buffer,
         }
     }
 }
+
 bool SocketReader::ParseBuffer(uint8_t *buffer,
                                 ssize_t buffer_size,
                                 ImageConverterInterface::Types decoder_type,
@@ -307,6 +330,11 @@ void SocketReader::Stop(uint32_t ip)
     if(m_regions_of_frame.find(ip) != m_regions_of_frame.end())
     {
         m_regions_of_frame[ip].clear();
+    }
+    if(_x265dec)
+    {
+        delete _x265dec;
+        _x265dec = nullptr;
     }
 }
 
