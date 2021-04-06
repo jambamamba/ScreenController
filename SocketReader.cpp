@@ -219,6 +219,8 @@ void SocketReader::ExtractX265Frame(
             stats.Update(frame.m_size);
         });
     }
+    qDebug() << "#### received command packet with payload of size " << frame.m_size;
+
     _x265dec->Decode(ip, frame.m_width, frame.m_height, enc);
 }
 
