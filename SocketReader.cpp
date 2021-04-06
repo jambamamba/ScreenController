@@ -179,7 +179,7 @@ void SocketReader::ExtractFrame(uint8_t *buffer,
 {
     ImageConverterInterface::Types decoder_type = static_cast<ImageConverterInterface::Types>
             (frame.m_decoder_type);
-    EncodedImage enc(buffer, buffer_size, frame.m_width, frame.m_height);
+    EncodedImage enc(buffer + sizeof (Command), buffer_size - sizeof (Command), frame.m_width, frame.m_height);
 
     switch(decoder_type)
     {
@@ -216,8 +216,8 @@ void SocketReader::ExtractX265Frame(
         });
     }
 
-    _x265dec->Decode(ip, frame.m_width, frame.m_height, enc);
     qDebug() << "#### received command packet #" << frame.m_sequence_number << "with payload of size " << enc.m_enc_sz << frame.m_size;
+    _x265dec->Decode(ip, frame.m_width, frame.m_height, enc);
 }
 
 void SocketReader::ExtractWebpFrame(
