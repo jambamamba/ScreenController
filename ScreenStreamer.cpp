@@ -271,6 +271,19 @@ void ScreenStreamer::StreamX265(uint32_t ip, uint32_t decoder_type, int width, i
     if(_rgb_buffer) { free(_rgb_buffer); }
     _rgb_buffer = (char*) malloc(width * 3 * height);
 
+    //osm testing purpose
+    static X265Decoder x265dec(width, height, [ip](const QImage &img){
+        if(img.isNull())
+        { return; }
+        //osm
+        {
+            char filename[128] = {0};
+            static int i = 0;
+            sprintf(filename, "/tmp/foo/frame%i.png", i++);
+            img.save(filename);
+        }
+    });
+
     if(_x265enc) { delete _x265enc; }
     _x265enc = new X265Encoder(
                 width,
@@ -295,6 +308,11 @@ void ScreenStreamer::StreamX265(uint32_t ip, uint32_t decoder_type, int width, i
                        );
            SendCommand(ip, *cmd.m_pkt);
            qDebug() << "#### sending command packet #" << cmd.m_pkt->u.m_frame.m_sequence_number << "with payload of size " << enc.m_enc_sz << cmd.m_pkt->u.m_frame.m_size;
+           //osm
+           {
+               x265dec.Decode(ip, width, height, enc);
+           }
+
            return enc.m_enc_sz;
        }
     );

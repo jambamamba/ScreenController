@@ -186,7 +186,7 @@ void SocketReader::ExtractFrame(uint8_t *buffer,
         ExtractX265Frame(frame, ip, enc, stats);
         break;
     default:
-        ExtractWebpFrame(frame, ip, enc, m_decoders[decoder_type], stats);
+//osm        ExtractWebpFrame(frame, ip, enc, m_decoders[decoder_type], stats);
         break;
     }
 }
@@ -210,6 +210,13 @@ void SocketReader::ExtractX265Frame(
             if(img.isNull())
             { return; }
             m_regions_of_frame[ip].back().m_img = img;
+            //osm
+            {
+                char filename[128] = {0};
+                static int i = 0;
+                sprintf(filename, "/tmp/foo/frame%i.png", i++);
+                img.save(filename);
+            }
             m_cv.notify_one();
 //            stats.Update(frame.m_size);
         });
