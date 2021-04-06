@@ -167,7 +167,7 @@ int SocketReader::SendData(uint8_t *buf, int buf_size, uint32_t ip, size_t port)
             break;
         }
         total_sent += bytes_sent;
-        usleep(1000 /** 100*/);
+        usleep(1000 /*100*/);
     }
     return total_sent;
 }
