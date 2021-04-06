@@ -172,14 +172,13 @@ int SocketReader::SendData(uint8_t *buf, int buf_size, uint32_t ip, size_t port)
     return total_sent;
 }
 void SocketReader::ExtractFrame(uint8_t *buffer,
-                                ssize_t buffer_size,
                                 const Command::Frame &frame,
                                 uint32_t ip,
                                 Stats &stats)
 {
     ImageConverterInterface::Types decoder_type = static_cast<ImageConverterInterface::Types>
             (frame.m_decoder_type);
-    EncodedImage enc(buffer + sizeof (Command), buffer_size - sizeof (Command), frame.m_width, frame.m_height);
+    EncodedImage enc(buffer, frame.m_size, frame.m_width, frame.m_height);
 
     switch(decoder_type)
     {
@@ -294,7 +293,6 @@ bool SocketReader::ParseBuffer(uint8_t *buffer,
 //                     << pkt->u.m_frame.m_width
 //                     << pkt->u.m_frame.m_height;
             ExtractFrame(pkt->m_tail_bytes,
-                         buffer_size,
                          pkt->u.m_frame,
                          ip,
                          stats);
@@ -311,7 +309,6 @@ bool SocketReader::ParseBuffer(uint8_t *buffer,
 //        frame.m_width = 1920;
 //        frame.m_height = 1080;
 //        ExtractFrame(buffer,
-//                     buffer_size,
 //                     frame,
 //                     ip,
 //                     stats);
