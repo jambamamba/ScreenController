@@ -294,7 +294,7 @@ void ScreenStreamer::StreamX265(uint32_t ip, uint32_t decoder_type, int width, i
                        1,1
                        );
            SendCommand(ip, *cmd.m_pkt);
-           qDebug() << "#### sending command packet #" << cmd.m_pkt->u.m_frame.m_sequence_number << "with payload of size " << enc.m_enc_sz;
+           qDebug() << "#### sending command packet #" << cmd.m_pkt->u.m_frame.m_sequence_number << "with payload of size " << enc.m_enc_sz << cmd.m_pkt->u.m_frame.m_size;
            return enc.m_enc_sz;
        }
     );
