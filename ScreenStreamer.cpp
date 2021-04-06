@@ -67,6 +67,8 @@ CommandAutoDestruct CreateFrameCommandPacket(
     memcpy(pkt, &cmd, sizeof cmd);
 
     pkt->m_event = Command::EventType::FrameInfo;
+    static uint32_t sequence_number = 0;
+    pkt->u.m_frame.m_sequence_number = sequence_number++;
     pkt->u.m_frame.m_x = x;
     pkt->u.m_frame.m_y = y;
     pkt->u.m_frame.m_width = width;

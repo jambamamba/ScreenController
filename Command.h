@@ -35,6 +35,7 @@ struct Command
         uint32_t m_y = -1;
     };
     struct Frame {
+        uint32_t m_sequence_number = 0;
         uint32_t m_x = 0;
         uint32_t m_y = 0;
         uint32_t m_width = 0;
@@ -46,7 +47,6 @@ struct Command
         uint32_t m_max_regions = 0;
         uint32_t m_decoder_type = 0;
     };
-
     union U {
         Key m_key;
         Mouse m_mouse;
