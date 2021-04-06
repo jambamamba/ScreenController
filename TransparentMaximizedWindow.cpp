@@ -189,7 +189,6 @@ void TransparentMaximizedWindow::mouseDoubleClickEvent(QMouseEvent *event)
 
 void TransparentMaximizedWindow::Show(int width, int height, QScreen* screen)
 {
-    return;//osm
     m_screen = screen;
     MoveToScreen(screen);
     m_capturing = false;

@@ -461,7 +461,6 @@ bool SocketReader::PlaybackImages(std::function<void (const Frame &, uint32_t)> 
                 }
                 return false;
             });
-//            return false;//osm todo
             if(m_die) { return false; }
             if(!m_play) { continue; }
 

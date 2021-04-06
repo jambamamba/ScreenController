@@ -238,7 +238,7 @@ void ScreenStreamer::StreamWebpImages(uint32_t ip, uint32_t decoder_type, ImageC
                             );
                 SendCommand(ip, *cmd.m_pkt);
 
-#if 1//osm fix me: sometimes the encoded image is really bad quality
+#if 0//osm fix me: sometimes the encoded image is really bad quality
                 {
                     QImage img = QImage(region.m_width, region.m_height, QImage::Format::Format_RGB888);;
                     WebPConverter cnv;
@@ -270,16 +270,16 @@ void ScreenStreamer::StreamX265(uint32_t ip, uint32_t decoder_type, int width, i
     _rgb_buffer = (char*) malloc(width * 3 * height);
 
 #if 0//osm
-//    static X265Converter decoder([width,height](QImage &img){
-//        if(!img.isNull())
-//        {
-//            char name[1024];
-//            static int i = 0;
-//            sprintf(name, "/tmp/foo/frame%i.png", i);
-//            img.save(name);
-//            i++;
-//        }
-//    });
+    static X265Converter decoder([width,height](QImage &img){
+        if(!img.isNull())
+        {
+            char name[1024];
+            static int i = 0;
+            sprintf(name, "/tmp/foo/frame%i.png", i);
+            img.save(name);
+            i++;
+        }
+    });
 #endif//osm
 
     if(_x265enc) { delete _x265enc; }
