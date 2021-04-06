@@ -109,8 +109,6 @@ void MainWindow::StartDiscoveryService()
 
 void MainWindow::on_connectButtton_clicked()
 {
-    m_streamer.StartStreaming(0, (int)ImageConverterInterface::Types::X265);
-    return;//osm
     if(ui->listView->selectedIndexes().size() == 0)
     { return; }
 

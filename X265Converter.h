@@ -35,7 +35,7 @@ struct X265Decoder
     virtual ~X265Decoder();
     void Decode(uint32_t ip, ssize_t width, ssize_t height, const EncodedImage &enc);
 protected:
-    void StartDecoderThread();
+    std::future<void> StartDecoderThread();
     HevcReader _hevc;
     YuvWriter _yuv;
     std::future<void> _decoder_thread;

@@ -101,6 +101,8 @@ void X265Encoder::StartEncoderThread(
         strcpy(argv[RES], resolution);
         //_img_quality_percent
 
+        extern int optind;
+        optind = 1;
         x265main(NUM_PARAMS, (char**)argv,
         [encoderInputFn](char **data, ssize_t *bytes, int width, int height){
             return encoderInputFn ? encoderInputFn(data, bytes, width, height, -1) : 0;
@@ -132,8 +134,8 @@ X265Decoder::X265Decoder( ssize_t img_width, ssize_t img_height, std::function<v
                 img_width,
                 img_height));
     })
+    , _decoder_thread(StartDecoderThread())
 {
-    StartDecoderThread();
 }
 
 X265Decoder::~X265Decoder()
@@ -141,16 +143,19 @@ X265Decoder::~X265Decoder()
     _die = true;
     if(_decoder_thread.valid()){_decoder_thread.wait();}
 }
-void X265Decoder::StartDecoderThread()
+std::future<void> X265Decoder::StartDecoderThread()
 {
-    _decoder_thread = std::async(std::launch::async, [this](){
-        char *argv[4] = {
-           "dec265",
-           "c:/temp/frames2.hevc",//not used
-           "--output",
-           "c:/temp/frames.yuv" //not used
-        };
-        dec265main(4, argv, &_hevc, &_yuv, _die);
+    return std::async(std::launch::async, [this](){
+        constexpr int NUM_PARAMS = 4;
+        static char args[NUM_PARAMS][64] = {"dec265",
+                                            "c:/temp/frames2.hevc",//not used
+                                            "--output",
+                                            "c:/temp/frames.yuv", //not used
+                                    };
+        char *argv[NUM_PARAMS] = {args[0], args[1], args[2], args[3]};
+        extern int optind;
+        optind = 1;
+        dec265main(NUM_PARAMS, argv, &_hevc, &_yuv, _die);
      });
 }
 
