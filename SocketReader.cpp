@@ -150,7 +150,7 @@ int SocketReader::SendData(uint8_t *buf, int buf_size, uint32_t ip, size_t port)
     }
 
     int total_sent = 0;
-    int datagram_size = 534;//8192*4;
+    int datagram_size = 8192*4;
     for(int i =0 ; i < buf_size; i+= datagram_size)
     {
         if(!WaitForSocketIO(m_client_socket, nullptr, &m_write_set))
