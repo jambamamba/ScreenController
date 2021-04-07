@@ -126,7 +126,7 @@ void X265Encoder::StartEncoderThread(
 X265Decoder::X265Decoder( ssize_t img_width, ssize_t img_height, std::function<void(const QImage &img)> onDecode )
     : _hevc([](){
         QApplication::processEvents();
-    })
+    }, _die)
     , _yuv([img_width, img_height, onDecode](const uint8_t* data, size_t size){
     onDecode(FromYuvImage(
                 data,
