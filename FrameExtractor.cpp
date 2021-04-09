@@ -25,11 +25,12 @@ void FrameExtractor::ExtractX265Frame(
 {
     if(_prev_sequence_number+1 != frame.m_sequence_number)
     {
+        qDebug() << "#### skipped frame, expecting" << (_prev_sequence_number+1) << ", instead got" << frame.m_sequence_number;
 //osm        SendCommand(ip,
 //                    Command(Command::EventType::StartStreaming,
 //                            _prev_sequence_number+1,
 //                            (int)ImageConverterInterface::Types::X265));
-//        return;
+        return;
     }
     if(!_x265dec || frame.m_sequence_number == 0)
     {

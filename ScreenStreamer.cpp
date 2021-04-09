@@ -115,9 +115,9 @@ void ScreenStreamer::StopThreads()
 {
     _die = true;
     if(_webp_thread.valid()) {_webp_thread.wait();}
+    if(_x265enc) { delete _x265enc; _x265enc = nullptr; }
     if(_rgb_buffer) { free(_rgb_buffer); _rgb_buffer = nullptr; }
     if(_img_converter) { delete _img_converter; _img_converter = nullptr; }
-    if(_x265enc) { delete _x265enc; }
 }
 
 ScreenStreamer::~ScreenStreamer()
