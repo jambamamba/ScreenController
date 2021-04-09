@@ -9,7 +9,7 @@ struct Command
 {
     uint8_t m_sync_bytes[4] = { 0xca, 0xfe, 0xba, 0xbe };
     uint8_t m_version = 1;
-    uint8_t m_padding = 0;
+    uint8_t m_padding[0];
     enum EventType : uint16_t {
         None,
         StartStreaming,
@@ -42,7 +42,7 @@ struct Command
         uint32_t m_height = 0;
         uint32_t m_screen_width = 0;
         uint32_t m_screen_height = 0;
-        ssize_t m_size = 0;
+        uint32_t m_size = 0;
         uint32_t m_region_num = 0;
         uint32_t m_max_regions = 0;
         uint32_t m_decoder_type = 0;
@@ -60,4 +60,5 @@ struct Command
             int decoder = 0);
 
 };
+
 Q_DECLARE_METATYPE(Command);
