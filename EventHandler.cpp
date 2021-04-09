@@ -4,7 +4,7 @@
 
 #include "Command.h"
 #include "ImageConverterInterface.h"
-#include "SocketReader.h"
+#include "SocketTrasceiver.h"
 
 #if defined(Win32) || defined(Win64)
 #include "WindowsMouse.h"
@@ -37,7 +37,7 @@ void EventHandler::HandleCommand(const Command &pkt, uint32_t ip)
     switch(pkt.m_event)
     {
     case Command::EventType::StartStreaming:
-        emit StartStreaming(ip, (int)ImageConverterInterface::Types::X265);//osm format should be read from commanding peer
+        emit StartStreaming(ip, pkt.u.m_frame.m_sequence_number, (int)pkt.u.m_frame.m_decoder_type);
         break;
     case Command::EventType::StopStreaming:
         emit StopStreaming(ip);
@@ -60,7 +60,7 @@ void EventHandler::HandleCommand(const Command &pkt, uint32_t ip)
     case Command::EventType::None:
         break;
     default:
-        qDebug() << "recvd unhandled command from " << SocketReader::IpToString(ip) << ", event " << pkt.m_event;
+        qDebug() << "recvd unhandled command from " << SocketTrasceiver::IpToString(ip) << ", event " << pkt.m_event;
         break;
     }
 }

@@ -52,17 +52,17 @@ uint8_t *DiffImages(const uint8_t * b0,
 }
 // 0 [1] 2 3 [4 5 6]
 // 0 [1 2 3] 4 5 [6]
-void GrowRegionToIncludePoint(RegionMapper::Region &region, ssize_t x, ssize_t y)
+void GrowRegionToIncludePoint(Region &region, ssize_t x, ssize_t y)
 {
-    if(x < region.m_x) { region.m_width += (region.m_x - x); region.m_x = x; }
-    else if(x >= region.m_x + region.m_width) { region.m_width = x - region.m_x + 1; }
+    if(x < region._x) { region._width += (region._x - x); region._x = x; }
+    else if(x >= region._x + region._width) { region._width = x - region._x + 1; }
 
-    if(y < region.m_y) { region.m_height += (region.m_y - y); region.m_y = y; }
-    else if(y >= region.m_y + region.m_height) { region.m_height = y - region.m_y + 1; }
+    if(y < region._y) { region._height += (region._y - y); region._y = y; }
+    else if(y >= region._y + region._height) { region._height = y - region._y + 1; }
 }
 
-std::vector<RegionMapper::Region> &UpdateRegions(
-        std::vector<RegionMapper::Region> &regions,
+std::vector<Region> &UpdateRegions(
+        std::vector<Region> &regions,
         const uint8_t *mask,
         size_t cols,
         size_t rows)
@@ -80,19 +80,19 @@ std::vector<RegionMapper::Region> &UpdateRegions(
         ssize_t y = pos/cols/3;
         ssize_t x = (pos - cols*3*y)/3;
 
-        RegionMapper::Region *closest_region = nullptr;
+        Region *closest_region = nullptr;
         Distance distance_to_closest_region;
         bool already_in_region = false;
         for(auto &region : regions)
         {
-            ssize_t dx = (x < region.m_x) ?
-                        (region.m_x - x) :
-                        (x >= region.m_x + region.m_width) ?
-                            (x - (region.m_x + region.m_width)) : 0;
-            ssize_t dy = (y < region.m_y) ?
-                        (region.m_y - y) :
-                        (y >= region.m_y + region.m_height) ?
-                            (y - (region.m_y + region.m_height)) : 0;
+            ssize_t dx = (x < region._x) ?
+                        (region._x - x) :
+                        (x >= region._x + region._width) ?
+                            (x - (region._x + region._width)) : 0;
+            ssize_t dy = (y < region._y) ?
+                        (region._y - y) :
+                        (y >= region._y + region._height) ?
+                            (y - (region._y + region._height)) : 0;
 
             if(dx == 0 && dy == 0)
             {
@@ -113,7 +113,7 @@ std::vector<RegionMapper::Region> &UpdateRegions(
 
         if(!closest_region)
         {
-            RegionMapper::Region region(x, y, 1, 1);
+            Region region(x, y, 1, 1);
             regions.push_back(region);
             continue;
         }
@@ -126,25 +126,20 @@ std::vector<RegionMapper::Region> &UpdateRegions(
     return regions;
 }
 }//namespace
-RegionMapper::RegionMapper()
-{}
 
-RegionMapper::~RegionMapper()
-{}
-
-std::vector<RegionMapper::Region> RegionMapper::GetRegionsOfInterest(const QImage &screen_shot)
+std::vector<Region> RegionMapper::GetRegionsOfInterest(const QImage &screen_shot)
 {
-    std::vector<RegionMapper::Region> regions;
+    std::vector<Region> regions;
 
     static int fnum = 0;
-    if(m_prev_screen_shot.isNull()
+    if(_prev_screen_shot.isNull()
 //            || (fnum % 10) == 0
             || true//oqsm - sends every full frame
             )
     {
         regions.push_back(Region(0, 0, screen_shot.width(), screen_shot.height(), screen_shot));
-        m_prev_screen_shot = QImage(screen_shot.width(), screen_shot.height(), screen_shot.format());
-        memcpy(m_prev_screen_shot.bits(), screen_shot.bits(), screen_shot.width() * screen_shot.height() * 3);
+        _prev_screen_shot = QImage(screen_shot.width(), screen_shot.height(), screen_shot.format());
+        memcpy(_prev_screen_shot.bits(), screen_shot.bits(), screen_shot.width() * screen_shot.height() * 3);
 //        qDebug() << "sending full screen shot " << screen_shot.width() << screen_shot.height();
         fnum++;
         return regions;
@@ -152,7 +147,7 @@ std::vector<RegionMapper::Region> RegionMapper::GetRegionsOfInterest(const QImag
     fnum++;
 
     uint8_t *mask = DiffImages(screen_shot.bits(),
-                           m_prev_screen_shot.bits(),
+                           _prev_screen_shot.bits(),
                            screen_shot.width(),
                            screen_shot.height());
     regions = UpdateRegions(regions, mask, screen_shot.width(), screen_shot.height());
@@ -169,12 +164,12 @@ std::vector<RegionMapper::Region> RegionMapper::GetRegionsOfInterest(const QImag
 
 
 
-    m_prev_screen_shot = QImage(screen_shot.width(), screen_shot.height(), screen_shot.format());
-    memcpy(m_prev_screen_shot.bits(), screen_shot.bits(), screen_shot.width() * screen_shot.height() * 3);
+    _prev_screen_shot = QImage(screen_shot.width(), screen_shot.height(), screen_shot.format());
+    memcpy(_prev_screen_shot.bits(), screen_shot.bits(), screen_shot.width() * screen_shot.height() * 3);
     return regions;
 }
 
-void RegionMapper::Region::CopyImage(const QImage &src)
+void Region::CopyImage(const QImage &src)
 {
-    m_img = src.copy(m_x, m_y, m_width, m_height);
+    _img = src.copy(_x, _y, _width, _height);
 }

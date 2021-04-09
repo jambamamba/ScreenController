@@ -5,7 +5,7 @@
 #include <QString>
 #include <QTimer>
 
-#include "SocketReader.h"
+#include "SocketTrasceiver.h"
 
 NodeModel::NodeModel(QObject *parent)
     : QAbstractItemModel(parent)

@@ -3,41 +3,41 @@
 #include <QImage>
 #include <functional>
 
-struct EncodedImage
+struct EncodedChunk
 {
-    EncodedImage(uint8_t* enc_data,
+    EncodedChunk(uint8_t* enc_data,
                  size_t enc_sz,
                  ssize_t width,
                  ssize_t height,
                  std::function<void(uint8_t* )> free_fn)
-        : m_enc_data(enc_data)
-        , m_enc_sz(enc_sz)
-        , m_width(width)
-        , m_height(height)
-        , m_free_fn(free_fn)
+        : _chunk_data(enc_data)
+        , _chunk_sz(enc_sz)
+        , _width(width)
+        , _height(height)
+        , _freeFn(free_fn)
     {}
-    EncodedImage(uint8_t* enc_data = nullptr,
+    EncodedChunk(uint8_t* enc_data = nullptr,
                  size_t enc_sz = 0,
                  ssize_t width = 0,
                  ssize_t height = 0)
-        : EncodedImage(enc_data, enc_sz, width, height, nullptr)
+        : EncodedChunk(enc_data, enc_sz, width, height, nullptr)
     {}
-    EncodedImage(ssize_t width, ssize_t height, std::function<void(uint8_t* )> free_fn)
-        : EncodedImage(nullptr, 0, width, height, free_fn)
+    EncodedChunk(ssize_t width, ssize_t height, std::function<void(uint8_t* )> free_fn)
+        : EncodedChunk(nullptr, 0, width, height, free_fn)
     {}
-    ~EncodedImage()
+    ~EncodedChunk()
     {
-        if(m_free_fn)
+        if(_freeFn)
         {
-            m_free_fn(m_enc_data);
+            _freeFn(_chunk_data);
         }
     }
 
-    size_t m_enc_sz = 0;
-    uint8_t* m_enc_data = nullptr;
-    ssize_t m_width = 0;
-    ssize_t m_height = 0;
-    std::function<void(uint8_t* )> m_free_fn;
+    size_t _chunk_sz = 0;
+    uint8_t* _chunk_data = nullptr;
+    ssize_t _width = 0;
+    ssize_t _height = 0;
+    std::function<void(uint8_t* )> _freeFn = nullptr;
 };
 
 struct ImageConverterInterface
@@ -53,8 +53,8 @@ struct ImageConverterInterface
     ImageConverterInterface() {}
     virtual ~ImageConverterInterface() {}
     virtual ssize_t FindHeader(uint8_t* buffer, ssize_t buffer_tail) = 0;
-    virtual EncodedImage Encode(const uint8_t* rgb888, ssize_t width, ssize_t height, float quality_factor) = 0;
-    virtual QImage Decode(const EncodedImage &enc) = 0;
+    virtual EncodedChunk Encode(const uint8_t* rgb888, ssize_t width, ssize_t height, float quality_factor) = 0;
+    virtual QImage Decode(const EncodedChunk &enc) = 0;
     virtual bool IsValid(uint8_t* buffer, ssize_t buffer_tail) = 0;
     virtual ssize_t HeaderSize() const = 0;
 };

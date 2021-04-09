@@ -57,7 +57,7 @@ X265Encoder::X265Encoder(
         int width,
         int height,
         std::function<int(char **data, ssize_t *bytes, int width, int height, float quality_factor)> encoderInputFn,
-        std::function<void(EncodedImage enc)> encoderOutputFn
+        std::function<void(EncodedChunk enc)> encoderOutputFn
         )
 {
     StartEncoderThread(width,height,encoderInputFn,encoderOutputFn);
@@ -73,7 +73,7 @@ void X265Encoder::StartEncoderThread(
         int width,
         int height,
         std::function<int(char **data, ssize_t *bytes, int width, int height, float quality_factor)> encoderInputFn,
-        std::function<void(EncodedImage enc)> encoderOutputFn
+        std::function<void(EncodedChunk enc)> encoderOutputFn
 )
 {
     if(width == 0 || height == 0 || !encoderInputFn || !encoderOutputFn)
@@ -110,7 +110,7 @@ void X265Encoder::StartEncoderThread(
         [encoderOutputFn,width,height](const unsigned char *data, ssize_t bytes){
             if(encoderOutputFn)
             {
-                EncodedImage enc((uint8_t*)data,
+                EncodedChunk enc((uint8_t*)data,
                                  bytes,
                                  width,
                                  height,
@@ -162,9 +162,9 @@ std::future<void> X265Decoder::StartDecoderThread()
 void X265Decoder::Decode(uint32_t ip,
                          ssize_t width,
                          ssize_t height,
-                           const EncodedImage &enc)
+                           const EncodedChunk &enc)
 {//TODO: use _map to get frame and ip for decoder callback used in constructor
     _img_to_decode = enc;
-    _hevc.receivedData((char*)enc.m_enc_data, enc.m_enc_sz);
+    _hevc.receivedData((char*)enc._chunk_data, enc._chunk_sz);
 }
 

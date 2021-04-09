@@ -15,7 +15,7 @@ public:
     void HandleCommand(const Command &pkt, uint32_t ip);
 
 signals:
-    void StartStreaming(uint32_t ip, int decoder_type);
+    void StartStreaming(uint32_t ip, uint32_t sequence_number, int decoder_type);
     void StopStreaming(uint32_t ip);
     void StoppedStreaming(uint32_t ip);
 protected:

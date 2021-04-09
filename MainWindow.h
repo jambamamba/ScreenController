@@ -4,7 +4,8 @@
 #include <QModelIndex>
 
 #include "EventHandler.h"
-#include "SocketReader.h"
+#include "FrameExtractor.h"
+#include "SocketTrasceiver.h"
 #include "ScreenStreamer.h"
 #include "NodeNameDialog.h"
 #include "NodeModel.h"
@@ -42,7 +43,7 @@ protected:
 private slots:
     void ShowTransparentWindowOverlay(const Frame &frame, uint32_t from_ip);
     void NodeActivated(QModelIndex);
-
+    void StopStreaming(uint32_t ip);
     void on_connectButtton_clicked();
 
 private:
@@ -50,8 +51,9 @@ private:
     NodeNameDialog m_node_name;
     QMap<uint32_t /*ip*/, TransparentMaximizedWindow*> m_transparent_window;
     QRect m_region;
-    SocketReader m_streamer_socket;
+    SocketTrasceiver m_streamer_socket;
     ScreenStreamer m_streamer;
+    FrameExtractor m_frame_extractor;
     std::future<void> m_discovery_thread;
     NodeModel *m_node_model;
     EventHandler m_event_handler;

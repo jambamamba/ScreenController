@@ -1,5 +1,6 @@
 #include "ScreenStreamer.h"
 
+#include <algorithm>
 #include <QApplication>
 #include <QCursor>
 #include <QDebug>
@@ -12,7 +13,6 @@
 #include "ImageConverterInterface.h"
 #include "MouseInterface.h"
 #include "RegionMapper.h"
-#include "SocketReader.h"
 #if defined(Win32) || defined(Win64)
 #include "WindowsMouse.h"
 #elif defined(Linux)
@@ -39,13 +39,13 @@ struct CommandAutoDestruct
 {
     CommandAutoDestruct(size_t size)
     {
-        m_pkt = (Command *)malloc(size);
+        _cmd = (Command *)malloc(size);
     }
     ~CommandAutoDestruct()
     {
-        free(m_pkt);
+        free(_cmd);
     }
-    Command *m_pkt;
+    Command *_cmd;
 };
 
 CommandAutoDestruct CreateFrameCommandPacket(
@@ -57,17 +57,17 @@ CommandAutoDestruct CreateFrameCommandPacket(
         uint32_t screen_height,
         uint32_t decoder_type,
         const uint8_t *data,
-        uint32_t data_size,
+        ssize_t data_size,
         uint32_t region_num,
-        uint32_t max_regions)
+        uint32_t max_regions,
+        uint32_t sequence_number)
 {
     Command cmd;
     CommandAutoDestruct cmd_auto(sizeof (Command) + data_size);
-    Command *pkt = cmd_auto.m_pkt;
+    Command *pkt = cmd_auto._cmd;
     memcpy(pkt, &cmd, sizeof cmd);
 
     pkt->m_event = Command::EventType::FrameInfo;
-    static uint32_t sequence_number = 0;
     pkt->u.m_frame.m_sequence_number = sequence_number++;
     pkt->u.m_frame.m_x = x;
     pkt->u.m_frame.m_y = y;
@@ -94,9 +94,10 @@ CommandAutoDestruct CreateFrameCommandPacket(
 }
 }//namespace
 
-ScreenStreamer::ScreenStreamer(SocketReader &socket, QObject *parent)
+ScreenStreamer::ScreenStreamer(
+        std::function<void(uint32_t ip, const Command &cmd)> sendCommand,
+        QObject *parent)
     : QObject(parent)
-    , _socket(socket)
 #if defined(Win32) || defined(Win64)
     ,m_mouse(new WindowsMouse(parent))
 #elif defined(Linux)
@@ -105,6 +106,7 @@ ScreenStreamer::ScreenStreamer(SocketReader &socket, QObject *parent)
     ,m_mouse(new NullMouse(parent))
 #endif
     ,_region_mapper(std::make_unique<RegionMapper>())
+    ,_sendCommand(sendCommand)
 {
     InitAvailableScreens();
 }
@@ -189,26 +191,11 @@ QImage& ScreenStreamer::ApplyMouseCursor(QImage& img)
     return img;
 }
 
-void ScreenStreamer::SendCommand(uint32_t ip, uint16_t event)
-{
-    Command pkt;
-    pkt.m_event = event;
-    SendCommand(ip, pkt);
-}
-
-void ScreenStreamer::SendCommand(uint32_t ip, const Command &pkt)
-{
-    _socket.SendData((uint8_t*)&pkt, pkt.m_size, ip, _socket.GetPort());
-
-    Command noop;
-    noop.m_event = Command::EventType::None;
-    _socket.SendData((uint8_t*)&noop, sizeof(Command), ip, _socket.GetPort());
-}
-
 void ScreenStreamer::StreamWebpImages(uint32_t ip, uint32_t decoder_type, ImageConverterInterface *img_converter)
 {
     _webp_thread = std::async(std::launch::async, [this, ip, decoder_type, img_converter](){
         _streaming = true;
+        _sequence_num = 0;
         pthread_setname_np(pthread_self(), "scrncap");
 
         while(!_die)
@@ -221,25 +208,11 @@ void ScreenStreamer::StreamWebpImages(uint32_t ip, uint32_t decoder_type, ImageC
             uint32_t region_num = 0;
             for(const auto &region : regions)
             {
-                EncodedImage enc = img_converter->Encode(region.m_img.bits(),
-                                                         region.m_width,
-                                                         region.m_height,
+                EncodedChunk enc = img_converter->Encode(region._img.bits(),
+                                                         region._width,
+                                                         region._height,
                                                          _img_quality_percent);
-                auto cmd = CreateFrameCommandPacket(
-                            region.m_x,
-                            region.m_y,
-                            region.m_width,
-                            region.m_height,
-                            screen_width,
-                            screen_height,
-                            decoder_type,
-                            enc.m_enc_data,
-                            enc.m_enc_sz,
-                            region_num++,
-                            regions.size()
-                            );
-                SendCommand(ip, *cmd.m_pkt);
-
+                SendEncodedData(ip,decoder_type,std::move(region),screen_width,screen_height,enc,region_num++,regions.size());
 #if 0//osm fix me: sometimes the encoded image is really bad quality
                 {
                     QImage img = QImage(region.m_width, region.m_height, QImage::Format::Format_RGB888);;
@@ -266,12 +239,9 @@ void ScreenStreamer::StreamWebpImages(uint32_t ip, uint32_t decoder_type, ImageC
     });
 }
 
-void ScreenStreamer::StreamX265(uint32_t ip, uint32_t decoder_type, int width, int height)
+void ScreenStreamer::StreamX265(uint32_t ip, uint32_t decoder_type, int width, int height, uint32_t sequence_number)
 {
-    if(_rgb_buffer) { free(_rgb_buffer); }
-    _rgb_buffer = (char*) malloc(width * 3 * height);
-
-    //osm testing purpose
+#if osm//osm testing purpose
     static X265Decoder x265dec(width, height, [ip](const QImage &img){
         if(img.isNull())
         { return; }
@@ -283,8 +253,18 @@ void ScreenStreamer::StreamX265(uint32_t ip, uint32_t decoder_type, int width, i
             img.save(filename);
         }
     });
+#endif
+    if(sequence_number != 0)
+    {
+        //osm TODO go to ring buffer and find sequence_number, then start sending frames from there, update _sequence_number to sequence_number
+        return;
+    }
+
+    if(_rgb_buffer) { free(_rgb_buffer); }
+    _rgb_buffer = (char*) malloc(width * 3 * height);
 
     if(_x265enc) { delete _x265enc; }
+    _sequence_num = 0;
     _x265enc = new X265Encoder(
                 width,
                 height,
@@ -296,28 +276,59 @@ void ScreenStreamer::StreamX265(uint32_t ip, uint32_t decoder_type, int width, i
            *data = _rgb_buffer;
            return *bytes;
        },
-       [this,ip,decoder_type,width,height](EncodedImage enc){
-           auto cmd = CreateFrameCommandPacket(
-                       0,0,
-                       width,height,
-                       width,height,
-                       decoder_type,
-                       enc.m_enc_data,
-                       enc.m_enc_sz,
-                       1,1
-                       );
-           SendCommand(ip, *cmd.m_pkt);
-           qDebug() << "#### sending command packet #" << cmd.m_pkt->u.m_frame.m_sequence_number << "with payload of size " << enc.m_enc_sz << cmd.m_pkt->u.m_frame.m_size;
-           //osm
-           {
-               x265dec.Decode(ip, width, height, enc);
-           }
-
-           return enc.m_enc_sz;
+       [this,ip,decoder_type,width,height](EncodedChunk enc){
+            SendEncodedData(ip,decoder_type,Region(0,0,width,height),width,height,enc,1,1);
+#if osm//osm
+            x265dec.Decode(ip, width, height, enc);
+#endif
+           return enc._chunk_sz;
        }
     );
 }
-void ScreenStreamer::StartStreaming(uint32_t ip, uint32_t decoder_type)
+void ScreenStreamer::SendEncodedData(
+        uint32_t ip,
+        uint32_t decoder_type,
+        const Region &&region,
+        int screen_width,
+        int screen_height,
+        const EncodedChunk &enc,
+        uint32_t region_num,
+        size_t num_regions) const
+{
+    uint8_t *data = enc._chunk_data;
+    size_t enc_size = enc._chunk_sz;
+    size_t total_bytes_sent = 0;
+    while(true)
+    {
+        size_t bytes_to_send = std::min(static_cast<int>(enc_size), _datagram_size);
+        auto cmd = CreateFrameCommandPacket(
+                    region._x,region._y,
+                    region._width,region._height,
+                    screen_width,screen_height,
+                    decoder_type,
+                    data + total_bytes_sent,
+                    bytes_to_send,
+                    region_num,num_regions,
+                    _sequence_num++
+                    );
+
+        //osm TODO do not send now but insert in ring buffer, have another thread send it out from correct sequence_num position
+        _sendCommand(ip, *cmd._cmd);
+
+        size_t bytes_sent = bytes_to_send;
+        total_bytes_sent += bytes_sent;
+        qDebug() << "#### sending command packet #" << cmd._cmd->u.m_frame.m_sequence_number << "with payload of size " << bytes_sent;
+        if(bytes_sent < enc_size)
+        {
+            enc_size -= bytes_sent;
+        }
+        else
+        {
+            break;
+        }
+    }
+}
+void ScreenStreamer::StartStreaming(uint32_t ip, uint32_t sequence_number, uint32_t decoder_type)
 {
     if(_streaming)
     {
@@ -339,7 +350,7 @@ void ScreenStreamer::StartStreaming(uint32_t ip, uint32_t decoder_type)
         StreamWebpImages(ip, decoder_type, _img_converter);
         break;
     case ImageConverterInterface::Types::X265:
-        StreamX265(ip, decoder_type, width, height);
+        StreamX265(ip, decoder_type, width, height, sequence_number);
         break;
     default:
         qDebug() << "Invalid image decoder"; exit(-1);
@@ -351,5 +362,4 @@ void ScreenStreamer::StopStreaming(uint32_t ip)
 {
     StopThreads();
     _die = false;
-    SendCommand(ip, Command::EventType::StoppedStreaming);
 }

@@ -42,7 +42,7 @@ struct Command
         uint32_t m_height = 0;
         uint32_t m_screen_width = 0;
         uint32_t m_screen_height = 0;
-        uint32_t m_size = 0;
+        ssize_t m_size = 0;
         uint32_t m_region_num = 0;
         uint32_t m_max_regions = 0;
         uint32_t m_decoder_type = 0;
@@ -55,6 +55,9 @@ struct Command
     } u;
     uint8_t m_tail_bytes[4] = { 0xca, 0xfe, 0xd0, 0x0d };
 
-    Command(uint8_t version = 1, uint16_t cmd_id = 0);
+    Command(uint16_t event = 0,
+            uint32_t sequence_num = 0,
+            int decoder = 0);
+
 };
 Q_DECLARE_METATYPE(Command);

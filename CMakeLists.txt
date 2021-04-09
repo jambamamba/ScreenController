@@ -118,6 +118,8 @@ SET(PROJECT_SOURCES
     EventHandler.cpp
     EventHandler.h
     Frame.h
+    FrameExtractor.h
+    FrameExtractor.cpp
     ImageConverterInterface.h
     JpegConverter.cpp
     JpegConverter.h
@@ -137,8 +139,8 @@ SET(PROJECT_SOURCES
     RegionMapper.h
     ScreenStreamer.cpp
     ScreenStreamer.h
-    SocketReader.cpp
-    SocketReader.h
+    SocketTrasceiver.cpp
+    SocketTrasceiver.h
     Stats.cpp
     Stats.h
     TransparentMaximizedWindow.cpp

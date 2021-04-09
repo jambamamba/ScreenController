@@ -39,7 +39,7 @@ JpegConverter::~JpegConverter()
 {}
 
 
-QImage JpegConverter::Decode(const EncodedImage &enc)
+QImage JpegConverter::Decode(const EncodedChunk &enc)
 {
     struct jpeg_decompress_struct cinfo;
 
@@ -55,7 +55,7 @@ QImage JpegConverter::Decode(const EncodedImage &enc)
     }
 
     jpeg_create_decompress(&cinfo);
-    jpeg_mem_src(&cinfo, enc.m_enc_data, enc.m_enc_sz);
+    jpeg_mem_src(&cinfo, enc._chunk_data, enc._chunk_sz);
     int rc = jpeg_read_header(&cinfo, TRUE);
     if(rc == -1)
     {
@@ -110,7 +110,7 @@ QImage JpegConverter::Decode(const EncodedImage &enc)
 // jpegSize - output, the number of bytes in the output JPEG buffer
 // jpegBuf  - output, a pointer to the output JPEG buffer, must call free() when finished with it.
 //
-EncodedImage JpegConverter::Encode(const uint8_t* image, ssize_t width, ssize_t height, float quality_factor)
+EncodedChunk JpegConverter::Encode(const uint8_t* image, ssize_t width, ssize_t height, float quality_factor)
 //void JpegConverter::ToJpeg(unsigned char* image, int width, int height, int quality,
 //            const char* comment, unsigned long* jpegSize, unsigned char** jpegBuf)
 {
@@ -139,10 +139,10 @@ EncodedImage JpegConverter::Encode(const uint8_t* image, ssize_t width, ssize_t 
     // Tell libJpeg to encode to memory, this is the bit that's different!
     // Lib will alloc buffer.
     //
-    EncodedImage enc(width, height, [](uint8_t* data){
+    EncodedChunk enc(width, height, [](uint8_t* data){
         if(data) { free(data); }
     });
-    jpeg_mem_dest(&cinfo, &enc.m_enc_data, &enc.m_enc_sz);
+    jpeg_mem_dest(&cinfo, &enc._chunk_data, &enc._chunk_sz);
 
     jpeg_start_compress(&cinfo, TRUE);
 
