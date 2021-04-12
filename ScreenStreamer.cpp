@@ -326,7 +326,7 @@ void ScreenStreamer::SendEncodedData(
         if(cmd->u.m_frame.m_sequence_number == _sequence_num_to_send)
         {
             _sendCommand(ip, *cmd);
-            usleep(1000);
+            usleep(10000);
             _sequence_num_to_send++;
             qDebug() << "#### sending command packet #" << cmd->u.m_frame.m_sequence_number << "with payload of size " << cmd->u.m_frame.m_size;
         }
