@@ -165,6 +165,6 @@ void X265Decoder::Decode(uint32_t ip,
                            const EncodedChunk &enc)
 {//TODO: use _map to get frame and ip for decoder callback used in constructor
     _img_to_decode = enc;
-    _hevc.receivedData((char*)enc._chunk_data, enc._chunk_sz);
+    _hevc.receivedData((char*)enc._data, enc._size);
 }
 

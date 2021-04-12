@@ -10,8 +10,8 @@ struct EncodedChunk
                  ssize_t width,
                  ssize_t height,
                  std::function<void(uint8_t* )> free_fn)
-        : _chunk_data(enc_data)
-        , _chunk_sz(enc_sz)
+        : _data(enc_data)
+        , _size(enc_sz)
         , _width(width)
         , _height(height)
         , _freeFn(free_fn)
@@ -29,12 +29,12 @@ struct EncodedChunk
     {
         if(_freeFn)
         {
-            _freeFn(_chunk_data);
+            _freeFn(_data);
         }
     }
 
-    size_t _chunk_sz = 0;
-    uint8_t* _chunk_data = nullptr;
+    size_t _size = 0;
+    uint8_t* _data = nullptr;
     ssize_t _width = 0;
     ssize_t _height = 0;
     std::function<void(uint8_t* )> _freeFn = nullptr;

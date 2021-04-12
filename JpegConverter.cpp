@@ -55,7 +55,7 @@ QImage JpegConverter::Decode(const EncodedChunk &enc)
     }
 
     jpeg_create_decompress(&cinfo);
-    jpeg_mem_src(&cinfo, enc._chunk_data, enc._chunk_sz);
+    jpeg_mem_src(&cinfo, enc._data, enc._size);
     int rc = jpeg_read_header(&cinfo, TRUE);
     if(rc == -1)
     {
@@ -142,7 +142,7 @@ EncodedChunk JpegConverter::Encode(const uint8_t* image, ssize_t width, ssize_t 
     EncodedChunk enc(width, height, [](uint8_t* data){
         if(data) { free(data); }
     });
-    jpeg_mem_dest(&cinfo, &enc._chunk_data, &enc._chunk_sz);
+    jpeg_mem_dest(&cinfo, &enc._data, &enc._size);
 
     jpeg_start_compress(&cinfo, TRUE);
 

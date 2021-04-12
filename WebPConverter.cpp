@@ -43,7 +43,7 @@ EncodedChunk WebPConverter::Encode(const uint8_t* rgb888,
     EncodedChunk enc(width, height, [](uint8_t *data){
         if(data) { WebPFree(data); }
     });
-    enc._chunk_sz = WebPEncodeRGB(rgb888, width, height, width * 3, quality_factor, &enc._chunk_data);
+    enc._size = WebPEncodeRGB(rgb888, width, height, width * 3, quality_factor, &enc._data);
     return enc;
 }
 
@@ -51,13 +51,13 @@ QImage WebPConverter::Decode(const EncodedChunk &enc)
 {
     int width = 0;
     int height = 0;
-    if(!WebPGetInfo(enc._chunk_data, enc._chunk_sz, &width, &height))
+    if(!WebPGetInfo(enc._data, enc._size, &width, &height))
     {
         return QImage();
     }
     QImage img(width, height, QImage::Format::Format_RGB888);
     size_t data_size = width * height * 3;
-    uint8_t* rgb888 = WebPDecodeRGBInto(enc._chunk_data, enc._chunk_sz,
+    uint8_t* rgb888 = WebPDecodeRGBInto(enc._data, enc._size,
                                         img.bits(),
                                         data_size,
                                         width * 3);

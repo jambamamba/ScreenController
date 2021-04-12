@@ -125,6 +125,8 @@ SET(PROJECT_SOURCES
     JpegConverter.h
     KeyInterface.cpp
     KeyInterface.h
+    LockFreeRingBuffer.h
+    LockFreeRingBuffer.cpp
     MainWindow.cpp
     MainWindow.h
     MouseInterface.cpp

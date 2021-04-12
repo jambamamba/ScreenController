@@ -19,16 +19,17 @@ public:
     ~FrameExtractor();
     void Stop(uint32_t ip);
     void ReadyToReceive(uint32_t ip);
-    void ExtractFrame(uint8_t *buffer,
+    bool ExtractFrame(uint8_t *buffer,
                       const Command::Frame &frame,
                       uint32_t ip);
     bool PlaybackImages(
             std::function<void(const Frame &frame, uint32_t from_ip)> renderImageCb);
+    uint32_t NextFrameToRequest() const;
 protected:
-    void ExtractX265Frame(const Command::Frame &frame,
+    bool ExtractX265Frame(const Command::Frame &frame,
                           uint32_t ip,
                           const EncodedChunk &chunk);
-    void ExtractWebpFrame(const Command::Frame &frame,
+    bool ExtractWebpFrame(const Command::Frame &frame,
                           uint32_t ip,
                           const EncodedChunk &enc,
                           std::shared_ptr<ImageConverterInterface> decoder);

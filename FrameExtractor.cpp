@@ -18,7 +18,7 @@ FrameExtractor::~FrameExtractor()
     m_playback_thread.wait();
 }
 
-void FrameExtractor::ExtractX265Frame(
+bool FrameExtractor::ExtractX265Frame(
         const Command::Frame &frame,
         uint32_t ip,
         const EncodedChunk &chunk)
@@ -26,11 +26,7 @@ void FrameExtractor::ExtractX265Frame(
     if(_prev_sequence_number+1 != frame.m_sequence_number)
     {
         qDebug() << "#### skipped frame, expecting" << (_prev_sequence_number+1) << ", instead got" << frame.m_sequence_number;
-//osm        SendCommand(ip,
-//                    Command(Command::EventType::StartStreaming,
-//                            _prev_sequence_number+1,
-//                            (int)ImageConverterInterface::Types::X265));
-        return;
+        return false;
     }
     if(!_x265dec || frame.m_sequence_number == 0)
     {
@@ -40,9 +36,10 @@ void FrameExtractor::ExtractX265Frame(
         });
     }
 
-    qDebug() << "#### received command packet #" << frame.m_sequence_number << "with payload of size " << chunk._chunk_sz << frame.m_size;
+    qDebug() << "#### received command packet #" << frame.m_sequence_number << "with payload of size " << chunk._size << frame.m_size;
     _x265dec->Decode(ip, frame.m_width, frame.m_height, chunk);
     _prev_sequence_number = frame.m_sequence_number;
+    return true;
 }
 
 void FrameExtractor::ProcessImageFromDecoder(
@@ -71,7 +68,8 @@ void FrameExtractor::ProcessImageFromDecoder(
     m_cv.notify_one();
     _stats.Update(frame.m_size);
 }
-void FrameExtractor::ExtractWebpFrame(const Command::Frame &frame,
+bool FrameExtractor::ExtractWebpFrame(
+        const Command::Frame &frame,
         uint32_t ip,
         const EncodedChunk &enc,
         std::shared_ptr<ImageConverterInterface> decoder)
@@ -124,6 +122,7 @@ void FrameExtractor::ExtractWebpFrame(const Command::Frame &frame,
             _stats.Update(frame.m_size);
         }
     }
+    return true;
 }
 
 bool FrameExtractor::PlaybackImages(
@@ -163,7 +162,12 @@ bool FrameExtractor::PlaybackImages(
     return true;
 }
 
-void FrameExtractor::ExtractFrame(uint8_t *buffer,
+uint32_t FrameExtractor::NextFrameToRequest() const
+{
+    return _prev_sequence_number + 1;
+}
+
+bool FrameExtractor::ExtractFrame(uint8_t *buffer,
                                   const Command::Frame &frame,
                                   uint32_t ip)
 {
@@ -174,12 +178,12 @@ void FrameExtractor::ExtractFrame(uint8_t *buffer,
     switch(decoder_type)
     {
     case ImageConverterInterface::Types::X265:
-        ExtractX265Frame(frame, ip, enc);
-        break;
+        return ExtractX265Frame(frame, ip, enc);
     default:
-//osm        ExtractWebpFrame(frame, ip, enc, m_decoders[decoder_type]);
+//osm        return ExtractWebpFrame(frame, ip, enc, m_decoders[decoder_type]);
         break;
     }
+    return true;
 }
 
 void FrameExtractor::Stop(uint32_t ip)

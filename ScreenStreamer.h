@@ -11,12 +11,29 @@
 #include <QList>
 #include <QImage>
 
+#include "Command.h"
 #include "ImageConverterInterface.h"
+#include "LockFreeRingBuffer.cpp"
+
+struct CommandAutoDestruct
+{
+    CommandAutoDestruct(size_t size)
+    {
+        _cmd = (Command *)malloc(size);
+    }
+    ~CommandAutoDestruct()
+    {
+        free(_cmd);
+    }
+    CommandAutoDestruct(const CommandAutoDestruct& rhs) = delete;
+    const CommandAutoDestruct& operator=(const CommandAutoDestruct& rhs) = delete;
+    Command *_cmd;
+};
+template class LockFreeRingBuffer<Command*>;
 
 class MouseInterface;
 class QScreen;
 class RegionMapper;
-struct Command;
 struct EncodedChunk;
 struct ImageConverterInterface;
 struct Region;
@@ -56,8 +73,10 @@ protected:
     char *_rgb_buffer = nullptr;
     ImageConverterInterface *_img_converter = nullptr;
     X265Encoder *_x265enc = nullptr;
-    mutable uint32_t _sequence_num = 0;
+    mutable std::atomic<uint32_t> _sequence_num_to_send = 0;
+    mutable uint32_t _sequence_num_encoded = 0;
     std::function<void(uint32_t ip, const Command &cmd)> _sendCommand = nullptr;
+    std::unique_ptr<LockFreeRingBuffer<Command*>> _ring_buffer;
     std::atomic<bool> _die;
     void StopThreads();
 };
