@@ -29,7 +29,7 @@ bool LockFreeRingBuffer<Node>::IsEmpty() const
 template <class Node>
 Node &LockFreeRingBuffer<Node>::GetAt(size_t pos) const
 {
-    size_t idx = (_tail + pos) % _num_nodes;
+    size_t idx = (_tail + 1 + pos) % _num_nodes;
     return _ring_buffer[idx];
 }
 
