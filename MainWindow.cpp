@@ -151,17 +151,17 @@ void MainWindow::PrepareToReceiveStream()
         switch(cmd.m_event)
         {
         case Command::EventType::FrameInfo:
-            if(!m_frame_extractor.ExtractFrame(
+        {
+            uint32_t next_frame_num = m_frame_extractor.ExtractFrame(
                         (uint8_t*)(cmd.m_tail_bytes),
                         cmd.u.m_frame,
-                        ip))
-            {
-                m_streamer_socket.SendCommand(ip,
-                            Command(Command::EventType::StartStreaming,
-                                    m_frame_extractor.NextFrameToRequest(),
-                                    (int)ImageConverterInterface::Types::X265));
-            }
+                        ip);
+            m_streamer_socket.SendCommand(ip,
+                                          Command(Command::EventType::StartStreaming,
+                                                  next_frame_num,
+                                                  (int)ImageConverterInterface::Types::X265));
             break;
+        }
         default:
             m_event_handler.HandleCommand(cmd, ip);
             break;

@@ -2,6 +2,7 @@
 
 #include <future>
 #include <memory>
+#include <mutex>
 #include <stdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -62,8 +63,10 @@ protected:
     QImage& ApplyMouseCursor(QImage& img);
     void StreamWebpImages(uint32_t ip, uint32_t decoder_type, ImageConverterInterface *img_converter);
     void StreamX265(uint32_t ip, uint32_t decoder_type, int width, int height, uint32_t sequence_number);
-    void SendEncodedData(uint32_t ip, uint32_t decoder_type, const Region &&region, int screen_width, int screen_height, const EncodedChunk &enc,
+    void BufferEncodedData(uint32_t ip, uint32_t decoder_type, const Region &&region, int screen_width, int screen_height, const EncodedChunk &enc,
                          uint32_t region_num, size_t num_regions) const;
+    void SendFrameBySequenceNumber(uint32_t sequence_num, uint32_t ip) const;
+    void InitializeX265Decoder(uint32_t ip, uint32_t decoder_type, int width, int height);
 
     std::future<void> _webp_thread;
     QList<QScreen *> _screens;
@@ -73,10 +76,10 @@ protected:
     char *_rgb_buffer = nullptr;
     ImageConverterInterface *_img_converter = nullptr;
     X265Encoder *_x265enc = nullptr;
-    mutable std::atomic<uint32_t> _sequence_num_to_send = 0;
     mutable uint32_t _sequence_num_encoded = 0;
     std::function<void(uint32_t ip, const Command &cmd)> _sendCommand = nullptr;
     std::unique_ptr<LockFreeRingBuffer<Command*>> _ring_buffer;
+    mutable std::mutex _ring_buffer_mutex;
     std::atomic<bool> _die;
     void StopThreads();
 };

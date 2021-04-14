@@ -199,7 +199,7 @@ void ScreenStreamer::StreamWebpImages(uint32_t ip, uint32_t decoder_type, ImageC
                                                          region._width,
                                                          region._height,
                                                          _img_quality_percent);
-                SendEncodedData(ip,decoder_type,std::move(region),screen_width,screen_height,enc,region_num++,regions.size());
+                BufferEncodedData(ip,decoder_type,std::move(region),screen_width,screen_height,enc,region_num++,regions.size());
 #if 0//osm fix me: sometimes the encoded image is really bad quality
                 {
                     QImage img = QImage(region.m_width, region.m_height, QImage::Format::Format_RGB888);;
@@ -241,14 +241,13 @@ void ScreenStreamer::StreamX265(uint32_t ip, uint32_t decoder_type, int width, i
         }
     });
 #endif
-    if(sequence_number != 0)
-    {
-        //osm TODO go to ring buffer and find sequence_number, then start sending frames from there, update _sequence_num_to_send to sequence_number
-        qDebug() << "#### go back to frame #" << sequence_number;
-        _sequence_num_to_send = sequence_number;
-        return;
-    }
+    (sequence_number == 0) ?
+        InitializeX265Decoder(ip, decoder_type, width, height) :
+        SendFrameBySequenceNumber(sequence_number, ip);
+}
 
+void ScreenStreamer::InitializeX265Decoder(uint32_t ip, uint32_t decoder_type, int width, int height)
+{
     if(_rgb_buffer) { free(_rgb_buffer); }
     _rgb_buffer = (char*) malloc(width * 3 * height);
 
@@ -266,7 +265,7 @@ void ScreenStreamer::StreamX265(uint32_t ip, uint32_t decoder_type, int width, i
            return *bytes;
        },
        [this,ip,decoder_type,width,height](EncodedChunk enc){
-            SendEncodedData(ip,decoder_type,Region(0,0,width,height),width,height,enc,1,1);
+            BufferEncodedData(ip,decoder_type,Region(0,0,width,height),width,height,enc,1,1);
 #if osm//osm
             x265dec.Decode(ip, width, height, enc);
 #endif
@@ -274,7 +273,7 @@ void ScreenStreamer::StreamX265(uint32_t ip, uint32_t decoder_type, int width, i
        }
     );
 }
-void ScreenStreamer::SendEncodedData(
+void ScreenStreamer::BufferEncodedData(
         uint32_t ip,
         uint32_t decoder_type,
         const Region &&region,
@@ -298,17 +297,24 @@ void ScreenStreamer::SendEncodedData(
                     data + total_bytes_buffered,
                     chunk_sz,
                     region_num,num_regions,
-                    _sequence_num_encoded++
+                    _sequence_num_encoded
                     );
 
-        //osm TODO do not send now but insert in ring buffer, have another thread send it out from correct sequence_num position
+        std::lock_guard<std::mutex> lk(_ring_buffer_mutex);
         _ring_buffer->Insert(&cmd, 1, [this](){
+//            qDebug() << "#### overflow";
             Command *tmp = nullptr;
             _ring_buffer->Remove(&tmp, 1);
             free(tmp);
             return true;
         });
 
+        if(_sequence_num_encoded == 0)
+        {
+            SendFrameBySequenceNumber(0, ip);
+        }
+
+        _sequence_num_encoded++;
         total_bytes_buffered += chunk_sz;
         if(chunk_sz < enc_size)
         {
@@ -319,21 +325,26 @@ void ScreenStreamer::SendEncodedData(
             break;
         }
     }
+}
 
+void ScreenStreamer::SendFrameBySequenceNumber(uint32_t sequence_num, uint32_t ip) const
+{
+    qDebug() << "#### get frame #" << sequence_num;
+
+    std::lock_guard<std::mutex> lk(_ring_buffer_mutex);
     for(size_t idx = 0; idx < _ring_buffer->Count(); ++idx)
     {
         Command *cmd = _ring_buffer->GetAt(idx);
-        if(cmd->u.m_frame.m_sequence_number == _sequence_num_to_send)
+        if(cmd->u.m_frame.m_sequence_number == sequence_num)
         {
             _sendCommand(ip, *cmd);
-            usleep(10000);
-            _sequence_num_to_send++;
             qDebug() << "#### sending command packet #" << cmd->u.m_frame.m_sequence_number << "with payload of size " << cmd->u.m_frame.m_size;
         }
-//        if(cmd->u.m_frame.m_sequence_number < _sequence_num_to_send)
-//        {
-//            break;
-//        }
+        //        if(cmd->u.m_frame.m_sequence_number < _sequence_num_to_send)
+        //        {
+        //            break;
+        //        }
+        break;
     }
 }
 void ScreenStreamer::StartStreaming(uint32_t ip, uint32_t sequence_number, uint32_t decoder_type)

@@ -18,7 +18,7 @@ FrameExtractor::~FrameExtractor()
     m_playback_thread.wait();
 }
 
-bool FrameExtractor::ExtractX265Frame(
+uint32_t FrameExtractor::ExtractX265Frame(
         const Command::Frame &frame,
         uint32_t ip,
         const EncodedChunk &chunk)
@@ -26,7 +26,7 @@ bool FrameExtractor::ExtractX265Frame(
     if(_prev_sequence_number+1 != frame.m_sequence_number)
     {
         qDebug() << "#### skipped frame, expecting" << (_prev_sequence_number+1) << ", instead got" << frame.m_sequence_number;
-        return false;
+        return _prev_sequence_number+1;
     }
     if(!_x265dec || frame.m_sequence_number == 0)
     {
@@ -39,7 +39,7 @@ bool FrameExtractor::ExtractX265Frame(
     qDebug() << "#### received command packet #" << frame.m_sequence_number << "with payload of size " << chunk._size << frame.m_size;
     _x265dec->Decode(ip, frame.m_width, frame.m_height, chunk);
     _prev_sequence_number = frame.m_sequence_number;
-    return true;
+    return _prev_sequence_number+1;
 }
 
 void FrameExtractor::ProcessImageFromDecoder(
@@ -68,7 +68,7 @@ void FrameExtractor::ProcessImageFromDecoder(
     m_cv.notify_one();
     _stats.Update(frame.m_size);
 }
-bool FrameExtractor::ExtractWebpFrame(
+uint32_t FrameExtractor::ExtractWebpFrame(
         const Command::Frame &frame,
         uint32_t ip,
         const EncodedChunk &enc,
@@ -122,7 +122,7 @@ bool FrameExtractor::ExtractWebpFrame(
             _stats.Update(frame.m_size);
         }
     }
-    return true;
+    return 0;//osm todo request next frame#
 }
 
 bool FrameExtractor::PlaybackImages(
@@ -162,12 +162,7 @@ bool FrameExtractor::PlaybackImages(
     return true;
 }
 
-uint32_t FrameExtractor::NextFrameToRequest() const
-{
-    return _prev_sequence_number + 1;
-}
-
-bool FrameExtractor::ExtractFrame(uint8_t *buffer,
+uint32_t FrameExtractor::ExtractFrame(uint8_t *buffer,
                                   const Command::Frame &frame,
                                   uint32_t ip)
 {
@@ -183,7 +178,7 @@ bool FrameExtractor::ExtractFrame(uint8_t *buffer,
 //osm        return ExtractWebpFrame(frame, ip, enc, m_decoders[decoder_type]);
         break;
     }
-    return true;
+    return 0;
 }
 
 void FrameExtractor::Stop(uint32_t ip)
