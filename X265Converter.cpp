@@ -86,7 +86,7 @@ void X265Encoder::StartEncoderThread(
                                      "--input", "/dev/screen",
                                      "--input-res", "WIDTHxHEIGHT",
                                      "--fps", "1",
-                                       "--preset", "placebo",
+                                       "--preset", "slower",
 //                                     "--preset", "ultrafast",
 //                                     "--tune", "psnr",
 //                                     "--tune", "ssim",
