@@ -56,7 +56,7 @@ MainWindow::MainWindow(QWidget *parent)
             Qt::ConnectionType::QueuedConnection);
     connect(this, &MainWindow::RestartRequestNextFrameTimer,
             this, &MainWindow::OnRestartRequestNextFrameTimer,
-            Qt::ConnectionType::QueuedConnection);
+            Qt::ConnectionType::BlockingQueuedConnection);
     connect(m_frame_request_timer, &QTimer::timeout,
             this, &MainWindow::RequestNextFrameTimerEvent);
     m_frame_request_timer->setSingleShot(true);
@@ -164,10 +164,9 @@ void MainWindow::PrepareToReceiveStream()
                         cmd.u.m_frame,
                         ip);
 
-            m_streamer_socket.SendCommand(ip,
-                                          Command(Command::EventType::StartStreaming,
-                                                  next_frame_num,
-                                                  (int)ImageConverterInterface::Types::X265));
+            _next_frame_request_data.Set(next_frame_num, ip);
+            RequestNextFrameTimerEvent();
+
             emit RestartRequestNextFrameTimer(next_frame_num, ip);
             break;
         }
@@ -177,22 +176,19 @@ void MainWindow::PrepareToReceiveStream()
         }
     });
     m_frame_extractor.PlaybackImages([this](const Frame &frame, uint32_t ip) {
-        emit StartPlayback(frame, ip);
+//osm TODO temp. disable viewing        emit StartPlayback(frame, ip);
     });
 }
 
 void MainWindow::OnRestartRequestNextFrameTimer(uint32_t next_frame_num, uint32_t ip)
 {
     m_frame_request_timer->stop();
-    if(_next_frame_request_data._next_frame_num != next_frame_num)
-    {
-        _next_frame_request_data.Set(next_frame_num, ip);
-        m_frame_request_timer->start(2000);
-    }
+    m_frame_request_timer->start(1000);
 }
 
 void MainWindow::RequestNextFrameTimerEvent()
 {
+    qDebug() << "#### requesting frame #" << _next_frame_request_data._next_frame_num;
     m_streamer_socket.SendCommand(_next_frame_request_data._ip,
                                   Command(Command::EventType::StartStreaming,
                                           _next_frame_request_data._next_frame_num,

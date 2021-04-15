@@ -96,6 +96,9 @@ ScreenStreamer::ScreenStreamer(
     , _ring_buffer(std::make_unique<LockFreeRingBuffer<Command*>>(1000))
 {
     InitAvailableScreens();
+    connect(this, &ScreenStreamer::SendNextFrame,
+            this, &ScreenStreamer::SendFrameBySequenceNumber,
+            Qt::ConnectionType::QueuedConnection);
 }
 
 void ScreenStreamer::StopThreads()
@@ -241,9 +244,10 @@ void ScreenStreamer::StreamX265(uint32_t ip, uint32_t decoder_type, int width, i
         }
     });
 #endif
+    _sequence_num_to_send = sequence_number;
     (sequence_number == 0) ?
         InitializeX265Decoder(ip, decoder_type, width, height) :
-        SendFrameBySequenceNumber(sequence_number, ip);
+        SendFrameBySequenceNumber(ip);
 }
 
 void ScreenStreamer::InitializeX265Decoder(uint32_t ip, uint32_t decoder_type, int width, int height)
@@ -313,7 +317,8 @@ void ScreenStreamer::BufferEncodedData(
 
         if(_sequence_num_encoded == 0)
         {
-            SendFrameBySequenceNumber(0, ip);
+            _sequence_num_to_send = 0;
+            SendFrameBySequenceNumber(ip);
         }
 
         _sequence_num_encoded++;
@@ -329,18 +334,18 @@ void ScreenStreamer::BufferEncodedData(
     }
 }
 
-void ScreenStreamer::SendFrameBySequenceNumber(uint32_t sequence_num, uint32_t ip) const
+void ScreenStreamer::SendFrameBySequenceNumber(uint32_t ip) const
 {
-    qDebug() << "#### get fra #" << sequence_num;
-
     std::lock_guard<std::mutex> lk(_ring_buffer_mutex);
     for(size_t idx = 0; idx < _ring_buffer->Count(); ++idx)
     {
         Command *cmd = _ring_buffer->GetAt(idx);
-        if(cmd->u.m_frame.m_sequence_number == sequence_num)
+        if(cmd->u.m_frame.m_sequence_number == _sequence_num_to_send)
         {
             _sendCommand(ip, *cmd);
             qDebug() << "#### sending #" << cmd->u.m_frame.m_sequence_number << "with payload of size " << cmd->u.m_frame.m_size;
+            _sequence_num_to_send++;
+            emit SendNextFrame(ip);
             return;
         }
         //        if(cmd->u.m_frame.m_sequence_number < _sequence_num_to_send)
@@ -348,7 +353,7 @@ void ScreenStreamer::SendFrameBySequenceNumber(uint32_t sequence_num, uint32_t i
         //            break;
         //        }
     }
-    qDebug() << "#### could not find sequence num: " << sequence_num;
+    qDebug() << "#### could not find sequence num: " << _sequence_num_to_send;
 }
 void ScreenStreamer::StartStreaming(uint32_t ip, uint32_t sequence_number, uint32_t decoder_type)
 {
