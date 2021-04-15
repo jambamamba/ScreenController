@@ -93,7 +93,7 @@ ScreenStreamer::ScreenStreamer(
 #endif
     ,_region_mapper(std::make_unique<RegionMapper>())
     ,_sendCommand(sendCommand)
-    , _ring_buffer(std::make_unique<LockFreeRingBuffer<Command*>>(1000))
+    , _ring_buffer(std::make_unique<LockFreeRingBuffer<Command*>>(10000))
 {
     InitAvailableScreens();
     connect(this, &ScreenStreamer::SendNextFrame,
