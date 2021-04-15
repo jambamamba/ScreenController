@@ -182,8 +182,12 @@ void MainWindow::PrepareToReceiveStream()
 
 void MainWindow::OnRestartRequestNextFrameTimer(uint32_t next_frame_num, uint32_t ip)
 {
+    static uint32_t fn = -1;
+    if(fn == _next_frame_request_data._next_frame_num)
+    { return; }
     m_frame_request_timer->stop();
     m_frame_request_timer->start(m_streamer._retry_request_frame_timeout_ms);
+    fn = _next_frame_request_data._next_frame_num;
 }
 
 void MainWindow::RequestNextFrameTimerEvent()
