@@ -59,7 +59,7 @@ MainWindow::MainWindow(QWidget *parent)
             Qt::ConnectionType::BlockingQueuedConnection);
     connect(m_frame_request_timer, &QTimer::timeout,
             this, &MainWindow::RequestNextFrameTimerEvent);
-    m_frame_request_timer->setSingleShot(true);
+    m_frame_request_timer->setSingleShot(false);
 
     StartDiscoveryService();
     PrepareToReceiveStream();
@@ -176,7 +176,7 @@ void MainWindow::PrepareToReceiveStream()
         }
     });
     m_frame_extractor.PlaybackImages([this](const Frame &frame, uint32_t ip) {
-//        emit StartPlayback(frame, ip);
+        emit StartPlayback(frame, ip);
     });
 }
 
