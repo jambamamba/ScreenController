@@ -65,7 +65,7 @@ Command *NewFrameCommandPacket(
     pkt->u.m_frame.m_region_num = region_num;
     pkt->u.m_frame.m_max_regions = max_regions;
     pkt->u.m_frame.m_decoder_type = decoder_type;
-    pkt->m_size = sizeof (Command) + data_size;
+    pkt->m_size = sizeof(Command) + data_size;
 
     uint8_t tail_bytes[4];
     memcpy(tail_bytes, cmd.m_tail_bytes, sizeof tail_bytes);
@@ -344,9 +344,9 @@ void ScreenStreamer::SendFrameBySequenceNumber(uint32_t ip) const
         if(cmd->u.m_frame.m_sequence_number == _sequence_num_to_send)
         {
             _sendCommand(ip, *cmd);
-//            qDebug() << "#### sending #" << cmd->u.m_frame.m_sequence_number << "with payload of size " << cmd->u.m_frame.m_size;
+            qDebug() << "#### sending #" << cmd->u.m_frame.m_sequence_number << "with payload of size " << cmd->u.m_frame.m_size;
             _sequence_num_to_send++;
-            emit SendNextFrame(ip);
+//            emit SendNextFrame(ip);
             return;
         }
         //        if(cmd->u.m_frame.m_sequence_number < _sequence_num_to_send)
