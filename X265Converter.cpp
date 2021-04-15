@@ -81,12 +81,12 @@ void X265Encoder::StartEncoderThread(
 
     _encoder_thread = std::async(std::launch::async, [this,width,height,encoderInputFn,encoderOutputFn](){
         pthread_setname_np(pthread_self(), "x265enc");
-        constexpr int NUM_PARAMS = 11;
+        constexpr int NUM_PARAMS = 9;
         static char args[NUM_PARAMS][64] = {"x265",
                                      "--input", "/dev/screen",
                                      "--input-res", "WIDTHxHEIGHT",
                                      "--fps", "1",
-                                       "--preset", "placebo",
+//                                       "--preset", "placebo",
 //                                     "--preset", "ultrafast",
 //                                     "--tune", "psnr",
 //                                     "--tune", "ssim",
@@ -94,8 +94,8 @@ void X265Encoder::StartEncoderThread(
 //                                     "--tune", "zerolatency",
                                      "--output", "buffer://"
                                     };
-        char *argv[NUM_PARAMS] = {args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9],
-                                  args[10]//, args[11], args[12], args[13], args[14], args[15], args[16], args[17], args[18]
+        char *argv[NUM_PARAMS] = {args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]//, args[9],
+//                                  args[10], args[11], args[12], args[13], args[14], args[15], args[16], args[17], args[18]
                                  };
         constexpr int RES = 4;
         char resolution[64] = {0};
