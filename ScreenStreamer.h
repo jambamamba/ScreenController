@@ -50,7 +50,7 @@ public:
     QScreen *ActiveScreen();
 
     static constexpr int _img_quality_percent = 5;
-    static constexpr int _datagram_size = 512 * 32;
+    static constexpr int _datagram_size = 512 * 16;
     static constexpr int _ring_buffer_size = 100000;
     static constexpr ImageConverterInterface::Types _default_decoder = ImageConverterInterface::Types::X265;
 public slots:
