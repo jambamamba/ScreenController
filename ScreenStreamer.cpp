@@ -244,6 +244,7 @@ void ScreenStreamer::StreamX265(uint32_t ip, uint32_t decoder_type, int width, i
         }
     });
 #endif
+    qDebug() << "#### reset sequence_number to " << sequence_number;
     _sequence_num_to_send = sequence_number;
     (sequence_number == 0) ?
         InitializeX265Decoder(ip, decoder_type, width, height) :
