@@ -52,7 +52,7 @@ public:
     static constexpr int _img_quality_percent = 5;
     static constexpr int _datagram_size = 1024 * 30;
     static constexpr int _ring_buffer_size = 100000;
-    static constexpr int _retry_request_frame_timeout_ms = 3000;
+    static constexpr int _retry_request_frame_timeout_ms = 1000;
     static constexpr ImageConverterInterface::Types _default_decoder = ImageConverterInterface::Types::X265;
 public slots:
     void StartStreaming(uint32_t ip, uint32_t sequence_number, uint32_t decoder_type);
