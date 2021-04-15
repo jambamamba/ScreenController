@@ -165,7 +165,7 @@ void MainWindow::PrepareToReceiveStream()
                         ip);
 
             _next_frame_request_data.Set(next_frame_num, ip);
-            RequestNextFrameTimerEvent();
+//            RequestNextFrameTimerEvent();
 
             emit RestartRequestNextFrameTimer(next_frame_num, ip);
             break;
