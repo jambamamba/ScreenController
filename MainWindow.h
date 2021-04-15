@@ -2,6 +2,7 @@
 
 #include <QMainWindow>
 #include <QModelIndex>
+#include <QTimer>
 
 #include "EventHandler.h"
 #include "FrameExtractor.h"
@@ -58,5 +59,6 @@ private:
     NodeModel *m_node_model;
     EventHandler m_event_handler;
     std::atomic<bool>m_node_name_changed = false;
+    QTimer *m_frame_request_timer = nullptr;
     bool m_stop = false;
 };

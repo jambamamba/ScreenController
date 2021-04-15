@@ -26,6 +26,7 @@ MainWindow::MainWindow(QWidget *parent)
         m_streamer_socket.SendCommand(ip, cmd);
     }, this)
     , m_event_handler(this)
+//    , m_frame_request_timer(new QTimer(this))
 {
     ui->setupUi(this);
     setWindowTitle("Kingfisher Screen Controller");
@@ -156,10 +157,22 @@ void MainWindow::PrepareToReceiveStream()
                         (uint8_t*)(cmd.m_tail_bytes),
                         cmd.u.m_frame,
                         ip);
+            //osm todo do this request in a timer, and if we get the packet, then cancel timer
             m_streamer_socket.SendCommand(ip,
                                           Command(Command::EventType::StartStreaming,
                                                   next_frame_num,
                                                   (int)ImageConverterInterface::Types::X265));
+            if(m_frame_request_timer) { delete m_frame_request_timer; }
+            m_frame_request_timer = new QTimer(this);
+//            m_frame_request_timer->stop();
+            connect(m_frame_request_timer, &QTimer::timeout, [this,ip,next_frame_num](){
+                m_streamer_socket.SendCommand(ip,
+                                              Command(Command::EventType::StartStreaming,
+                                                      next_frame_num,
+                                                      (int)ImageConverterInterface::Types::X265));
+            });
+            m_frame_request_timer->setSingleShot(false);
+            m_frame_request_timer->start(100);
             break;
         }
         default:
