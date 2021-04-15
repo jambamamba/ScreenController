@@ -54,8 +54,11 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&m_event_handler, &EventHandler::StoppedStreaming,
             this, &MainWindow::DeleteTransparentWindowOverlay,
             Qt::ConnectionType::QueuedConnection);
+    connect(this, &MainWindow::RestartRequestNextFrameTimer,
+            this, &MainWindow::OnRestartRequestNextFrameTimer,
+            Qt::ConnectionType::QueuedConnection);
     connect(m_frame_request_timer, &QTimer::timeout,
-            this, &MainWindow::RequestNextFrame);
+            this, &MainWindow::RequestNextFrameTimerEvent);
     m_frame_request_timer->setSingleShot(false);
 
     StartDiscoveryService();
@@ -165,9 +168,7 @@ void MainWindow::PrepareToReceiveStream()
                                           Command(Command::EventType::StartStreaming,
                                                   next_frame_num,
                                                   (int)ImageConverterInterface::Types::X265));
-            _next_frame_request_data.Set(next_frame_num, ip);
-            m_frame_request_timer->stop();
-            m_frame_request_timer->start(100);
+            emit RestartRequestNextFrameTimer(next_frame_num, ip);
             break;
         }
         default:
@@ -180,7 +181,14 @@ void MainWindow::PrepareToReceiveStream()
     });
 }
 
-void MainWindow::RequestNextFrame()
+void MainWindow::OnRestartRequestNextFrameTimer(uint32_t next_frame_num, uint32_t ip)
+{
+    _next_frame_request_data.Set(next_frame_num, ip);
+    m_frame_request_timer->stop();
+    m_frame_request_timer->start(100);
+}
+
+void MainWindow::RequestNextFrameTimerEvent()
 {
     m_streamer_socket.SendCommand(_next_frame_request_data._ip,
                                   Command(Command::EventType::StartStreaming,

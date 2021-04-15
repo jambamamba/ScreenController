@@ -32,6 +32,7 @@ signals:
     void StartPlayback(const Frame &frame, uint32_t from_ip);
     void StoppedStreaming(uint32_t ip);
     void DiscoveredNode(const QString &name, uint32_t ip, uint16_t port);
+    void RestartRequestNextFrameTimer(uint32_t next_frame_num, uint32_t ip);
 
 protected:
     void StartDiscoveryService();
@@ -45,7 +46,8 @@ private slots:
     void ShowTransparentWindowOverlay(const Frame &frame, uint32_t from_ip);
     void NodeActivated(QModelIndex);
     void StopStreaming(uint32_t ip);
-    void RequestNextFrame();
+    void OnRestartRequestNextFrameTimer(uint32_t next_frame_num, uint32_t ip);
+    void RequestNextFrameTimerEvent();
     void on_connectButtton_clicked();
 
 private:
