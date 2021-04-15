@@ -150,10 +150,13 @@ bool FrameExtractor::PlaybackImages(
 
             for(uint32_t ip: m_regions_of_frame.keys())
             {
-                for(const auto &region: m_regions_of_frame[ip])
-                if(!region.m_img.isNull())
+                for(auto it = m_regions_of_frame[ip].begin(); it != m_regions_of_frame[ip].end(); )
                 {
-                    renderImageCb(region, ip);
+                    if(!it->m_img.isNull())
+                    {
+                        renderImageCb(*it, ip);
+                    }
+                    it = m_regions_of_frame[ip].erase(it);
                 }
             }
         }

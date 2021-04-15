@@ -59,7 +59,7 @@ MainWindow::MainWindow(QWidget *parent)
             Qt::ConnectionType::QueuedConnection);
     connect(m_frame_request_timer, &QTimer::timeout,
             this, &MainWindow::RequestNextFrameTimerEvent);
-    m_frame_request_timer->setSingleShot(false);
+    m_frame_request_timer->setSingleShot(true);
 
     StartDiscoveryService();
     PrepareToReceiveStream();
@@ -163,7 +163,7 @@ void MainWindow::PrepareToReceiveStream()
                         (uint8_t*)(cmd.m_tail_bytes),
                         cmd.u.m_frame,
                         ip);
-            //osm todo do this request in a timer, and if we get the packet, then cancel timer
+
             m_streamer_socket.SendCommand(ip,
                                           Command(Command::EventType::StartStreaming,
                                                   next_frame_num,
@@ -183,9 +183,12 @@ void MainWindow::PrepareToReceiveStream()
 
 void MainWindow::OnRestartRequestNextFrameTimer(uint32_t next_frame_num, uint32_t ip)
 {
-    _next_frame_request_data.Set(next_frame_num, ip);
     m_frame_request_timer->stop();
-    m_frame_request_timer->start(100);
+    if(_next_frame_request_data._next_frame_num != next_frame_num)
+    {
+        _next_frame_request_data.Set(next_frame_num, ip);
+        m_frame_request_timer->start(2000);
+    }
 }
 
 void MainWindow::RequestNextFrameTimerEvent()
