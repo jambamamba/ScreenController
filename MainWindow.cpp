@@ -183,7 +183,7 @@ void MainWindow::PrepareToReceiveStream()
 void MainWindow::OnRestartRequestNextFrameTimer(uint32_t next_frame_num, uint32_t ip)
 {
     m_frame_request_timer->stop();
-    m_frame_request_timer->start(1000);
+    m_frame_request_timer->start(4000);
 }
 
 void MainWindow::RequestNextFrameTimerEvent()
