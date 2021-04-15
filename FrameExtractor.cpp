@@ -25,7 +25,7 @@ uint32_t FrameExtractor::ExtractX265Frame(
 {
     if(_prev_sequence_number+1 != frame.m_sequence_number)
     {
-        qDebug() << "#### skipped frame, expecting" << (_prev_sequence_number+1) << ", instead got" << frame.m_sequence_number;
+//        qDebug() << "#### skipped frame, expecting" << (_prev_sequence_number+1) << ", instead got" << frame.m_sequence_number;
         return _prev_sequence_number+1;
     }
     if(!_x265dec || frame.m_sequence_number == 0)
@@ -36,7 +36,7 @@ uint32_t FrameExtractor::ExtractX265Frame(
         });
     }
 
-    qDebug() << "#### received command packet #" << frame.m_sequence_number << "with payload of size " << chunk._size << frame.m_size;
+//    qDebug() << "#### received command packet #" << frame.m_sequence_number << "with payload of size " << chunk._size << frame.m_size;
     _x265dec->Decode(ip, frame.m_width, frame.m_height, chunk);
     _prev_sequence_number = frame.m_sequence_number;
     return _prev_sequence_number+1;

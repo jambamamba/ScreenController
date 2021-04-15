@@ -244,7 +244,7 @@ void ScreenStreamer::StreamX265(uint32_t ip, uint32_t decoder_type, int width, i
         }
     });
 #endif
-    qDebug() << "#### reset sequence_number to " << sequence_number;
+//    qDebug() << "#### reset sequence_number to " << sequence_number;
     _sequence_num_to_send = sequence_number;
     (sequence_number == 0) ?
         InitializeX265Decoder(ip, decoder_type, width, height) :
@@ -310,7 +310,7 @@ void ScreenStreamer::BufferEncodedData(
             _ring_buffer->Insert(&cmd, 1, [this](){
                 Command *tmp = nullptr;
                 _ring_buffer->Remove(&tmp, 1);
-                qDebug() << "#### overflow, removing #" << tmp->u.m_frame.m_sequence_number;
+//                qDebug() << "#### overflow, removing #" << tmp->u.m_frame.m_sequence_number;
                 free(tmp);
                 return true;
             });
@@ -344,7 +344,7 @@ void ScreenStreamer::SendFrameBySequenceNumber(uint32_t ip) const
         if(cmd->u.m_frame.m_sequence_number == _sequence_num_to_send)
         {
             _sendCommand(ip, *cmd);
-            qDebug() << "#### sending #" << cmd->u.m_frame.m_sequence_number << "with payload of size " << cmd->u.m_frame.m_size;
+//            qDebug() << "#### sending #" << cmd->u.m_frame.m_sequence_number << "with payload of size " << cmd->u.m_frame.m_size;
             _sequence_num_to_send++;
 //            emit SendNextFrame(ip);
             return;
@@ -354,7 +354,7 @@ void ScreenStreamer::SendFrameBySequenceNumber(uint32_t ip) const
         //            break;
         //        }
     }
-    qDebug() << "#### could not find sequence num: " << _sequence_num_to_send;
+//    qDebug() << "#### could not find sequence num: " << _sequence_num_to_send;
 }
 void ScreenStreamer::StartStreaming(uint32_t ip, uint32_t sequence_number, uint32_t decoder_type)
 {

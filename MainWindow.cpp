@@ -183,12 +183,12 @@ void MainWindow::PrepareToReceiveStream()
 void MainWindow::OnRestartRequestNextFrameTimer(uint32_t next_frame_num, uint32_t ip)
 {
     m_frame_request_timer->stop();
-    m_frame_request_timer->start(3000);
+    m_frame_request_timer->start(m_streamer._retry_request_frame_timeout_ms);
 }
 
 void MainWindow::RequestNextFrameTimerEvent()
 {
-    qDebug() << "#### requesting frame #" << _next_frame_request_data._next_frame_num;
+//    qDebug() << "#### requesting frame #" << _next_frame_request_data._next_frame_num;
     m_streamer_socket.SendCommand(_next_frame_request_data._ip,
                                   Command(Command::EventType::StartStreaming,
                                           _next_frame_request_data._next_frame_num,
