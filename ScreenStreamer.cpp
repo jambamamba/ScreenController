@@ -94,11 +94,13 @@ ScreenStreamer::ScreenStreamer(
     ,_region_mapper(std::make_unique<RegionMapper>())
     ,_sendCommand(sendCommand)
     , _ring_buffer(std::make_unique<LockFreeRingBuffer<Command*>>(_ring_buffer_size))
+    , _send_next_frame_timer(new QTimer(this))
 {
     InitAvailableScreens();
     connect(this, &ScreenStreamer::SendNextFrame,
             this, &ScreenStreamer::SendFrameBySequenceNumber,
             Qt::ConnectionType::QueuedConnection);
+    _send_next_frame_timer->setSingleShot(true);
 }
 
 void ScreenStreamer::StopThreads()
@@ -246,9 +248,19 @@ void ScreenStreamer::StreamX265(uint32_t ip, uint32_t decoder_type, int width, i
 #endif
     qDebug() << "#### reset sequence_number to " << sequence_number;
     _sequence_num_to_send = sequence_number;
-    (sequence_number == 0) ?
-        InitializeX265Decoder(ip, decoder_type, width, height) :
+    if(sequence_number == 0)
+    {
+        InitializeX265Decoder(ip, decoder_type, width, height);
+        disconnect(_send_next_frame_timer_conn);
+        _send_next_frame_timer_conn = connect(_send_next_frame_timer, &QTimer::timeout,
+                [this,ip](){
+            SendFrameBySequenceNumber(ip);
+        });
+    }
+    else
+    {
         SendFrameBySequenceNumber(ip);
+    }
 }
 
 void ScreenStreamer::InitializeX265Decoder(uint32_t ip, uint32_t decoder_type, int width, int height)
@@ -346,7 +358,8 @@ void ScreenStreamer::SendFrameBySequenceNumber(uint32_t ip) const
             _sendCommand(ip, *cmd);
             qDebug() << "#### sending #" << cmd->u.m_frame.m_sequence_number << "with payload of size " << cmd->u.m_frame.m_size;
             _sequence_num_to_send++;
-            emit SendNextFrame(ip);//todo, add timer here, timeout needs to be variable depending on how many packets are getting dropped
+//            emit SendNextFrame(ip);//todo, add timer here, timeout needs to be variable depending on how many packets are getting dropped
+            _send_next_frame_timer->start(_send_next_frame_timeout_ms);
             return;
         }
         //        if(cmd->u.m_frame.m_sequence_number < _sequence_num_to_send)

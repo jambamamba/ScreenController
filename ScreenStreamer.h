@@ -11,6 +11,7 @@
 
 #include <QList>
 #include <QImage>
+#include <QTimer>
 
 #include "Command.h"
 #include "ImageConverterInterface.h"
@@ -53,6 +54,7 @@ public:
     static constexpr int _datagram_size = 1500 - sizeof(Command); // to determine MTU size, ping -s $((1500 - 28)) -M do 192.168.1.22 -c 1, or on Internet ping -s $((96 - 28)) -M do 8.8.8.8 -c 1
     static constexpr int _ring_buffer_size = 100000;
     static constexpr int _retry_request_frame_timeout_ms = 1000;
+    static constexpr int _send_next_frame_timeout_ms = 50;
     static constexpr ImageConverterInterface::Types _default_decoder = ImageConverterInterface::Types::X265;
 public slots:
     void StartStreaming(uint32_t ip, uint32_t sequence_number, uint32_t decoder_type);
@@ -86,6 +88,8 @@ protected:
     std::function<void(uint32_t ip, const Command &cmd)> _sendCommand = nullptr;
     std::unique_ptr<LockFreeRingBuffer<Command*>> _ring_buffer;
     mutable std::mutex _ring_buffer_mutex;
+    QTimer *_send_next_frame_timer = nullptr;
+    QMetaObject::Connection _send_next_frame_timer_conn;
     std::atomic<bool> _die;
     void StopThreads();
 };
