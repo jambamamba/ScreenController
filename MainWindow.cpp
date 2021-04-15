@@ -26,7 +26,7 @@ MainWindow::MainWindow(QWidget *parent)
         m_streamer_socket.SendCommand(ip, cmd);
     }, this)
     , m_event_handler(this)
-//    , m_frame_request_timer(new QTimer(this))
+    , m_frame_request_timer(new QTimer(this))
 {
     ui->setupUi(this);
     setWindowTitle("Kingfisher Screen Controller");
@@ -54,6 +54,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&m_event_handler, &EventHandler::StoppedStreaming,
             this, &MainWindow::DeleteTransparentWindowOverlay,
             Qt::ConnectionType::QueuedConnection);
+    connect(m_frame_request_timer, &QTimer::timeout,
+            this, &MainWindow::RequestNextFrame);
+    m_frame_request_timer->setSingleShot(false);
 
     StartDiscoveryService();
     PrepareToReceiveStream();
@@ -162,16 +165,8 @@ void MainWindow::PrepareToReceiveStream()
                                           Command(Command::EventType::StartStreaming,
                                                   next_frame_num,
                                                   (int)ImageConverterInterface::Types::X265));
-            if(m_frame_request_timer) { delete m_frame_request_timer; }
-            m_frame_request_timer = new QTimer(this);
-//            m_frame_request_timer->stop();
-            connect(m_frame_request_timer, &QTimer::timeout, [this,ip,next_frame_num](){
-                m_streamer_socket.SendCommand(ip,
-                                              Command(Command::EventType::StartStreaming,
-                                                      next_frame_num,
-                                                      (int)ImageConverterInterface::Types::X265));
-            });
-            m_frame_request_timer->setSingleShot(false);
+            _next_frame_request_data.Set(next_frame_num, ip);
+            m_frame_request_timer->stop();
             m_frame_request_timer->start(100);
             break;
         }
@@ -183,6 +178,14 @@ void MainWindow::PrepareToReceiveStream()
     m_frame_extractor.PlaybackImages([this](const Frame &frame, uint32_t ip) {
         emit StartPlayback(frame, ip);
     });
+}
+
+void MainWindow::RequestNextFrame()
+{
+    m_streamer_socket.SendCommand(_next_frame_request_data._ip,
+                                  Command(Command::EventType::StartStreaming,
+                                          _next_frame_request_data._next_frame_num,
+                                          (int)ImageConverterInterface::Types::X265));
 }
 
 void MainWindow::DeleteTransparentWindowOverlay(uint32_t ip)
