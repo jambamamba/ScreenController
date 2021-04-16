@@ -39,7 +39,7 @@ JpegConverter::~JpegConverter()
 {}
 
 
-QImage &JpegConverter::Decode(const EncodedImage &enc, QImage &out_image)
+QImage JpegConverter::Decode(const EncodedChunk &enc)
 {
     struct jpeg_decompress_struct cinfo;
 
@@ -51,21 +51,21 @@ QImage &JpegConverter::Decode(const EncodedImage &enc, QImage &out_image)
     {
         qDebug() << "Error while decompressing JPEG " << jpegLastErrorMsg;
         jpeg_destroy_decompress(&cinfo);
-        return out_image;
+        return QImage();
     }
 
     jpeg_create_decompress(&cinfo);
-    jpeg_mem_src(&cinfo, enc.m_enc_data, enc.m_enc_sz);
+    jpeg_mem_src(&cinfo, enc._data, enc._size);
     int rc = jpeg_read_header(&cinfo, TRUE);
     if(rc == -1)
     {
         qDebug() << "jpeg_read_header failed";
-        return out_image;
+        return QImage();
     }
     if(!jpeg_start_decompress(&cinfo))
     {
         qDebug() << "jpeg_start_decompress failed";
-        return out_image;
+        return QImage();
     }
     int width = cinfo.output_width;
     int height = cinfo.output_height;
@@ -84,20 +84,17 @@ QImage &JpegConverter::Decode(const EncodedImage &enc, QImage &out_image)
         if(rc == -1)
         {
             qDebug() << "jpeg_read_scanlines failed";
-            return out_image;
+            return QImage();
         }
     }
     jpeg_finish_decompress(&cinfo);
     jpeg_destroy_decompress(&cinfo);
 
-    if(out_image.isNull() || out_image.width() != width || out_image.height() != height)
-    {
-        out_image = QImage(width, height, QImage::Format::Format_RGB888);
-    }
-    memcpy(out_image.bits(), bmp_buffer, bmp_size);
+    QImage img(width, height, QImage::Format::Format_RGB888);
+    memcpy(img.bits(), bmp_buffer, bmp_size);
     free(bmp_buffer);
 
-    return out_image;
+    return img;
 }
 
 //https://www.ridgesolutions.ie/index.php/2019/12/10/libjpeg-example-encode-jpeg-to-memory-buffer-instead-of-file/
@@ -113,7 +110,7 @@ QImage &JpegConverter::Decode(const EncodedImage &enc, QImage &out_image)
 // jpegSize - output, the number of bytes in the output JPEG buffer
 // jpegBuf  - output, a pointer to the output JPEG buffer, must call free() when finished with it.
 //
-EncodedImage JpegConverter::Encode(const uint8_t* image, int width, int height, float quality_factor)
+EncodedChunk JpegConverter::Encode(const uint8_t* image, ssize_t width, ssize_t height, float quality_factor)
 //void JpegConverter::ToJpeg(unsigned char* image, int width, int height, int quality,
 //            const char* comment, unsigned long* jpegSize, unsigned char** jpegBuf)
 {
@@ -142,10 +139,10 @@ EncodedImage JpegConverter::Encode(const uint8_t* image, int width, int height, 
     // Tell libJpeg to encode to memory, this is the bit that's different!
     // Lib will alloc buffer.
     //
-    EncodedImage enc([](uint8_t* data){
+    EncodedChunk enc(width, height, [](uint8_t* data){
         if(data) { free(data); }
     });
-    jpeg_mem_dest(&cinfo, &enc.m_enc_data, &enc.m_enc_sz);
+    jpeg_mem_dest(&cinfo, &enc._data, &enc._size);
 
     jpeg_start_compress(&cinfo, TRUE);
 

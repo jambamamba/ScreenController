@@ -24,16 +24,16 @@ ssize_t CommandMessage::FindHeader(uint8_t *buffer, ssize_t buffer_sz)
     return -1;
 }
 
-EncodedImage CommandMessage::Encode(const uint8_t *, int , int , float )
+EncodedChunk CommandMessage::Encode(const uint8_t *, ssize_t width, ssize_t height, float )
 {
-    EncodedImage enc([](uint8_t *){
+    EncodedChunk enc(width, height, [](uint8_t *){
     });
     return enc;
 }
 
-QImage &CommandMessage::Decode(const EncodedImage &enc, QImage &out_image)
+QImage CommandMessage::Decode(const EncodedChunk &)
 {
-    return out_image;
+    return QImage();
 }
 
 bool CommandMessage::IsValid(uint8_t *buffer, ssize_t sz)

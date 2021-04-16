@@ -22,8 +22,11 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
     , m_streamer_socket(9000)
-    , m_streamer(m_streamer_socket, this)
+    , m_streamer([this](uint32_t ip, const Command &cmd){
+        m_streamer_socket.SendCommand(ip, cmd);
+    }, this)
     , m_event_handler(this)
+    , m_frame_request_timer(new QTimer(this))
 {
     ui->setupUi(this);
     setWindowTitle("Kingfisher Screen Controller");
@@ -46,11 +49,17 @@ MainWindow::MainWindow(QWidget *parent)
             &m_streamer, &ScreenStreamer::StartStreaming,
             Qt::ConnectionType::QueuedConnection);
     connect(&m_event_handler, &EventHandler::StopStreaming,
-            &m_streamer, &ScreenStreamer::StopStreaming,
+            this, &MainWindow::StopStreaming,
             Qt::ConnectionType::QueuedConnection);
     connect(&m_event_handler, &EventHandler::StoppedStreaming,
             this, &MainWindow::DeleteTransparentWindowOverlay,
             Qt::ConnectionType::QueuedConnection);
+    connect(this, &MainWindow::RestartRequestNextFrameTimer,
+            this, &MainWindow::OnRestartRequestNextFrameTimer,
+            Qt::ConnectionType::BlockingQueuedConnection);
+    connect(m_frame_request_timer, &QTimer::timeout,
+            this, &MainWindow::RequestNextFrameTimerEvent);
+    m_frame_request_timer->setSingleShot(false);
 
     StartDiscoveryService();
     PrepareToReceiveStream();
@@ -120,8 +129,11 @@ void MainWindow::on_connectButtton_clicked()
 
 void MainWindow::SendStartStreamingCommand(uint32_t ip)
 {
-    m_streamer.SendCommand(ip, Command::EventType::StartStreaming);
-    m_streamer_socket.Start(ip);
+    m_streamer_socket.SendCommand(ip,
+                                  Command(Command::EventType::StartStreaming,
+                                          0,
+                                          (int)m_streamer._default_decoder));
+    m_frame_extractor.ReadyToReceive(ip);
     if(m_transparent_window.find(ip) != m_transparent_window.end())
     {
         QImage screen_shot = m_streamer.ScreenShot();
@@ -134,19 +146,62 @@ void MainWindow::NodeActivated(QModelIndex index)
     SendStartStreamingCommand(m_node_model->Ip(index));
 }
 
+void MainWindow::StopStreaming(uint32_t ip)
+{
+    m_streamer.StopStreaming(ip);
+    m_streamer_socket.SendCommand(ip, Command::EventType::StoppedStreaming);
+}
+
 void MainWindow::PrepareToReceiveStream()
 {
-    m_streamer_socket.StartRecieveDataThread([this](const Command &pkt, uint32_t ip){
-        m_event_handler.HandleCommand(pkt, ip);
+    m_streamer_socket.StartRecieveDataThread([this](const Command &cmd, uint32_t ip){
+        switch(cmd.m_event)
+        {
+        case Command::EventType::FrameInfo:
+        {
+            uint32_t next_frame_num = m_frame_extractor.ExtractFrame(
+                        (uint8_t*)(cmd.m_tail_bytes),
+                        cmd.u.m_frame,
+                        ip);
+
+            _next_frame_request_data.Set(next_frame_num, ip);
+//            RequestNextFrameTimerEvent();
+
+            emit RestartRequestNextFrameTimer(next_frame_num, ip);
+            break;
+        }
+        default:
+            m_event_handler.HandleCommand(cmd, ip);
+            break;
+        }
     });
-    m_streamer_socket.PlaybackImages([this](const Frame &frame, uint32_t ip) {
+    m_frame_extractor.PlaybackImages([this](const Frame &frame, uint32_t ip) {
         emit StartPlayback(frame, ip);
     });
 }
 
+void MainWindow::OnRestartRequestNextFrameTimer(uint32_t next_frame_num, uint32_t ip)
+{
+    static uint32_t fn = -1;
+    if(fn == _next_frame_request_data._next_frame_num)
+    { return; }
+    m_frame_request_timer->stop();
+    m_frame_request_timer->start(m_streamer._retry_request_frame_timeout_ms);
+    fn = _next_frame_request_data._next_frame_num;
+}
+
+void MainWindow::RequestNextFrameTimerEvent()
+{
+//    qDebug() << "#### requesting frame #" << _next_frame_request_data._next_frame_num;
+    m_streamer_socket.SendCommand(_next_frame_request_data._ip,
+                                  Command(Command::EventType::StartStreaming,
+                                          _next_frame_request_data._next_frame_num,
+                                          (int)ImageConverterInterface::Types::X265));
+}
+
 void MainWindow::DeleteTransparentWindowOverlay(uint32_t ip)
 {
-    m_streamer_socket.Stop(ip);
+    m_frame_extractor.Stop(ip);
     return;//todo
     if(m_transparent_window.find(ip) == m_transparent_window.end())
     {
@@ -180,13 +235,13 @@ void MainWindow::MakeNewTransparentWindowOverlay(uint32_t ip)
                 m_node_model->Name(ip), this);
     connect(m_transparent_window[ip], &TransparentMaximizedWindow::Close,
             [this, ip](){
-        m_streamer.SendCommand(ip, Command::EventType::StopStreaming);
+        m_streamer_socket.SendCommand(ip, Command::EventType::StopStreaming);
     });
     connect(m_transparent_window[ip], &TransparentMaximizedWindow::SendCommandToNode,
             [this, ip](const Command &pkt){
         if(m_transparent_window.find(ip) != m_transparent_window.end())
         {
-            m_streamer.SendCommand(ip, pkt);
+            m_streamer_socket.SendCommand(ip, pkt);
         }
     });
     QImage screen_shot = m_streamer.ScreenShot();

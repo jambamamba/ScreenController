@@ -9,7 +9,7 @@ struct Command
 {
     uint8_t m_sync_bytes[4] = { 0xca, 0xfe, 0xba, 0xbe };
     uint8_t m_version = 1;
-    uint8_t m_padding = 0;
+    uint8_t m_padding[0];
     enum EventType : uint16_t {
         None,
         StartStreaming,
@@ -35,6 +35,7 @@ struct Command
         uint32_t m_y = -1;
     };
     struct Frame {
+        uint32_t m_sequence_number = 0;
         uint32_t m_x = 0;
         uint32_t m_y = 0;
         uint32_t m_width = 0;
@@ -46,7 +47,6 @@ struct Command
         uint32_t m_max_regions = 0;
         uint32_t m_decoder_type = 0;
     };
-
     union U {
         Key m_key;
         Mouse m_mouse;
@@ -55,6 +55,10 @@ struct Command
     } u;
     uint8_t m_tail_bytes[4] = { 0xca, 0xfe, 0xd0, 0x0d };
 
-    Command(uint8_t version = 1, uint16_t cmd_id = 0);
+    Command(uint16_t event = 0,
+            uint32_t sequence_num = 0,
+            int decoder = 0);
+
 };
+
 Q_DECLARE_METATYPE(Command);

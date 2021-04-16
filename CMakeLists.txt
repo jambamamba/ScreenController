@@ -3,8 +3,8 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_C_FLAGS  -Wall)
 set(CMAKE_CXX_FLAGS  -Wall)
-set(CMAKE_C_FLAGS_RELEASE  -s -O3)
-set(CMAKE_CXX_FLAGS_RELEASE  -s -O3)
+set(CMAKE_C_FLAGS_RELEASE  -s)
+set(CMAKE_CXX_FLAGS_RELEASE  -s)
 set(LIBS_DIR "$ENV{HOME}/$ENV{DOCKERUSER}/.leila/lib")
 set(QT_DIR "$ENV{HOME}/$ENV{DOCKERUSER}/Qt/5")
 
@@ -42,9 +42,6 @@ INCLUDE_DIRECTORIES(
     .
 )
 
-ADD_DEFINITIONS(
-)
-
 # this will run uic on .ui files:
 QT5_WRAP_UI(PROJECT_UI_HDRS
     ../License/LicenseWidget.ui
@@ -69,6 +66,7 @@ IF(UNIX)
     LINK_DIRECTORIES(
 	${LIBS_DIR}/libturbojpeg/build/
 	${LIBS_DIR}/libwebp/build/
+	${CMAKE_BUILD_DIR}/x265/source/
 #        ${LIBS_DIR}/libxdo/
     )
     SET(SSLLibs
@@ -120,11 +118,15 @@ SET(PROJECT_SOURCES
     EventHandler.cpp
     EventHandler.h
     Frame.h
+    FrameExtractor.h
+    FrameExtractor.cpp
     ImageConverterInterface.h
     JpegConverter.cpp
     JpegConverter.h
     KeyInterface.cpp
     KeyInterface.h
+    LockFreeRingBuffer.h
+    LockFreeRingBuffer.cpp
     MainWindow.cpp
     MainWindow.h
     MouseInterface.cpp
@@ -139,14 +141,18 @@ SET(PROJECT_SOURCES
     RegionMapper.h
     ScreenStreamer.cpp
     ScreenStreamer.h
-    SocketReader.cpp
-    SocketReader.h
+    SocketTrasceiver.cpp
+    SocketTrasceiver.h
+    Stats.cpp
+    Stats.h
     TransparentMaximizedWindow.cpp
     TransparentMaximizedWindow.h
     WebPConverter.cpp
     WebPConverter.h
     WindowEnumeratorInterface.h
     main.cpp
+    X265Converter.h
+    X265Converter.cpp
 )
 
 IF(UNIX)
@@ -154,6 +160,9 @@ IF(UNIX)
 ENDIF(UNIX)
 
 ADD_SUBDIRECTORY(DiscoveryService)
+ADD_SUBDIRECTORY(x265)
+ADD_SUBDIRECTORY(libde265)
+
 ADD_EXECUTABLE(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
     ${App_ICON}
     ${PROJECT_SOURCES}
@@ -179,6 +188,8 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME}
     webpdecoder
     exampleutil
     webpdemux
+    x265
+    dec265
 )
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")

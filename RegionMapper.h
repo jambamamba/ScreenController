@@ -3,24 +3,25 @@
 #include <cstdint>
 #include <QImage>
 
+struct Region
+{
+    ssize_t _x;
+    ssize_t _y;
+    ssize_t _width;
+    ssize_t _height;
+    QImage _img;
+    Region(ssize_t x = 0, ssize_t y = 0, ssize_t width = 0, ssize_t height = 0, const QImage &img = QImage())
+        : _x(x), _y(y), _width(width), _height(height), _img(img) {}
+    void CopyImage(const QImage &img);
+};
+
 class RegionMapper
 {
 public:
-    struct Region
-    {
-        ssize_t m_x;
-        ssize_t m_y;
-        ssize_t m_width;
-        ssize_t m_height;
-        QImage m_img;
-        Region(ssize_t x = 0, ssize_t y = 0, ssize_t width = 0, ssize_t height = 0, const QImage &img = QImage())
-            : m_x(x), m_y(y), m_width(width), m_height(height), m_img(img) {}
-        void CopyImage(const QImage &img);
-    };
-    RegionMapper();
-    ~RegionMapper();
+    RegionMapper() = default;
+    ~RegionMapper() = default;
     std::vector<Region> GetRegionsOfInterest(const QImage &screen_shot);
 
 protected:
-    QImage m_prev_screen_shot;
+    QImage _prev_screen_shot;
 };

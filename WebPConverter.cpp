@@ -35,36 +35,33 @@ ssize_t WebPConverter::FindHeader(uint8_t *buffer, ssize_t buffer_tail)
     return -1;
 }
 
-EncodedImage WebPConverter::Encode(const uint8_t* rgb888,
-                                   int width,
-                                   int height,
+EncodedChunk WebPConverter::Encode(const uint8_t* rgb888,
+                                   ssize_t width,
+                                   ssize_t height,
                                    float quality_factor)
 {
-    EncodedImage enc([](uint8_t *data){
+    EncodedChunk enc(width, height, [](uint8_t *data){
         if(data) { WebPFree(data); }
     });
-    enc.m_enc_sz = WebPEncodeRGB(rgb888, width, height, width * 3, quality_factor, &enc.m_enc_data);
+    enc._size = WebPEncodeRGB(rgb888, width, height, width * 3, quality_factor, &enc._data);
     return enc;
 }
 
-QImage &WebPConverter::Decode(const EncodedImage &enc, QImage &out_image)
+QImage WebPConverter::Decode(const EncodedChunk &enc)
 {
     int width = 0;
     int height = 0;
-    if(!WebPGetInfo(enc.m_enc_data, enc.m_enc_sz, &width, &height))
+    if(!WebPGetInfo(enc._data, enc._size, &width, &height))
     {
-        return out_image;
+        return QImage();
     }
-    if(out_image.isNull() || out_image.width() != width || out_image.height() != height)
-    {
-        out_image = QImage(width, height, QImage::Format::Format_RGB888);
-    }
+    QImage img(width, height, QImage::Format::Format_RGB888);
     size_t data_size = width * height * 3;
-    uint8_t* rgb888 = WebPDecodeRGBInto(enc.m_enc_data, enc.m_enc_sz,
-                                        out_image.bits(),
+    uint8_t* rgb888 = WebPDecodeRGBInto(enc._data, enc._size,
+                                        img.bits(),
                                         data_size,
                                         width * 3);
-    return out_image;
+    return img;
 }
 
 bool WebPConverter::IsValid(uint8_t *buffer, ssize_t buffer_tail)
