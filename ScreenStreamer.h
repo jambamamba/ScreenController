@@ -18,6 +18,7 @@
 class MouseInterface;
 class QScreen;
 class UvgRTP;
+struct X265Encoder;
 class ScreenStreamer : public QObject
 {
     Q_OBJECT
@@ -37,10 +38,13 @@ protected:
     int ActiveScreenIdx() const;
     QImage& ApplyMouseCursor(QImage& img);
     void StopThreads();
+    void StartEncoding(int width, int height);
 
     QList<QScreen *> _screens;
     MouseInterface *m_mouse;
     std::function<void(uint32_t ip, const Command &cmd)> _sendCommand = nullptr;
     std::unique_ptr<UvgRTP> _rtp;
+    char *_rgb_buffer = nullptr;
+    X265Encoder *_x265enc = nullptr;
     std::atomic<bool> _die;
 };

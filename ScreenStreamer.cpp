@@ -22,6 +22,7 @@
 #include "NullMouse.h"
 #endif
 #include "UvgRTP.h"
+#include "X265Converter.h"
 
 namespace  {
 static QImage &bltCursorOnImage(QImage &img, const QImage &cursor, const QPoint &pos)
@@ -52,6 +53,7 @@ ScreenStreamer::ScreenStreamer(
 void ScreenStreamer::StopThreads()
 {
     _die = true;
+    if(_x265enc) { delete _x265enc; _x265enc = nullptr; }
 }
 
 ScreenStreamer::~ScreenStreamer()
@@ -130,18 +132,9 @@ void ScreenStreamer::StartStreaming(uint32_t ip)
     if(!_rtp)
     {
         _rtp = std::make_unique<UvgRTP>(ip, 8888, 8889);
+        QImage img = ScreenShot();
+        StartEncoding(img.width(), img.height());
         return;//todo - start streaming to ip if its different than the one we are streaming to.
-    }
-    QImage img = ScreenShot();
-//    int width = img.width();
-//    int height = img.height();
-
-    //osm todo convert to x265 frames and call push_frame:
-
-    constexpr uint32_t timestamp = 0;
-    if (_rtp->MediaStream()->push_frame(img.bits(), img.width() * img.height() * 3, timestamp, RTP_NO_FLAGS) != RTP_OK)
-    {
-        qDebug() << "Failed to send RTP frame!";
     }
 }
 
@@ -150,4 +143,51 @@ void ScreenStreamer::StopStreaming(uint32_t ip)
     StopThreads();
     _rtp.reset();
     _die = false;
+}
+
+void ScreenStreamer::StartEncoding(int width, int height)
+{
+#if osm//osm testing purpose
+    static X265Decoder x265dec(width, height, [ip](const QImage &img){
+        if(img.isNull())
+        { return; }
+        //osm
+        {
+            char filename[128] = {0};
+            static int i = 0;
+            sprintf(filename, "/tmp/foo/frame%i.png", i++);
+            img.save(filename);
+        }
+    });
+#endif
+
+    if(_rgb_buffer) { free(_rgb_buffer); }
+    _rgb_buffer = (char*) malloc(width * 3 * height);
+
+    if(_x265enc) { delete _x265enc; }
+    _x265enc = new X265Encoder(
+                width,
+                height,
+                [this,width,height](char **data, ssize_t *bytes, int width_, int height_, float quality_factor){
+           QImage img = ScreenShot();
+           //osm assert width_ == width and height_ == height
+           memcpy(_rgb_buffer, img.bits(), width * 3 * height);
+           *bytes = width * 3 * height;
+           *data = _rgb_buffer;
+           return *bytes;
+       },
+       [this](EncodedChunk enc){
+
+        constexpr uint32_t timestamp = 0;
+        if (_rtp->MediaStream()->push_frame(enc._data, enc._size, timestamp, RTP_NO_FLAGS) != RTP_OK)
+        {
+            qDebug() << "Failed to send RTP frame!";
+        }
+
+#if osm//osm
+            x265dec.Decode(ip, width, height, enc);
+#endif
+           return enc._size;
+       }
+    );
 }

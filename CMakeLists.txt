@@ -63,6 +63,7 @@ SET(X11Libs )
 IF(UNIX)
     LINK_DIRECTORIES(
         ../cryptopp
+        ${CMAKE_BUILD_DIR}/x265/source/
     )
     SET(SSLLibs
         crypto
@@ -113,6 +114,8 @@ SET(PROJECT_SOURCES
     EventHandler.cpp
     EventHandler.h
     Frame.h
+    FrameExtractor.h
+    FrameExtractor.cpp
     ImageConverterInterface.h
     KeyInterface.cpp
     KeyInterface.h
@@ -142,6 +145,8 @@ SET(PROJECT_SOURCES
     UvgRTP.cpp
     WindowEnumeratorInterface.h
     main.cpp
+    X265Converter.h
+    X265Converter.cpp
 )
 
 IF(UNIX)
@@ -149,6 +154,8 @@ IF(UNIX)
 ENDIF(UNIX)
 
 ADD_SUBDIRECTORY(DiscoveryService)
+ADD_SUBDIRECTORY(x265)
+ADD_SUBDIRECTORY(libde265)
 ADD_SUBDIRECTORY(uvgRTP)
 
 ADD_EXECUTABLE(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
@@ -169,6 +176,8 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME}
     discovery.lib
     uvgrtp
 #    cryptopp
+    x265
+    dec265
 )
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
