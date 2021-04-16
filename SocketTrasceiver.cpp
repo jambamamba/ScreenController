@@ -135,7 +135,6 @@ void SocketTrasceiver::StartRecieveDataThread(std::function<void(const Command &
 
             while(!m_die)
             {
-                //osm: todo use select here so we don't block forever
                 if(!WaitForSocketIO(_socket, &m_read_set, nullptr))
                 {
                     continue;

@@ -7,3 +7,6 @@
 [submodule "libde265"]
 	path = libde265
 	url = https://github.com/jambamamba/libde265.git
+[submodule "uvgRTP"]
+	path = uvgRTP
+	url = https://github.com/ultravideo/uvgRTP.git

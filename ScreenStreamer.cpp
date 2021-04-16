@@ -21,6 +21,7 @@
 #else
 #include "NullMouse.h"
 #endif
+#include "UvgRTP.h"
 
 namespace  {
 static QImage &bltCursorOnImage(QImage &img, const QImage &cursor, const QPoint &pos)
@@ -124,22 +125,26 @@ QImage& ScreenStreamer::ApplyMouseCursor(QImage& img)
     return img;
 }
 
-
-void ScreenStreamer::StartStreaming(uint32_t ip, uint32_t sequence_number, uint32_t decoder_type)
+void ScreenStreamer::StartStreaming(uint32_t ip)
 {
-    if(_streaming)
+    if(!_rtp)
     {
+        _rtp = std::make_unique<UvgRTP>(ip, 8888, 8889);
         return;//todo - start streaming to ip if its different than the one we are streaming to.
     }
     QImage img = ScreenShot();
-    int width = img.width();
-    int height = img.height();
+//    int width = img.width();
+//    int height = img.height();
 
-//osm todo
+    if (_rtp->MediaStream()->push_frame(img.bits(), img.width() * img.height() * 3, RTP_NO_FLAGS) != RTP_OK)
+    {
+        qDebug() << "Failed to send RTP frame!";
+    }
 }
 
 void ScreenStreamer::StopStreaming(uint32_t ip)
 {
     StopThreads();
+    _rtp.reset();
     _die = false;
 }

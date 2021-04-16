@@ -19,6 +19,7 @@ struct ImageConverterInterface;
 class QStandardItemModel;
 class NodeListModel;
 class TransparentMaximizedWindow;
+class UvgRTP;
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -41,7 +42,7 @@ protected:
     void MakeNewTransparentWindowOverlay(uint32_t ip);
 
 private slots:
-    void ShowTransparentWindowOverlay(const Frame &frame, uint32_t from_ip);
+    void OnStartPlayback(const Frame &frame, uint32_t from_ip);
     void NodeActivated(QModelIndex);
     void StopStreaming(uint32_t ip);
     void on_connectButtton_clicked();
@@ -52,6 +53,7 @@ private:
     QMap<uint32_t /*ip*/, TransparentMaximizedWindow*> m_transparent_window;
     QRect m_region;
     SocketTrasceiver m_streamer_socket;
+    std::unique_ptr<UvgRTP> _rtp;
     ScreenStreamer m_streamer;
     std::future<void> m_discovery_thread;
     NodeModel *m_node_model;

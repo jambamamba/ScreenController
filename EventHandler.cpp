@@ -37,7 +37,7 @@ void EventHandler::HandleCommand(const Command &pkt, uint32_t ip)
     switch(pkt.m_event)
     {
     case Command::EventType::StartStreaming:
-//osm todo        emit StartStreaming(ip, pkt.u.m_frame.m_sequence_number, (int)pkt.u.m_frame.m_decoder_type);
+        emit StartStreaming(ip);
         break;
     case Command::EventType::StopStreaming:
         emit StopStreaming(ip);

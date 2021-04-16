@@ -17,6 +17,7 @@
 
 class MouseInterface;
 class QScreen;
+class UvgRTP;
 class ScreenStreamer : public QObject
 {
     Q_OBJECT
@@ -28,18 +29,18 @@ public:
     QScreen *ActiveScreen();
 
 public slots:
-    void StartStreaming(uint32_t ip, uint32_t sequence_number, uint32_t decoder_type);
+    void StartStreaming(uint32_t ip);
     void StopStreaming(uint32_t ip);
 
 protected:
     void InitAvailableScreens();
     int ActiveScreenIdx() const;
     QImage& ApplyMouseCursor(QImage& img);
+    void StopThreads();
 
     QList<QScreen *> _screens;
     MouseInterface *m_mouse;
-    bool _streaming = false;
     std::function<void(uint32_t ip, const Command &cmd)> _sendCommand = nullptr;
+    std::unique_ptr<UvgRTP> _rtp;
     std::atomic<bool> _die;
-    void StopThreads();
 };

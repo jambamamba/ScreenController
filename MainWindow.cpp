@@ -12,6 +12,7 @@
 #include "DiscoveryClient.h"
 #include "DiscoveryService.h"
 #include "TransparentMaximizedWindow.h"
+#include "UvgRTP.h"
 #include "X11Key.h"
 
 MainWindow::MainWindow(QWidget *parent)
@@ -38,7 +39,7 @@ MainWindow::MainWindow(QWidget *parent)
             Qt::ConnectionType::QueuedConnection);
     connect(&m_node_name, &NodeNameDialog::NameChanged, [this](){ m_node_name_changed = true; });
     connect(this, &MainWindow::StartPlayback,
-            this, &MainWindow::ShowTransparentWindowOverlay,
+            this, &MainWindow::OnStartPlayback,
             Qt::ConnectionType::QueuedConnection);
     connect(&m_event_handler, &EventHandler::StartStreaming,
             &m_streamer, &ScreenStreamer::StartStreaming,
@@ -128,7 +129,12 @@ void MainWindow::SendStartStreamingCommand(uint32_t ip)
 
 void MainWindow::NodeActivated(QModelIndex index)
 {
-    SendStartStreamingCommand(m_node_model->Ip(index));
+    uint32_t ip = m_node_model->Ip(index);
+    SendStartStreamingCommand(ip);
+    if(_rtp) { _rtp.reset(); }
+    _rtp = std::make_unique<UvgRTP>(ip, 8889, 8888, [](uint8_t* payload, size_t payload_len){
+
+    });
 }
 
 void MainWindow::StopStreaming(uint32_t ip)
@@ -142,6 +148,7 @@ void MainWindow::PrepareToReceiveStream()
     m_streamer_socket.StartRecieveDataThread([this](const Command &cmd, uint32_t ip){
             m_event_handler.HandleCommand(cmd, ip);
     });
+    //osm emit StartPlayback(const Frame &frame, uint32_t ip) to render images to TransparentMaximizedWindow
 }
 
 void MainWindow::DeleteTransparentWindowOverlay(uint32_t ip)
@@ -156,7 +163,7 @@ void MainWindow::DeleteTransparentWindowOverlay(uint32_t ip)
     m_transparent_window.remove(ip);
 }
 
-void MainWindow::ShowTransparentWindowOverlay(const Frame &frame, uint32_t ip)
+void MainWindow::OnStartPlayback(const Frame &frame, uint32_t ip)
 {
     if(m_transparent_window.find(ip) !=  m_transparent_window.end())
     {

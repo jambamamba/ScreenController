@@ -36,6 +36,7 @@ INCLUDE_DIRECTORIES(
     ../License
     ../Updater
     DiscoveryService
+    uvgRTP/include
     .
 )
 
@@ -61,6 +62,7 @@ SET(SSLLibs )
 SET(X11Libs )
 IF(UNIX)
     LINK_DIRECTORIES(
+        ../cryptopp
     )
     SET(SSLLibs
         crypto
@@ -136,6 +138,8 @@ SET(PROJECT_SOURCES
     Stats.h
     TransparentMaximizedWindow.cpp
     TransparentMaximizedWindow.h
+    UvgRTP.h
+    UvgRTP.cpp
     WindowEnumeratorInterface.h
     main.cpp
 )
@@ -145,6 +149,7 @@ IF(UNIX)
 ENDIF(UNIX)
 
 ADD_SUBDIRECTORY(DiscoveryService)
+ADD_SUBDIRECTORY(uvgRTP)
 
 ADD_EXECUTABLE(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
     ${App_ICON}
@@ -162,6 +167,8 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME}
     ${X11Libs}
     pthread
     discovery.lib
+    uvgrtp
+#    cryptopp
 )
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
