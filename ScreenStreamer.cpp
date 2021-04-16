@@ -136,7 +136,10 @@ void ScreenStreamer::StartStreaming(uint32_t ip)
 //    int width = img.width();
 //    int height = img.height();
 
-    if (_rtp->MediaStream()->push_frame(img.bits(), img.width() * img.height() * 3, RTP_NO_FLAGS) != RTP_OK)
+    //osm todo convert to x265 frames and call push_frame:
+
+    constexpr uint32_t timestamp = 0;
+    if (_rtp->MediaStream()->push_frame(img.bits(), img.width() * img.height() * 3, timestamp, RTP_NO_FLAGS) != RTP_OK)
     {
         qDebug() << "Failed to send RTP frame!";
     }

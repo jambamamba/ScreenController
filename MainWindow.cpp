@@ -133,7 +133,7 @@ void MainWindow::NodeActivated(QModelIndex index)
     SendStartStreamingCommand(ip);
     if(_rtp) { _rtp.reset(); }
     _rtp = std::make_unique<UvgRTP>(ip, 8889, 8888, [](uint8_t* payload, size_t payload_len){
-
+        //osm todo pass this to x265 decoder
     });
 }
 
