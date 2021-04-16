@@ -32,10 +32,7 @@ ENDIF(UNIX)
 
 INCLUDE_DIRECTORIES(
     ${QT_DIR}/Src/qtvirtualkeyboard/tests/manual/
-    ${LIBS_DIR}/turbojpeg/build
-    ${LIBS_DIR}/turbojpeg
     ${LIBS_DIR}/openssl/include
-    ${LIBS_DIR}/libwebp/src
     ../License
     ../Updater
     DiscoveryService
@@ -64,10 +61,6 @@ SET(SSLLibs )
 SET(X11Libs )
 IF(UNIX)
     LINK_DIRECTORIES(
-	${LIBS_DIR}/libturbojpeg/build/
-	${LIBS_DIR}/libwebp/build/
-	${CMAKE_BUILD_DIR}/x265/source/
-#        ${LIBS_DIR}/libxdo/
     )
     SET(SSLLibs
         crypto
@@ -118,11 +111,7 @@ SET(PROJECT_SOURCES
     EventHandler.cpp
     EventHandler.h
     Frame.h
-    FrameExtractor.h
-    FrameExtractor.cpp
     ImageConverterInterface.h
-    JpegConverter.cpp
-    JpegConverter.h
     KeyInterface.cpp
     KeyInterface.h
     LockFreeRingBuffer.h
@@ -147,12 +136,8 @@ SET(PROJECT_SOURCES
     Stats.h
     TransparentMaximizedWindow.cpp
     TransparentMaximizedWindow.h
-    WebPConverter.cpp
-    WebPConverter.h
     WindowEnumeratorInterface.h
     main.cpp
-    X265Converter.h
-    X265Converter.cpp
 )
 
 IF(UNIX)
@@ -160,8 +145,6 @@ IF(UNIX)
 ENDIF(UNIX)
 
 ADD_SUBDIRECTORY(DiscoveryService)
-ADD_SUBDIRECTORY(x265)
-ADD_SUBDIRECTORY(libde265)
 
 ADD_EXECUTABLE(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
     ${App_ICON}
@@ -176,20 +159,9 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME}
     ${Qt5Widgets_LIBRARIES}
     Qt5::Network
     ${SSLLibs}
-    ${JPEGLib}
     ${X11Libs}
     pthread
     discovery.lib
-    imageioutil
-    imagedec
-    imageenc
-    webp
-    webpmux
-    webpdecoder
-    exampleutil
-    webpdemux
-    x265
-    dec265
 )
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")

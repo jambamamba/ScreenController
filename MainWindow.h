@@ -5,7 +5,6 @@
 #include <QTimer>
 
 #include "EventHandler.h"
-#include "FrameExtractor.h"
 #include "SocketTrasceiver.h"
 #include "ScreenStreamer.h"
 #include "NodeNameDialog.h"
@@ -32,7 +31,6 @@ signals:
     void StartPlayback(const Frame &frame, uint32_t from_ip);
     void StoppedStreaming(uint32_t ip);
     void DiscoveredNode(const QString &name, uint32_t ip, uint16_t port);
-    void RestartRequestNextFrameTimer(uint32_t next_frame_num, uint32_t ip);
 
 protected:
     void StartDiscoveryService();
@@ -46,8 +44,6 @@ private slots:
     void ShowTransparentWindowOverlay(const Frame &frame, uint32_t from_ip);
     void NodeActivated(QModelIndex);
     void StopStreaming(uint32_t ip);
-    void OnRestartRequestNextFrameTimer(uint32_t next_frame_num, uint32_t ip);
-    void RequestNextFrameTimerEvent();
     void on_connectButtton_clicked();
 
 private:
@@ -57,19 +53,9 @@ private:
     QRect m_region;
     SocketTrasceiver m_streamer_socket;
     ScreenStreamer m_streamer;
-    FrameExtractor m_frame_extractor;
     std::future<void> m_discovery_thread;
     NodeModel *m_node_model;
     EventHandler m_event_handler;
     std::atomic<bool>m_node_name_changed = false;
-    QTimer *m_frame_request_timer = nullptr;
-    struct NextFrameRequestData
-    {
-        uint32_t _next_frame_num = 0;
-        uint32_t _ip = 0;
-        void Set(uint32_t next_frame_num, uint32_t ip)
-        { _next_frame_num = next_frame_num; _ip = ip; }
-    } _next_frame_request_data;
-
     bool m_stop = false;
 };

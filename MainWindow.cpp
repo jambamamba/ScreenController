@@ -4,19 +4,15 @@
 #include <QListWidgetItem>
 #include <QStandardItemModel>
 #include <QTimer>
+#include <QtX11Extras/QX11Info>
 
 #include "ui_MainWindow.h"
 
-#include "DiscoveryService.h"
-#include "DiscoveryClient.h"
-#include "TransparentMaximizedWindow.h"
-
 #include "Command.h"
-#include "JpegConverter.h"
-#include "WebPConverter.h"
-
+#include "DiscoveryClient.h"
+#include "DiscoveryService.h"
+#include "TransparentMaximizedWindow.h"
 #include "X11Key.h"
-#include <QtX11Extras/QX11Info>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -26,7 +22,6 @@ MainWindow::MainWindow(QWidget *parent)
         m_streamer_socket.SendCommand(ip, cmd);
     }, this)
     , m_event_handler(this)
-    , m_frame_request_timer(new QTimer(this))
 {
     ui->setupUi(this);
     setWindowTitle("Kingfisher Screen Controller");
@@ -54,12 +49,6 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&m_event_handler, &EventHandler::StoppedStreaming,
             this, &MainWindow::DeleteTransparentWindowOverlay,
             Qt::ConnectionType::QueuedConnection);
-    connect(this, &MainWindow::RestartRequestNextFrameTimer,
-            this, &MainWindow::OnRestartRequestNextFrameTimer,
-            Qt::ConnectionType::BlockingQueuedConnection);
-    connect(m_frame_request_timer, &QTimer::timeout,
-            this, &MainWindow::RequestNextFrameTimerEvent);
-    m_frame_request_timer->setSingleShot(false);
 
     StartDiscoveryService();
     PrepareToReceiveStream();
@@ -129,11 +118,7 @@ void MainWindow::on_connectButtton_clicked()
 
 void MainWindow::SendStartStreamingCommand(uint32_t ip)
 {
-    m_streamer_socket.SendCommand(ip,
-                                  Command(Command::EventType::StartStreaming,
-                                          0,
-                                          (int)m_streamer._default_decoder));
-    m_frame_extractor.ReadyToReceive(ip);
+    m_streamer_socket.SendCommand(ip, Command(Command::EventType::StartStreaming));
     if(m_transparent_window.find(ip) != m_transparent_window.end())
     {
         QImage screen_shot = m_streamer.ScreenShot();
@@ -155,54 +140,12 @@ void MainWindow::StopStreaming(uint32_t ip)
 void MainWindow::PrepareToReceiveStream()
 {
     m_streamer_socket.StartRecieveDataThread([this](const Command &cmd, uint32_t ip){
-        switch(cmd.m_event)
-        {
-        case Command::EventType::FrameInfo:
-        {
-            uint32_t next_frame_num = m_frame_extractor.ExtractFrame(
-                        (uint8_t*)(cmd.m_tail_bytes),
-                        cmd.u.m_frame,
-                        ip);
-
-            _next_frame_request_data.Set(next_frame_num, ip);
-//            RequestNextFrameTimerEvent();
-
-            emit RestartRequestNextFrameTimer(next_frame_num, ip);
-            break;
-        }
-        default:
             m_event_handler.HandleCommand(cmd, ip);
-            break;
-        }
     });
-    m_frame_extractor.PlaybackImages([this](const Frame &frame, uint32_t ip) {
-        emit StartPlayback(frame, ip);
-    });
-}
-
-void MainWindow::OnRestartRequestNextFrameTimer(uint32_t next_frame_num, uint32_t ip)
-{
-    static uint32_t fn = -1;
-    if(fn == _next_frame_request_data._next_frame_num)
-    { return; }
-    m_frame_request_timer->stop();
-    m_frame_request_timer->start(m_streamer._retry_request_frame_timeout_ms);
-    fn = _next_frame_request_data._next_frame_num;
-}
-
-void MainWindow::RequestNextFrameTimerEvent()
-{
-//    qDebug() << "#### requesting frame #" << _next_frame_request_data._next_frame_num;
-    m_streamer_socket.SendCommand(_next_frame_request_data._ip,
-                                  Command(Command::EventType::StartStreaming,
-                                          _next_frame_request_data._next_frame_num,
-                                          (int)ImageConverterInterface::Types::X265));
 }
 
 void MainWindow::DeleteTransparentWindowOverlay(uint32_t ip)
 {
-    m_frame_extractor.Stop(ip);
-    return;//todo
     if(m_transparent_window.find(ip) == m_transparent_window.end())
     {
         return;

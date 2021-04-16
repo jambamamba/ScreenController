@@ -45,9 +45,6 @@ struct ImageConverterInterface
     enum Types {
         None,
         Command,
-        Jpeg,
-        Webp,
-        X265
     };
 
     ImageConverterInterface() {}
