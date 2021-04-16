@@ -54,7 +54,7 @@ public:
     static constexpr int _datagram_size = 1500 - sizeof(Command); // to determine MTU size, ping -s $((1500 - 28)) -M do 192.168.1.22 -c 1, or on Internet ping -s $((96 - 28)) -M do 8.8.8.8 -c 1
     static constexpr int _ring_buffer_size = 10000;
     static constexpr int _retry_request_frame_timeout_ms = 1000;
-    static constexpr int _send_next_frame_timeout_ms = 5;
+    static constexpr int _send_next_frame_timeout_ms = 20;
     static constexpr ImageConverterInterface::Types _default_decoder = ImageConverterInterface::Types::X265;
 public slots:
     void StartStreaming(uint32_t ip, uint32_t sequence_number, uint32_t decoder_type);
