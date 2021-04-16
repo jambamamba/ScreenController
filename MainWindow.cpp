@@ -192,7 +192,7 @@ void MainWindow::OnRestartRequestNextFrameTimer(uint32_t next_frame_num, uint32_
 
 void MainWindow::RequestNextFrameTimerEvent()
 {
-    qDebug() << "#### requesting frame #" << _next_frame_request_data._next_frame_num;
+//    qDebug() << "#### requesting frame #" << _next_frame_request_data._next_frame_num;
     m_streamer_socket.SendCommand(_next_frame_request_data._ip,
                                   Command(Command::EventType::StartStreaming,
                                           _next_frame_request_data._next_frame_num,

@@ -356,7 +356,7 @@ void ScreenStreamer::SendFrameBySequenceNumber(uint32_t ip) const
         if(cmd->u.m_frame.m_sequence_number == _sequence_num_to_send)
         {
             _sendCommand(ip, *cmd);
-            qDebug() << "#### sending #" << cmd->u.m_frame.m_sequence_number << "with payload of size " << cmd->u.m_frame.m_size;
+//            qDebug() << "#### sending #" << cmd->u.m_frame.m_sequence_number << "with payload of size " << cmd->u.m_frame.m_size;
             _sequence_num_to_send++;
 //            emit SendNextFrame(ip);//todo, add timer here, timeout needs to be variable depending on how many packets are getting dropped
             _send_next_frame_timer->start(_send_next_frame_timeout_ms);
