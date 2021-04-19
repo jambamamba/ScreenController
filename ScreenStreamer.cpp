@@ -182,11 +182,18 @@ void ScreenStreamer::StartEncoding(int width, int height)
        },
        [this](EncodedChunk enc){
 
-        constexpr uint32_t timestamp = 0;
-        if (_rtp->MediaStream()->push_frame(enc._data, enc._size, timestamp, RTP_NO_FLAGS) != RTP_OK)
-        {
-            qDebug() << "Failed to send RTP frame!";
-        }
+            constexpr uint32_t timestamp = 0;
+            for(uint8_t *data = enc._data;;)
+            {
+                size_t chunk_sz = enc._size < 1446 ? enc._size : 1446;
+                if (_rtp->MediaStream()->push_frame(data, chunk_sz, timestamp, RTP_NO_FLAGS) != RTP_OK)
+                {
+                    qDebug() << "Failed to send RTP frame!";
+                    continue;
+                }
+                enc._size -= chunk_sz;
+                data = data + chunk_sz;
+            }
 
 #if osm//osm
             x265dec.Decode(ip, width, height, enc);
