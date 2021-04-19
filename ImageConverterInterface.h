@@ -33,7 +33,7 @@ struct EncodedChunk
         }
     }
 
-    size_t _size = 0;
+    ssize_t _size = 0;
     uint8_t* _data = nullptr;
     ssize_t _width = 0;
     ssize_t _height = 0;
