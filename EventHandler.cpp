@@ -46,16 +46,19 @@ void EventHandler::HandleCommand(const Command &pkt, uint32_t ip)
         emit StoppedStreaming(ip);
         break;
     case Command::EventType::MouseMove:
-        m_mouse->moveTo(pkt.u.m_mouse.m_x, pkt.u.m_mouse.m_y);
+        m_mouse->moveTo(pkt.u._mouse.m_x, pkt.u._mouse.m_y);
         break;
     case Command::EventType::MousePress:
-        m_mouse->buttonPress(pkt.u.m_mouse.m_button, pkt.u.m_mouse.m_x, pkt.u.m_mouse.m_y);
+        m_mouse->buttonPress(pkt.u._mouse.m_button, pkt.u._mouse.m_x, pkt.u._mouse.m_y);
         break;
     case Command::EventType::MouseRelease:
-        m_mouse->buttonRelease(pkt.u.m_mouse.m_button, pkt.u.m_mouse.m_x, pkt.u.m_mouse.m_y);
+        m_mouse->buttonRelease(pkt.u._mouse.m_button, pkt.u._mouse.m_x, pkt.u._mouse.m_y);
         break;
     case Command::EventType::KeyEvent:
-        m_key->keyEvent(pkt.u.m_key.m_code, pkt.u.m_key.m_modifier, pkt.u.m_key.m_type);
+        m_key->keyEvent(pkt.u._key.m_code, pkt.u._key.m_modifier, pkt.u._key.m_type);
+        break;
+    case Command::EventType::FrameInfo:
+        emit SetDecoderFrameWidthHeight(ip, pkt.u._frame.width, pkt.u._frame.height);
         break;
     case Command::EventType::None:
         break;

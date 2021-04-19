@@ -34,9 +34,14 @@ struct Command
         uint32_t m_x = -1;
         uint32_t m_y = -1;
     };
+    struct Frame {
+        uint32_t width = 0;
+        uint32_t height = 0;
+    };
     union U {
-        Key m_key;
-        Mouse m_mouse;
+        Key _key;
+        Mouse _mouse;
+        Frame _frame;
         U(){}
     } u;
     uint8_t m_tail_bytes[4] = { 0xca, 0xfe, 0xd0, 0x0d };

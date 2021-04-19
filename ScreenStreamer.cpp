@@ -133,6 +133,10 @@ void ScreenStreamer::StartStreaming(uint32_t ip)
     {
         _rtp = std::make_unique<UvgRTP>(ip, 8888, 8889);
         QImage img = ScreenShot();
+        Command cmd(Command::EventType::FrameInfo);
+        cmd.u._frame.width = img.width();
+        cmd.u._frame.height = img.height();
+        _sendCommand(ip, cmd);
         StartEncoding(img.width(), img.height());
         return;//todo - start streaming to ip if its different than the one we are streaming to.
     }

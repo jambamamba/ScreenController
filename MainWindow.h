@@ -5,6 +5,7 @@
 #include <QTimer>
 
 #include "EventHandler.h"
+#include "FrameExtractor.h"
 #include "SocketTrasceiver.h"
 #include "ScreenStreamer.h"
 #include "NodeNameDialog.h"
@@ -29,7 +30,6 @@ public:
     ~MainWindow();
     virtual void keyPressEvent(QKeyEvent *event) override;
 signals:
-    void StartPlayback(const Frame &frame, uint32_t from_ip);
     void StoppedStreaming(uint32_t ip);
     void DiscoveredNode(const QString &name, uint32_t ip, uint16_t port);
 
@@ -42,22 +42,23 @@ protected:
     void MakeNewTransparentWindowOverlay(uint32_t ip);
 
 private slots:
-    void OnStartPlayback(const Frame &frame, uint32_t from_ip);
+    void PlaybackImage(const Frame &frame, uint32_t from_ip);
     void NodeActivated(QModelIndex);
     void StopStreaming(uint32_t ip);
     void on_connectButtton_clicked();
 
 private:
     Ui::MainWindow *ui;
-    NodeNameDialog m_node_name;
+    NodeNameDialog _node_name;
     QMap<uint32_t /*ip*/, TransparentMaximizedWindow*> m_transparent_window;
-    QRect m_region;
-    SocketTrasceiver m_streamer_socket;
+    QRect _region;
+    SocketTrasceiver _streamer_socket;
     std::unique_ptr<UvgRTP> _rtp;
-    ScreenStreamer m_streamer;
-    std::future<void> m_discovery_thread;
-    NodeModel *m_node_model;
-    EventHandler m_event_handler;
-    std::atomic<bool>m_node_name_changed = false;
-    bool m_stop = false;
+    ScreenStreamer _streamer;
+    std::future<void> _discovery_thread;
+    NodeModel *_node_model;
+    EventHandler _event_handler;
+    FrameExtractor _frame_extractor;
+    std::atomic<bool>_node_name_changed = false;
+    bool _stop = false;
 };

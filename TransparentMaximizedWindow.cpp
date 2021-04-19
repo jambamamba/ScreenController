@@ -34,9 +34,9 @@ Command CreateKeyCommandPacket(uint32_t key, uint32_t modifier, uint32_t type)
 {
     Command pkt;
     pkt.m_event = Command::EventType::KeyEvent;
-    pkt.u.m_key.m_code = key;
-    pkt.u.m_key.m_modifier = modifier;
-    pkt.u.m_key.m_type = type;
+    pkt.u._key.m_code = key;
+    pkt.u._key.m_modifier = modifier;
+    pkt.u._key.m_type = type;
 
     return pkt;
 }
@@ -45,9 +45,9 @@ Command CreateMouseCommandPacket(Command::EventType event_type, const QMouseEven
 {
     Command pkt;
     pkt.m_event = event_type;
-    pkt.u.m_mouse.m_button = event->button();
-    pkt.u.m_mouse.m_x = event->globalX();
-    pkt.u.m_mouse.m_y = event->globalY();
+    pkt.u._mouse.m_button = event->button();
+    pkt.u._mouse.m_x = event->globalX();
+    pkt.u._mouse.m_y = event->globalY();
 
     return pkt;
 }
@@ -155,8 +155,8 @@ void TransparentMaximizedWindow::mousePressEvent(QMouseEvent *event)
 
     m_mouse_button_state = DebounceEvents::MousePress;
     auto pkt = CreateMouseCommandPacket(Command::EventType::MousePress, event);
-    pkt.u.m_mouse.m_x = m_mouse_pos.x();
-    pkt.u.m_mouse.m_y = m_mouse_pos.y();
+    pkt.u._mouse.m_x = m_mouse_pos.x();
+    pkt.u._mouse.m_y = m_mouse_pos.y();
 //    qDebug() << "mousePress @ " << pkt.u.m_mouse.m_x << "," << pkt.u.m_mouse.m_y;
     emit SendCommandToNode(pkt);
 }
@@ -167,8 +167,8 @@ void TransparentMaximizedWindow::mouseReleaseEvent(QMouseEvent *event)
 
     m_mouse_button_state = DebounceEvents::MouseRelease;
     auto pkt = CreateMouseCommandPacket(Command::EventType::MouseRelease, event);
-    pkt.u.m_mouse.m_x = m_mouse_pos.x();
-    pkt.u.m_mouse.m_y = m_mouse_pos.y();
+    pkt.u._mouse.m_x = m_mouse_pos.x();
+    pkt.u._mouse.m_y = m_mouse_pos.y();
 //    qDebug() << "mouseRelease @ " << pkt.u.m_mouse.m_x << "," << pkt.u.m_mouse.m_y;
     emit SendCommandToNode(pkt);
 }
@@ -177,7 +177,7 @@ void TransparentMaximizedWindow::mouseMoveEvent(QMouseEvent *event)
 {
     auto pkt = CreateMouseCommandPacket(Command::EventType::MouseMove, event);
 //    qDebug() << "mouseMove @ " << pkt.u.m_mouse.m_x << "," << pkt.u.m_mouse.m_y;
-    m_mouse_pos = QPoint(pkt.u.m_mouse.m_x, pkt.u.m_mouse.m_y);
+    m_mouse_pos = QPoint(pkt.u._mouse.m_x, pkt.u._mouse.m_y);
     emit SendCommandToNode(pkt);
 }
 

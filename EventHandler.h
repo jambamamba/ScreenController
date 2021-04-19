@@ -18,6 +18,7 @@ signals:
     void StartStreaming(uint32_t ip);
     void StopStreaming(uint32_t ip);
     void StoppedStreaming(uint32_t ip);
+    void SetDecoderFrameWidthHeight(uint32_t ip, uint32_t width, uint32_t height);
 protected:
     std::unique_ptr<MouseInterface> m_mouse;
     std::unique_ptr<KeyInterface> m_key;
