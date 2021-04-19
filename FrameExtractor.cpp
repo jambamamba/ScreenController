@@ -35,7 +35,7 @@ void FrameExtractor::ExtractFrame(uint8_t *buffer,
         });
     }
 
-//    qDebug() << "#### received command packet #" << frame.m_sequence_number << "with payload of size " << chunk._size << frame.m_size;
+    qDebug() << "#### received command packet #" << "x" << "with payload of size " << sz;
     EncodedChunk chunk(buffer, sz, _width, _height);
     _x265dec->Decode(ip, _width, _height, chunk);
 }

@@ -34,7 +34,7 @@ UvgRTP::UvgRTP(uint32_t ip,
                int source_port,
                std::function<void (uint8_t*, size_t)> cb)
     :_sess(_ctx.create_session(SocketTrasceiver::IpToString(ip)))
-    ,_hevc(_sess->create_stream(remote_port, source_port, RTP_FORMAT_H265, RTP_NO_FLAGS))
+    ,_hevc(_sess->create_stream(remote_port, source_port, RTP_FORMAT_GENERIC, RTP_NO_FLAGS))
     ,_receiveCallback(cb)
 {
     if(_receiveCallback)
