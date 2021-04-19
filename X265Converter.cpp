@@ -81,14 +81,14 @@ void X265Encoder::StartEncoderThread(
 
     _encoder_thread = std::async(std::launch::async, [this,width,height,encoderInputFn,encoderOutputFn](){
         pthread_setname_np(pthread_self(), "x265enc");
-        constexpr int NUM_PARAMS = 13;
+        constexpr int NUM_PARAMS = 11;
         static char args[NUM_PARAMS][64] = {"x265",
                                      "--input", "/dev/screen",
                                      "--input-res", "WIDTHxHEIGHT",
                                      "--fps", "1",
-//                                            "--crf", "51", // do either crf (higher for worse quality, 28 is default), or do vbv in kbits/sec bit rate
-                                            "--vbv-bufsize", "60",// https://x265.readthedocs.io/en/master/cli.html#quality-rate-control-and-rate-distortion-options
-                                            "--vbv-maxrate", "120",
+                                            "--crf", "51", // do either crf (higher for worse quality, 28 is default), or do vbv in kbits/sec bit rate
+//                                            "--vbv-bufsize", "60",// https://x265.readthedocs.io/en/master/cli.html#quality-rate-control-and-rate-distortion-options
+//                                            "--vbv-maxrate", "120",
 //                                       "--preset", "slower",
 //                                     "--preset", "ultrafast",
 //                                     "--tune", "psnr",
@@ -103,7 +103,7 @@ void X265Encoder::StartEncoderThread(
                                   args[5], args[6],
                                   args[7], args[8],
                                   args[9], args[10],
-                                  args[11], args[12],
+//                                  args[11], args[12],
 //                                  args[13], args[14],
 //                                  args[15], args[16],
 //                                  args[17], args[18]
