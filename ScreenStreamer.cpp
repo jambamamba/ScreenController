@@ -134,8 +134,8 @@ void ScreenStreamer::StartStreaming(uint32_t ip)
         _rtp = std::make_unique<UvgRTP>(ip, 8888, 8889);
         QImage img = ScreenShot();
         Command cmd(Command::EventType::FrameInfo);
-        cmd.u._frame.width = img.width()/2;
-        cmd.u._frame.height = img.height()/2;
+        cmd.u._frame.width = img.width();
+        cmd.u._frame.height = img.height();
         _sendCommand(ip, cmd);
         StartEncoding(img.width(), img.height());
         return;//todo - start streaming to ip if its different than the one we are streaming to.
@@ -173,10 +173,10 @@ void ScreenStreamer::StartEncoding(int width, int height)
                 width,
                 height,
                 [this,width,height](char **data, ssize_t *bytes, int width_, int height_, float quality_factor){
-           QImage img = ScreenShot().scaledToWidth(width/2);
+           QImage img = ScreenShot();
            //osm assert width_ == width and height_ == height
-           memcpy(_rgb_buffer, img.bits(), width/2 * 3 * height/2);
-           *bytes = width * 3 * height/2;
+           memcpy(_rgb_buffer, img.bits(), width * 3 * height);
+           *bytes = width * 3 * height;
            *data = _rgb_buffer;
            return *bytes;
        },
