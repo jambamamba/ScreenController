@@ -128,7 +128,7 @@ void MainWindow::SendStartStreamingCommand(uint32_t ip)
     if(m_transparent_window.find(ip) != m_transparent_window.end())
     {
         QImage screen_shot = _streamer.ScreenShot();
-        m_transparent_window[ip]->Show(screen_shot.width(), screen_shot.height(), _streamer.ActiveScreen());
+        m_transparent_window[ip]->Show(screen_shot.width()/2, screen_shot.height()/2, _streamer.ActiveScreen());
     }
 }
 
