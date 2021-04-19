@@ -1,3 +1,12 @@
+#mkdir build
+#cd build
+#ccmake ..
+#/home/dev/oosman/Qt/5/5.15.0/gcc_64/lib/cmake/Qt5Core
+#/home/dev/oosman/Qt/5/5.15.0/gcc_64/lib/cmake/Qt5Gui
+#/home/dev/oosman/Qt/5/5.15.0/gcc_64/lib/cmake/Qt5Network
+#/home/dev/oosman/Qt/5/5.15.0/gcc_64/lib/cmake/Qt5Widgets
+#/home/dev/oosman/Qt/5/5.15.0/gcc_64/lib/cmake/Qt5X11Extras
+
 cmake_minimum_required(VERSION 3.19)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)

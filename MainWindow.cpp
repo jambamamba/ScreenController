@@ -24,7 +24,7 @@ MainWindow::MainWindow(QWidget *parent)
     }, this)
     , _event_handler(this)
     , _frame_extractor([this](const Frame &frame, uint32_t ip){
-        PlaybackImage(frame, ip);
+        emit RenderImage(frame, ip);
     })
 {
     ui->setupUi(this);
@@ -39,6 +39,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->listView, &QListView::doubleClicked,this,&MainWindow::NodeActivated);
     connect(ui->listView, &NodeListView::NodeActivated,this,&MainWindow::NodeActivated);
     connect(this, &MainWindow::DiscoveredNode, _node_model, &NodeModel::DiscoveredNode,
+            Qt::ConnectionType::QueuedConnection);
+    connect(this, &MainWindow::RenderImage, this, &MainWindow::OnRenderImage,
             Qt::ConnectionType::QueuedConnection);
     connect(&_node_name, &NodeNameDialog::NameChanged, [this](){ _node_name_changed = true; });
     connect(&_event_handler, &EventHandler::SetDecoderFrameWidthHeight, [this](uint32_t ip, uint32_t width, uint32_t height){
@@ -135,8 +137,8 @@ void MainWindow::NodeActivated(QModelIndex index)
     uint32_t ip = _node_model->Ip(index);
     SendStartStreamingCommand(ip);
     if(_rtp) { _rtp.reset(); }
-    _rtp = std::make_unique<UvgRTP>(ip, 8889, 8888, [](uint8_t* payload, size_t payload_len){
-        //osm todo pass this to x265 decoder
+    _rtp = std::make_unique<UvgRTP>(ip, 8889, 8888, [this,ip](uint8_t* payload, size_t payload_len){
+        _frame_extractor.ExtractFrame(payload, payload_len, ip);
     });
 }
 
@@ -151,7 +153,6 @@ void MainWindow::PrepareToReceiveStream()
     _streamer_socket.StartRecieveDataThread([this](const Command &cmd, uint32_t ip){
             _event_handler.HandleCommand(cmd, ip);
     });
-    //osm emit PlaybackImage(const Frame &frame, uint32_t ip) to render images to TransparentMaximizedWindow
 }
 
 void MainWindow::DeleteTransparentWindowOverlay(uint32_t ip)
@@ -167,17 +168,17 @@ void MainWindow::DeleteTransparentWindowOverlay(uint32_t ip)
     m_transparent_window.remove(ip);
 }
 
-void MainWindow::PlaybackImage(const Frame &frame, uint32_t ip)
+void MainWindow::OnRenderImage(const Frame &frame, uint32_t ip)
 {
-    if(m_transparent_window.find(ip) !=  m_transparent_window.end())
+    if(m_transparent_window.find(ip) ==  m_transparent_window.end())
     {
-        if(!m_transparent_window[ip]->IsClosed())
-        {
-            m_transparent_window[ip]->SetImage(frame);
-        }
-        return;
+        MakeNewTransparentWindowOverlay(ip);
     }
-    MakeNewTransparentWindowOverlay(ip);
+
+    if(!m_transparent_window[ip]->IsClosed())
+    {
+        m_transparent_window[ip]->SetImage(frame);
+    }
 }
 
 void MainWindow::MakeNewTransparentWindowOverlay(uint32_t ip)

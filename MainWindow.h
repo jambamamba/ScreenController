@@ -32,6 +32,7 @@ public:
 signals:
     void StoppedStreaming(uint32_t ip);
     void DiscoveredNode(const QString &name, uint32_t ip, uint16_t port);
+    void RenderImage(const Frame &frame, uint32_t ip);
 
 protected:
     void StartDiscoveryService();
@@ -42,7 +43,7 @@ protected:
     void MakeNewTransparentWindowOverlay(uint32_t ip);
 
 private slots:
-    void PlaybackImage(const Frame &frame, uint32_t from_ip);
+    void OnRenderImage(const Frame &frame, uint32_t ip);
     void NodeActivated(QModelIndex);
     void StopStreaming(uint32_t ip);
     void on_connectButtton_clicked();
