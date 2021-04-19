@@ -87,8 +87,8 @@ void X265Encoder::StartEncoderThread(
                                      "--input-res", "WIDTHxHEIGHT",
                                      "--fps", "1",
 //                                            "--crf", "51", // do either crf (higher for worse quality, 28 is default), or do vbv in kbits/sec bit rate
-                                            "--vbv-bufsize", "60",// https://x265.readthedocs.io/en/master/cli.html#quality-rate-control-and-rate-distortion-options
-                                            "--vbv-maxrate", "120",
+                                            "--vbv-bufsize", "30",// https://x265.readthedocs.io/en/master/cli.html#quality-rate-control-and-rate-distortion-options
+                                            "--vbv-maxrate", "60",
 //                                       "--preset", "slower",
 //                                     "--preset", "ultrafast",
 //                                     "--tune", "psnr",
